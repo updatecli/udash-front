@@ -83,14 +83,13 @@ export default {
   methods: {
     async getPipelineData() {
       const token = await this.$auth0.getAccessTokenSilently();
-      console.log("Debug: " + token);
       const response = await fetch('/api/pipelines', {
           headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      this.pipelines = await response.json();
-
+      const data = await response.json();
+      this.pipelines = data.data
     },
     getPipelineLink: function(id){
       return "/pipelines/" + id
