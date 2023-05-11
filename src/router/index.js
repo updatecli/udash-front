@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import PipelinesView from '../views/PipelinesView.vue'
 import PipelineView from '../views/PipelineView.vue'
+import ProfileView from "../views/ProfileView.vue";
+import { createAuthGuard } from "@auth0/auth0-vue";
 
 const routes = [
   {
@@ -18,15 +20,23 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
   },
   {
+    beforeEnter: createAuthGuard(),
     path: '/pipelines',
     name: 'pipelines',
     component: PipelinesView
   },
   {
+    beforeEnter: createAuthGuard(),
     path: '/pipelines/:id',
     name: 'pipeline',
     component: PipelineView
   },
+  {
+    beforeEnter: createAuthGuard(),
+    path: "/profile",
+    name: "profile",
+    component: ProfileView
+  }
 ]
 
 const router = createRouter({

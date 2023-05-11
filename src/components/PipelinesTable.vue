@@ -68,20 +68,30 @@
 </template>
 
 <script>
-import axios from 'axios'
 
 export default {
   name: 'PipelinesTable',
 
   data: () => ({
-    pipelines: [],
+    pipelines: []
   }),
-
+ 
   beforeUnmount() {
     this.cancelAutoUpdate();
   },
 
   methods: {
+    async getPipelineData() {
+      const token = await this.$auth0.getAccessTokenSilently();
+      console.log("Debug: " + token);
+      const response = await fetch('/api/pipelines', {
+          headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      this.pipelines = await response.json();
+
+    },
     getPipelineLink: function(id){
       return "/pipelines/" + id
     },
@@ -112,13 +122,11 @@ export default {
           return "mdi-robot-off"
       }
     },
-
   },
 
   async created() {
     try {
-      const pipelines = await axios.get(`/api/pipelines`);
-      this.pipelines = pipelines.data.data;
+      this.getPipelineData()
     } catch (error) {
       console.log(error);
     }

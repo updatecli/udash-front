@@ -25,6 +25,7 @@
             value="home"></v-list-item>
           <v-list-item
             prepend-icon="mdi-satellite-variant"
+            v-if="isAuthenticated"
             title="Pipelines"
             to="/pipelines"
             value="home"></v-list-item>
@@ -39,8 +40,16 @@
 </template>
 
 <script>
+    import { useAuth0 } from '@auth0/auth0-vue';
     export default {
         name: 'SideNavigation',
+        setup() {
+          const auth0 = useAuth0();
+          return {
+            isAuthenticated: auth0.isAuthenticated,
+            isLoading: auth0.isLoading,
+          }
+        },
         data: () => ({
             drawer: true,
         }),
