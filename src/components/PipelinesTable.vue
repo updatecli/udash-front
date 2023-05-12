@@ -56,7 +56,7 @@
                     class="mx-4"
                     variant="text"
                     prepend-icon="mdi-arrow-right-circle"
-                    :href=getPipelineLink(pipeline.ID)></v-btn>
+                    :to=getPipelineLink(pipeline.ID)></v-btn>
                 </td>
               </tr>
             </tbody>
@@ -81,7 +81,7 @@ export default {
   },
 
   methods: {
-    async getPipelineData() {
+    async getPipelinesData() {
       const token = await this.$auth0.getAccessTokenSilently();
       const response = await fetch('/api/pipelines', {
           headers: {
@@ -92,7 +92,7 @@ export default {
       this.pipelines = data.data
     },
     getPipelineLink: function(id){
-      return "/pipelines/" + id
+      return `/pipelines/${id}`
     },
     cancelAutoUpdate() {
       clearInterval(this.timer);
@@ -125,7 +125,7 @@ export default {
 
   async created() {
     try {
-      this.getPipelineData()
+      this.getPipelinesData()
     } catch (error) {
       console.log(error);
     }
