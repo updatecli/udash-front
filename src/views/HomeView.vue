@@ -60,7 +60,7 @@
                 class="mx-4"
                 variant="text"
                 :prepend-icon="link.icon"
-                :href="link.to">
+                :to="link.to">
                 {{ link.name }}
               </v-btn>
             </div>
@@ -88,14 +88,9 @@ export default {
   data: () => ({
     links:[
       {
-      name: "Updatecli",
-      to: "https://www.updatecli.io",
-      icon: "mdi-arrow-right-circle",
-      },
-      {
-      name: "Pipelines",
-      to: "/Pipelines",
-      icon: "mdi-arrow-right-circle",
+        name: "Pipelines",
+        to: "/Pipelines",
+        icon: "mdi-arrow-right-circle",
       },
   ]
   })
