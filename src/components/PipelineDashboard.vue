@@ -28,7 +28,6 @@
 </template>
 
 <script>
-import axios from 'axios'
 
 export default {
   name: 'PipelineDashboard',
@@ -72,13 +71,21 @@ export default {
           return "mdi-robot-off"
       }
     },
-
+    async getPipelineData() {
+      const token = await this.$auth0.getAccessTokenSilently();
+      const response = await fetch('/api/pipelines/' + this.$route.params.id, {
+          headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      this.pipeline = data.data
+    },
   },
 
   async created() {
     try {
-      const pipeline = await axios.get(`/api/pipelines/` + this.$route.params.id );
-      this.pipeline = pipeline.data.data;
+      this.getPipelineData()
     } catch (error) {
       console.log(error);
     }
