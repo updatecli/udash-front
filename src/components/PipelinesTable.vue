@@ -16,51 +16,29 @@
             sm="12"
           >
 
-          <v-table
+          <v-data-table
+            v-model:items-per-page="itemsPerPage"
+            :headers="headers"
+            :items="pipelines"
+            item-value="name"
             density="compact"
             fixed-header
             max-height="600px"
           >
-            <thead>
-              <tr>
-                <th>
-                </th>
-                <th class="text-left">
-                  Name
-                </th>
-                <th class="text-left">
-                  Created At
-                </th>
-                <th class="text-left">
-                  Updated At
-                </th>
-                <th class="text-left">
-                  Result
-                </th>
-                <th class="text-left">
-                </th>
-              </tr>
-            </thead>
-
-            <tbody
-              v-for="pipeline in pipelines" :key="pipeline.ID"
-              >
-              <tr>
-                <td><v-icon :icon=getStatusIcon(pipeline.Result) :color=getStatusColor(pipeline.Result)></v-icon></td>
-                <td>{{ pipeline.Name }}</td>
-                <td>{{ pipeline.CreatedAt }}</td>
-                <td>{{ pipeline.UpdatedAt }}</td>
-                <td>{{ pipeline.Result }}</td>
-                <td>
-                  <v-btn
-                    class="mx-4"
-                    variant="text"
-                    prepend-icon="mdi-arrow-right-circle"
-                    :to=getPipelineLink(pipeline.ID)></v-btn>
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+            <template v-slot:item.ID="{ item }">
+              <v-btn
+                class="mx-4"
+                variant="text"
+                prepend-icon="mdi-arrow-right-circle"
+                :to=getPipelineLink(item.raw.ID)></v-btn>
+            </template>
+            <template v-slot:item.Result="{ item }">
+              <v-icon
+                :icon=getStatusIcon(item.raw.Result)
+                :color=getStatusColor(item.raw.Result)
+                ></v-icon>
+            </template>
+          </v-data-table>
         </v-col>
       </v-row>
     </v-container>
@@ -68,14 +46,32 @@
 </template>
 
 <script>
+import { VDataTable } from 'vuetify/labs/VDataTable'
 
 export default {
   name: 'PipelinesTable',
 
+  components: {
+    VDataTable,
+  },
+
   data: () => ({
-    pipelines: []
+    pipelines: [],
+    itemsPerPage: 50,
+    headers: [
+      { align: "start", key:'Result'},
+      {
+        title: "Name",
+        align: 'start',
+        sortable: true,
+        key: 'Name'
+      },
+      { title: "Created at", key:'CreatedAt'},
+      { title: "Updated at", key:'UpdatedAt'},
+      { key: 'ID', sortable: false}
+    ],
   }),
- 
+
   beforeUnmount() {
     this.cancelAutoUpdate();
   },
