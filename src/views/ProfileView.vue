@@ -9,8 +9,8 @@
           <v-col
             class="text-left"
             cols="auto"
-            lg="8"
-            md="8"
+            lg="12"
+            md="12"
             sm="12"
           >
             <v-card
