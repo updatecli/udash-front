@@ -16,6 +16,7 @@
             <v-card
               class="mx-auto text-center"
               max-width="344"
+              flat
             >
               <img
                 :src="user?.picture"
