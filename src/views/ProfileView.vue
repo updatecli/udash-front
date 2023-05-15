@@ -24,11 +24,21 @@
               />
 
               <v-card-title>
-                  {{ user?.name }}
+                  Profile
               </v-card-title>
               <v-card-text>
-                <p>Email: {{ user?.email }}</p>
-                <p>Name: {{ user?.name }}</p>
+                <v-text-field
+                  label="Email"
+                  :model-value=user?.email
+                  readonly
+                  variant="outlined"
+                ></v-text-field>
+                <v-text-field
+                  label="Username"
+                  :model-value=user?.name
+                  readonly
+                  variant="outlined"
+                ></v-text-field>
               </v-card-text>
             </v-card>
           </v-col>
