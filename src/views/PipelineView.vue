@@ -4,21 +4,6 @@
     <SideNavigation/>
 
     <v-main>
-      <v-container>
-        <v-row>
-          <v-col
-            class="text-right"
-            cols="auto"
-            lg="8"
-            md="8"
-            sm="12"
-          >
-          <h1>
-            Pipeline
-          </h1>
-          </v-col>
-        </v-row>
-      </v-container>
       <PipelineDashboard/>
     </v-main>
 

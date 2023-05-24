@@ -1,29 +1,168 @@
 <template>
+  <v-container>
+    <v-row>
+      <v-col
+        class="text-right"
+        cols="auto"
+        lg="8"
+        md="8"
+        sm="12"
+      >
+        <h1>
+          Pipeline
+        </h1>
+        <h2>
+          {{ pipeline.Pipeline.Name }}
+        </h2>
+      </v-col>
+      <v-col
+        class="text-center"
+      >
+        <v-btn
+          :icon="getStatusIcon(pipeline.Pipeline.Result)"
+          :color="getStatusColor(pipeline.Pipeline.Result)"
+          size="100"
+        ></v-btn>
+      </v-col>
+    </v-row>
+  </v-container>
   <v-container
-      class="py-8 px-6"
-      fluid
   >
-    <!-- Show Project Description -->
-    <v-container>
-      <!--
-        Show Project application in a table
-      -->
-      <v-row>
-        <v-col
-            cols="auto"
-            lg="12"
-            md="12"
-            sm="12"
-          >
-        {{ pipeline.Pipeline }}
-        {{ pipeline.Name }}
-        {{ pipeline.Sources }}
-        {{ pipeline.Conditions }}
-        {{ pipeline.Targets }}
+    <v-row>
+      <v-col
+        cols="auto"
+        lg="8"
+        md="8"
+        sm="12"
+      >
+        <!-- Show Sources -->
+        <v-card
+          elevation="0"
+          v-if="pipeline.Pipeline.Sources"
+        >
+          <v-card-title><h4>Sources</h4></v-card-title>
+          <v-card-text>
+            <v-timeline
+            >
+              <v-timeline-item
+                v-for="(value, key) in pipeline.Pipeline.Sources" :key="key"
+                :dot-color="getStatusColor(value.Result)"
+                large
+              >
+                <template v-slot:opposite>
+                  <div width="100">
+                    {{  key }}
+                  </div>
+                </template>
+                <v-card
+                  rounded="0"
+                  variant="outlined"
+                >
+                  <v-card-title>{{ value.Name }}</v-card-title>
+                  <v-card-text>{{ value.Description }}</v-card-text>
+                  <v-chip-group>
+                    <v-chip
+                      v-if="value.Information"
+                    >
+                      <p>{{ value.Information }}</p>
+                    </v-chip>
+                    <v-chip>
+                      <p>{{ value.Result }}</p>
+                    </v-chip>
+                    <v-chip>
+                      <p>id: {{ key }}</p>
+                    </v-chip>
+                  </v-chip-group>
+                </v-card>
+              </v-timeline-item>
+            </v-timeline>
+          </v-card-text>
+        </v-card>
 
-        </v-col>
-      </v-row>
-    </v-container>
+        <!-- Show Conditions -->
+        <v-card
+          elevation="0"
+          v-if="pipeline.Pipeline.Conditions"
+        >
+          <v-card-title><h4>Conditions</h4></v-card-title>
+          <v-card-text>
+            <v-timeline>
+              <v-timeline-item
+                v-for="(value, key) in pipeline.Pipeline.Conditions" :key="key"
+                :dot-color="getStatusColor(value.Result)"
+              >
+                <v-card
+                  rounded="0"
+                  variant="outlined"
+                >
+                  <v-card-title>{{ value.Name }}</v-card-title>
+                  <v-card-text>{{ value.Description }}</v-card-text>
+
+                  <v-chip-group>
+                    <v-chip
+                      v-if="value.Information"
+                    >
+                      <p>{{ value.Information }}</p>
+                    </v-chip>
+                    <v-chip>
+                      <p>{{ value.Result }}</p>
+                    </v-chip>
+                    <v-chip>
+                      <p>id: {{ key }}</p>
+                    </v-chip>
+                  </v-chip-group>
+                </v-card>
+              </v-timeline-item>
+            </v-timeline>
+          </v-card-text>
+        </v-card>
+
+        <!-- Show Targets -->
+        <v-card
+          elevation="0"
+          v-if="pipeline.Pipeline.Targets"
+        >
+          <v-card-title><h4>Targets</h4></v-card-title>
+          <v-card-text>
+            <v-timeline
+            >
+              <v-timeline-item
+                v-for="(value, key) in pipeline.Pipeline.Targets" :key="key"
+                :dot-color="getStatusColor(value.Result)"
+                large
+              >
+                <template v-slot:opposite>
+                  <div width="100">
+                    {{  key }}
+                  </div>
+                </template>
+                <v-card
+                  rounded="0"
+                  variant="outlined"
+                >
+                  <v-card-title>{{ value.Name }}</v-card-title>
+                  <v-card-text>{{ value.Description }}</v-card-text>
+
+                  <v-chip-group>
+                    <v-chip
+                      v-if="value.Information"
+                    >
+                      <p>{{ value.Information }}</p>
+                    </v-chip>
+                    <v-chip>
+                      <p>{{ value.Result }}</p>
+                    </v-chip>
+                    <v-chip>
+                      <p>id: {{ key }}</p>
+                    </v-chip>
+                  </v-chip-group>
+                </v-card>
+              </v-timeline-item>
+            </v-timeline>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -33,7 +172,9 @@ export default {
   name: 'PipelineDashboard',
 
   data: () => ({
-    pipeline: [],
+    pipeline: {
+      "Pipeline": {}
+    },
   }),
 
   beforeUnmount() {
@@ -41,14 +182,15 @@ export default {
   },
 
   methods: {
+
     getPipelineLink: function(id){
       return "/pipelines/" + id
     },
     cancelAutoUpdate() {
       clearInterval(this.timer);
     },
-    getStatusColor: function(status){
-      switch (status) {
+    getStatusColor: function(input){
+      switch (input) {
         case "✔":
           return "success"
         case "✗":
@@ -59,6 +201,7 @@ export default {
           return "yellow"
       }
     },
+
     getStatusIcon: function(status){
       switch (status) {
         case "✔":
@@ -79,7 +222,8 @@ export default {
         }
       });
       const data = await response.json();
-      this.pipeline = data.data
+
+      this.pipeline = data.data;
     },
   },
 
