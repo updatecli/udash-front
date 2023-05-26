@@ -29,14 +29,14 @@
               </v-card-title>
               <v-card-text>
                 <v-text-field
-                  label="Email"
-                  :model-value=user?.email
+                  label="Name"
+                  :model-value=user?.name
                   readonly
                   variant="outlined"
                 ></v-text-field>
                 <v-text-field
-                  label="Username"
-                  :model-value=user?.name
+                  label="Email"
+                  :model-value=user?.email
                   readonly
                   variant="outlined"
                 ></v-text-field>
