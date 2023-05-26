@@ -37,128 +37,94 @@
       >
         <!-- Show Sources -->
         <v-card
-          elevation="0"
+          variant="outlined"
           v-if="pipeline.Pipeline.Sources"
         >
-          <v-card-title><h4>Sources</h4></v-card-title>
+          <v-card-title><h4>Source</h4></v-card-title>
           <v-card-text>
-            <v-timeline
-            >
-              <v-timeline-item
+              <v-card
+                variant="flat"
                 v-for="(value, key) in pipeline.Pipeline.Sources" :key="key"
-                :dot-color="getStatusColor(value.Result)"
-                large
               >
-                <template v-slot:opposite>
-                  <div width="100">
-                    {{  key }}
-                  </div>
-                </template>
-                <v-card
-                  rounded="0"
-                  variant="outlined"
-                >
-                  <v-card-title>{{ value.Name }}</v-card-title>
-                  <v-card-text>{{ value.Description }}</v-card-text>
-                  <v-chip-group>
-                    <v-chip
-                      v-if="value.Information"
-                    >
-                      <p>{{ value.Information }}</p>
-                    </v-chip>
-                    <v-chip>
-                      <p>{{ value.Result }}</p>
-                    </v-chip>
-                    <v-chip>
-                      <p>id: {{ key }}</p>
-                    </v-chip>
-                  </v-chip-group>
-                </v-card>
-              </v-timeline-item>
-            </v-timeline>
+                <v-card-title>
+                  <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}</v-card-title>
+                <v-card-text>{{ value.Description }}</v-card-text>
+                <v-chip-group>
+                  <v-spacer></v-spacer>
+                  <v-chip>
+                    <p>{{ key }}</p>
+                  </v-chip>
+                  <v-chip
+                    v-if="value.Information"
+                  >
+                    <p>{{ value.Information }}</p>
+                  </v-chip>
+                </v-chip-group>
+              </v-card>
           </v-card-text>
         </v-card>
+
+        <v-divider
+          :color="getStatusColor(pipeline.Pipeline.Result)"
+          thickness="30"></v-divider>
 
         <!-- Show Conditions -->
         <v-card
-          elevation="0"
+          variant="outlined"
           v-if="pipeline.Pipeline.Conditions"
         >
-          <v-card-title><h4>Conditions</h4></v-card-title>
+          <v-card-title><h4>Condition</h4></v-card-title>
           <v-card-text>
-            <v-timeline>
-              <v-timeline-item
+              <v-card
+                variant="flat"
                 v-for="(value, key) in pipeline.Pipeline.Conditions" :key="key"
-                :dot-color="getStatusColor(value.Result)"
               >
-                <v-card
-                  rounded="0"
-                  variant="outlined"
-                >
-                  <v-card-title>{{ value.Name }}</v-card-title>
-                  <v-card-text>{{ value.Description }}</v-card-text>
-
-                  <v-chip-group>
-                    <v-chip
-                      v-if="value.Information"
-                    >
-                      <p>{{ value.Information }}</p>
-                    </v-chip>
-                    <v-chip>
-                      <p>{{ value.Result }}</p>
-                    </v-chip>
-                    <v-chip>
-                      <p>id: {{ key }}</p>
-                    </v-chip>
-                  </v-chip-group>
-                </v-card>
-              </v-timeline-item>
-            </v-timeline>
+                <v-card-title>
+                  <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}</v-card-title>
+                <v-card-text>{{ value.Description }}</v-card-text>
+                <v-chip-group>
+                  <v-spacer></v-spacer>
+                  <v-chip>
+                    <p>{{ key }}</p>
+                  </v-chip>
+                </v-chip-group>
+              </v-card>
           </v-card-text>
         </v-card>
 
+        <v-divider
+          :color="getStatusColor(pipeline.Pipeline.Result)"
+          thickness="30"></v-divider>
+
         <!-- Show Targets -->
         <v-card
-          elevation="0"
+          variant="outlined"
           v-if="pipeline.Pipeline.Targets"
         >
-          <v-card-title><h4>Targets</h4></v-card-title>
+          <v-card-title><h4>Target</h4></v-card-title>
           <v-card-text>
-            <v-timeline
-            >
-              <v-timeline-item
+              <v-card
+                variant="flat"
                 v-for="(value, key) in pipeline.Pipeline.Targets" :key="key"
-                :dot-color="getStatusColor(value.Result)"
-                large
               >
-                <template v-slot:opposite>
-                  <div width="100">
-                    {{  key }}
-                  </div>
-                </template>
-                <v-card
-                  rounded="0"
-                  variant="outlined"
-                >
-                  <v-card-title>{{ value.Name }}</v-card-title>
-                  <v-card-text>{{ value.Description }}</v-card-text>
-
-                  <v-chip-group>
-                    <v-chip
-                      v-if="value.Information"
-                    >
-                      <p>{{ value.Information }}</p>
-                    </v-chip>
-                    <v-chip>
-                      <p>{{ value.Result }}</p>
-                    </v-chip>
-                    <v-chip>
-                      <p>id: {{ key }}</p>
-                    </v-chip>
-                  </v-chip-group>
-                </v-card>
-              </v-timeline-item>
-            </v-timeline>
+                <v-card-title>
+                  <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}</v-card-title>
+                <v-card-text>{{ value.Description }}</v-card-text>
+                <v-chip-group>
+                  <v-spacer></v-spacer>
+                  <v-chip
+                    v-if="value.Information"
+                  >
+                    <p>{{ value.Information }}</p>
+                  </v-chip>
+                  <v-chip>
+                    <p>{{ key }}</p>
+                  </v-chip>
+                  <v-chip>
+                    {{ value.NewInformation }}
+                  </v-chip>
+                </v-chip-group>
+              </v-card>
           </v-card-text>
         </v-card>
       </v-col>
