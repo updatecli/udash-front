@@ -77,9 +77,9 @@ export default {
   },
 
   methods: {
-    async getPipelinesData() {
+    async getReportsData() {
       const token = await this.$auth0.getAccessTokenSilently();
-      const response = await fetch('/api/pipelines', {
+      const response = await fetch('/api/pipeline/reports', {
           headers: {
           Authorization: `Bearer ${token}`
         }
@@ -88,7 +88,7 @@ export default {
       this.pipelines = data.data
     },
     getPipelineLink: function(id){
-      return `/pipelines/${id}`
+      return `/pipeline/reports/${id}`
     },
     cancelAutoUpdate() {
       clearInterval(this.timer);
@@ -121,7 +121,7 @@ export default {
 
   async created() {
     try {
-      this.getPipelinesData()
+      this.getReportsData()
     } catch (error) {
       console.log(error);
     }

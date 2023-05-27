@@ -14,12 +14,12 @@
             sm="12"
           >
           <h1>
-            Pipelines
+            Reports
           </h1>
           </v-col>
         </v-row>
       </v-container>
-      <PipelinesTable/>
+      <PipelineReports/>
     </v-main>
 
     <ReleaseFooter/>
@@ -28,18 +28,18 @@
 
 <script>
 
-import ReleaseFooter from '../components/ReleaseFooter.vue';
-import SideNavigation from '../components/SideNavigation.vue';
-import HeadNavigation from '../components/HeadNavigation.vue';
-import PipelinesTable from '../components/PipelinesTable.vue';
+import ReleaseFooter from '../../components/ReleaseFooter.vue';
+import SideNavigation from '../../components/SideNavigation.vue';
+import HeadNavigation from '../../components/HeadNavigation.vue';
+import PipelineReports from '../../components/pipeline/reports.vue';
 
 export default {
-  name: 'PipelinesView',
+  name: 'PipelineReportsView',
   components: {
     ReleaseFooter,
     SideNavigation,
     HeadNavigation,
-    PipelinesTable,
+    PipelineReports,
   },
   data: () => ({
     links:[

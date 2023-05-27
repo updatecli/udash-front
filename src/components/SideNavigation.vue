@@ -26,9 +26,9 @@
           <v-list-item
             prepend-icon="mdi-satellite-variant"
             v-if="isAuthenticated"
-            title="Pipelines"
-            to="/pipelines"
-            value="home"></v-list-item>
+            title="Reports"
+            to="/pipeline/reports"
+            value="reports"></v-list-item>
           <v-list-item
             prepend-icon="mdi-alien"
             title="About"

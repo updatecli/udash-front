@@ -4,7 +4,7 @@
     <SideNavigation/>
 
     <v-main>
-      <PipelineDashboard/>
+      <PipelineReport/>
     </v-main>
 
     <ReleaseFooter/>
@@ -13,18 +13,18 @@
 
 <script>
 
-import ReleaseFooter from '../components/ReleaseFooter.vue';
-import SideNavigation from '../components/SideNavigation.vue';
-import HeadNavigation from '../components/HeadNavigation.vue';
-import PipelineDashboard from '../components/PipelineDashboard.vue';
+import ReleaseFooter from '../../components/ReleaseFooter.vue';
+import SideNavigation from '../../components/SideNavigation.vue';
+import HeadNavigation from '../../components/HeadNavigation.vue';
+import PipelineReport from '../../components/pipeline/report.vue';
 
 export default {
-  name: 'PipelineView',
+  name: 'PipelineReportView',
   components: {
     ReleaseFooter,
     SideNavigation,
     HeadNavigation,
-    PipelineDashboard,
+    PipelineReport: PipelineReport,
   },
   data: () => ({
     links:[

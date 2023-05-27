@@ -14,7 +14,7 @@
             sm="12"
           >
           <h1>
-            Update Monitor
+            Udash
           </h1>
           </v-col>
         </v-row>
@@ -88,8 +88,8 @@ export default {
   data: () => ({
     links:[
       {
-        name: "Pipelines",
-        to: "/Pipelines",
+        name: "Reports",
+        to: "/pipeline/reports",
         icon: "mdi-arrow-right-circle",
       },
   ]

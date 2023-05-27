@@ -9,7 +9,7 @@
         sm="12"
       >
         <h1>
-          Pipeline
+          Report
         </h1>
         <h2>
           {{ pipeline.Pipeline.Name }}
@@ -135,7 +135,7 @@
 <script>
 
 export default {
-  name: 'PipelineDashboard',
+  name: 'PipelineReportView',
 
   data: () => ({
     pipeline: {
@@ -149,8 +149,8 @@ export default {
 
   methods: {
 
-    getPipelineLink: function(id){
-      return "/pipelines/" + id
+    getPipelineReportLink: function(id){
+      return "/pipeline/reports/" + id
     },
     cancelAutoUpdate() {
       clearInterval(this.timer);
@@ -180,14 +180,16 @@ export default {
           return "mdi-robot-off"
       }
     },
-    async getPipelineData() {
+    async getPipelineReportData() {
       const token = await this.$auth0.getAccessTokenSilently();
-      const response = await fetch('/api/pipelines/' + this.$route.params.id, {
+      const response = await fetch('/api/pipeline/reports/' + this.$route.params.id, {
           headers: {
           Authorization: `Bearer ${token}`
         }
       });
       const data = await response.json();
+
+      console.log(data.data)
 
       this.pipeline = data.data;
     },
@@ -195,7 +197,7 @@ export default {
 
   async created() {
     try {
-      this.getPipelineData()
+      this.getPipelineReportData()
     } catch (error) {
       console.log(error);
     }
