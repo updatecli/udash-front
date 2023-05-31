@@ -59,7 +59,7 @@ export default {
     pipelines: [],
     itemsPerPage: 50,
     headers: [
-      { align: "start", key:'Result'},
+      { title: "State", align: "start", key:'Result'},
       {
         title: "Name",
         align: 'start',
