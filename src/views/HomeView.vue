@@ -88,6 +88,11 @@ export default {
   data: () => ({
     links:[
       {
+        name: "QuickStart",
+        to: "/quickstart",
+        icon: "mdi-arrow-right-circle",
+      },
+      {
         name: "Reports",
         to: "/pipeline/reports",
         icon: "mdi-arrow-right-circle",

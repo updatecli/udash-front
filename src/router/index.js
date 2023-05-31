@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import PipelineReportsView from '../views/pipeline/ReportsView.vue'
 import PipelineReportView from '../views/pipeline/ReportView.vue'
 import ProfileView from "../views/ProfileView.vue";
+import QuickStartView from "../views/QuickStart.vue";
 import { createAuthGuard } from "@auth0/auth0-vue";
 
 const routes = [
@@ -36,6 +37,11 @@ const routes = [
     path: "/profile",
     name: "profile",
     component: ProfileView
+  },
+  {
+    path: "/quickstart",
+    name: "quickstart",
+    component: QuickStartView
   }
 ]
 
