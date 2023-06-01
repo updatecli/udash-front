@@ -25,6 +25,11 @@
             value="home"></v-list-item>
           <v-list-item
             prepend-icon="mdi-satellite-variant"
+            title="Quickstart"
+            to="/quickstart"
+            value="quickstart"></v-list-item>
+          <v-list-item
+            prepend-icon="mdi-satellite-variant"
             v-if="isAuthenticated"
             title="Reports"
             to="/pipeline/reports"
