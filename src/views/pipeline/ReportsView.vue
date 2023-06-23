@@ -14,7 +14,7 @@
             sm="12"
           >
           <h1>
-            Reports
+            Reports <v-icon icon="mdi-satellite-variant"></v-icon>
           </h1>
           </v-col>
         </v-row>
