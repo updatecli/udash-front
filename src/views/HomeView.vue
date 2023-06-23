@@ -13,9 +13,7 @@
             md="8"
             sm="12"
           >
-          <h1>
-            Udash
-          </h1>
+          <h1>Udash <v-icon icon="mdi-home-city"></v-icon></h1>
           </v-col>
         </v-row>
 
@@ -28,22 +26,16 @@
             sm="12"
           >
             <p>
-            Udash is a new type of release monitoring platform.
+            Udash is a new type of monitoring platform.
             </p>
             <p>
-            It brings more flexibility by leveraging Updatecli report execution.
+            It brings flexibility by leveraging Updatecli Reports.
             </p>
             <p>
             By using a declarative dependency management tool such as Updatecli, we can compare versions used within a project with the latest one published upstream.
             </p>
             <p>
-            That being said, when we say "release monitoring platform", it's not true because Updatecli sources allow us to monitor more than releases.
-            </p>
-            <p>
-            We can monitor docker image tags, maven artifacts published, the content of JSON/CSV/TOML/YAML files, etc.
-            </p>
-            <p>
-            Stay tune, more to come...
+            We can monitor file contents, Docker image tags, maven artifacts, and many more.
             </p>
           </v-col>
           <v-col
