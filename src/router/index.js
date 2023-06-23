@@ -39,6 +39,7 @@ const routes = [
     component: ProfileView
   },
   {
+    beforeEnter: createAuthGuard(),
     path: "/quickstart",
     name: "quickstart",
     component: QuickStartView
