@@ -9,7 +9,7 @@
         sm="12"
       >
         <h1>
-          Report
+          Report <v-icon icon="mdi-satellite-variant"></v-icon>
         </h1>
       </v-col>
       <v-col
@@ -33,7 +33,7 @@
         <!-- Show Sources -->
         <v-card
           variant="outlined"
-          v-if="pipeline.Pipeline.Sources"
+          v-if="isSources()"
         >
           <v-card-title><h4>Source</h4></v-card-title>
           <v-card-text>
@@ -43,7 +43,20 @@
               >
                 <v-card-title>
                   <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}</v-card-title>
-                <v-card-text>{{ value.Description }}</v-card-text>
+                <v-card-text
+                >
+                  <p
+                    v-if="value.Scm.URL"
+                    class="pt-2 pb-4 pl-1"
+                  >
+                    <v-icon icon="mdi-git"></v-icon>{{ value.Scm.URL }} - {{ value.Scm.Branch.Source }}
+                  </p>
+                  <p
+                    class="pl-10"
+                  >
+                    {{ value.Description }}
+                  </p>
+                </v-card-text>
                 <v-chip-group>
                   <v-spacer></v-spacer>
                   <v-chip>
@@ -60,13 +73,14 @@
         </v-card>
 
         <v-divider
+          v-if="isConditions()"
           :color="getStatusColor(pipeline.Pipeline.Result)"
           thickness="30"></v-divider>
 
         <!-- Show Conditions -->
         <v-card
           variant="outlined"
-          v-if="pipeline.Pipeline.Conditions"
+          v-if="isConditions()"
         >
           <v-card-title><h4>Condition</h4></v-card-title>
           <v-card-text>
@@ -76,7 +90,19 @@
               >
                 <v-card-title>
                   <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}</v-card-title>
-                <v-card-text>{{ value.Description }}</v-card-text>
+                <v-card-text>
+                  <p
+                    v-if="value.Scm.URL"
+                    class="pt-2 pb-4 pl-1"
+                  >
+                    <v-icon icon="mdi-git"></v-icon>{{ value.Scm.URL }} - {{ value.Scm.Branch.Source }}
+                  </p>
+                  <p
+                    class="pl-10"
+                  >
+                    {{ value.Description }}
+                  </p>
+                </v-card-text>
                 <v-chip-group>
                   <v-spacer></v-spacer>
                   <v-chip>
@@ -88,13 +114,14 @@
         </v-card>
 
         <v-divider
+          v-if="isTargets()"
           :color="getStatusColor(pipeline.Pipeline.Result)"
           thickness="30"></v-divider>
 
         <!-- Show Targets -->
         <v-card
           variant="outlined"
-          v-if="pipeline.Pipeline.Targets"
+          v-if="isTargets()"
         >
           <v-card-title><h4>Target</h4></v-card-title>
           <v-card-text>
@@ -104,19 +131,35 @@
               >
                 <v-card-title>
                   <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}</v-card-title>
-                <v-card-text>{{ value.Description }}</v-card-text>
+                <v-card-text>
+                  <p
+                    v-if="value.Scm.URL"
+                    class="pt-2 pb-4 pl-1"
+                  >
+                    <v-icon icon="mdi-git"></v-icon>{{ value.Scm.URL }} - {{ value.Scm.Branch.Source }}
+                  </p>
+
+                  <p
+                    class="pl-10"
+                  >
+                    {{ value.Description }}
+                  </p>
+                  </v-card-text>
+
                 <v-chip-group>
                   <v-spacer></v-spacer>
                   <v-chip
                     v-if="value.Information"
                   >
-                    <p>{{ value.Information }}</p>
+                    <p>Information: {{ value.Information }}</p>
                   </v-chip>
                   <v-chip>
                     <p>{{ key }}</p>
                   </v-chip>
-                  <v-chip>
-                    {{ value.NewInformation }}
+                  <v-chip
+                    v-if="value.NewInformation"
+                  >
+                    Upgrade to: {{ value.NewInformation }}
                   </v-chip>
                 </v-chip-group>
               </v-card>
@@ -200,6 +243,27 @@ export default {
 
     isLatestReport(){
       return this.latestReportByName.ID == this.pipeline.ID
+    },
+
+    isConditions(){
+      for (const condition in this.pipeline.Pipeline.Conditions) {
+        return true
+      }
+      return false;
+    },
+
+    isSources(){
+      for (const condition in this.pipeline.Pipeline.Sources) {
+        return true
+      }
+      return false;
+    },
+
+    isTargets(){
+      for (const condition in this.pipeline.Pipeline.Targets) {
+        return true
+      }
+      return false;
     },
 
     getPipelineReportLink: function(id){
