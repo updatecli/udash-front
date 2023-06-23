@@ -13,9 +13,7 @@
             md="8"
             sm="12"
           >
-          <h1>
-            Quickstart
-          </h1>
+            <h1>Quickstart <v-icon icon="mdi-book-open-variant"> </v-icon></h1>
           </v-col>
         </v-row>
 
@@ -27,12 +25,14 @@
             md="8"
             sm="12"
           >
-          <h2>Report View</h2>
+          <h2>Report View </h2>
 
           <v-text-area>
             <p>
-              The report "view" allows to visualise Updatecli pipeline report.
-              Updatecli must be configured to publish report after each pipeline execution.
+              The report "view" allows to visualize Updatecli pipeline report.
+            </p>
+            <p>
+              Updatecli must be configured to publish reports after each pipeline execution.
             </p>
 
             <v-divider></v-divider>
@@ -44,7 +44,7 @@
                 <h3>Login</h3>
               </v-card-title>
               <v-card-text>
-                  updatecli login --oauth-authDomain "example.com" --oauth-clientId "xxx" "{{  host }}"
+                  updatecli login --oauth-authDomain "{{ oauthauthdomain }}" --oauth-clientId "{{ oauthclientid }}" "{{ oauthaudience }}"
               </v-card-text>
             </v-card>
 
@@ -55,9 +55,11 @@
                 <h3>Publish</h3>
               </v-card-title>
               <v-card-text>
-                  updatecli diff --config updatecli/updatecli.d/manifest.yaml --experimental --reportAPI {{  host }}
+                  export UPDATECLI_API_URL="{{ oauthaudience }}"
                   <br/>
-                  updatecli apply --config updatecli/updatecli.d/manifest.yaml --experimental --reportAPI {{  host }}
+                  updatecli diff --config updatecli/updatecli.d/manifest.yaml --experimental
+                  <br/>
+                  updatecli apply --config updatecli/updatecli.d/manifest.yaml --experimental
               </v-card-text>
             </v-card>
           </v-text-area>
@@ -71,6 +73,18 @@
             >
             <div
               v-for="link in links"
+              :key="link.name"
+              >
+              <v-btn
+                class="mx-4"
+                variant="text"
+                :prepend-icon="link.icon"
+                :to="link.to">
+                {{ link.name }}
+              </v-btn>
+            </div>
+            <div
+              v-for="link in externalLinks"
               :key="link.name"
               >
               <v-btn
@@ -94,6 +108,7 @@
 import ReleaseFooter from '../components/ReleaseFooter.vue';
 import SideNavigation from '../components/SideNavigation.vue';
 import HeadNavigation from '../components/HeadNavigation.vue';
+import authConfig from "../../auth_config.json";
 
 export default {
   name: 'QuickStartView',
@@ -104,19 +119,30 @@ export default {
   },
 
   data: () => ({
+    oauthclientid: authConfig.clientId,
+    oauthauthdomain: authConfig.domain,
+    oauthaudience: authConfig.audience,
     host: location.host,
-    links:[
+    externalLinks:[
       {
         name: "Updatecli",
         to: "https://www.updatecli.io",
-        icon: "mdi-arrow-right-circle",
+        icon: "mdi-web",
       },
       {
         name: "GitHub",
         to: "https://github.com/updatecli/updatecli",
         icon: "mdi-github",
       },
+    ],
+    links:[
+      {
+        name: "Reports",
+        to: "/pipeline/reports",
+        icon: "mdi-satellite-variant",
+      },
     ]
   }),
 }
 </script>
+
