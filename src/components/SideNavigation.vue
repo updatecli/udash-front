@@ -25,17 +25,19 @@
             value="home"></v-list-item>
           <v-list-item
             prepend-icon="mdi-satellite-variant"
-            title="Quickstart"
-            to="/quickstart"
-            value="quickstart"></v-list-item>
-          <v-list-item
-            prepend-icon="mdi-satellite-variant"
             v-if="isAuthenticated"
             title="Reports"
             to="/pipeline/reports"
             value="reports"></v-list-item>
           <v-list-item
+            prepend-icon="mdi-book-open-variant"
+            v-if="isAuthenticated"
+            title="Quickstart"
+            to="/quickstart"
+            value="quickstart"></v-list-item>
+          <v-list-item
             prepend-icon="mdi-alien"
+            v-if="isAuthenticated"
             title="About"
             to="/about"
             value="about"></v-list-item>
@@ -60,3 +62,4 @@
         }),
     }
 </script>
+
