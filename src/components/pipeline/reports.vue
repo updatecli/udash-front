@@ -57,7 +57,7 @@ export default {
 
   data: () => ({
     pipelines: [],
-    itemsPerPage: 50,
+    itemsPerPage: 10,
     headers: [
       { title: "State", align: "start", key:'Result'},
       {
