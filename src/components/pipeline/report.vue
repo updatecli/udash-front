@@ -185,7 +185,7 @@
           <v-card-text>
             <v-row
             >
-              <v-col>State</v-col><v-col><v-icon icon="mdi-circle" :color="getStatusColor(pipeline.Result)"></v-icon></v-col>
+              <v-col>State</v-col><v-col><v-icon icon="mdi-circle" :color="getStatusColor(pipeline.Pipeline.Result)"></v-icon></v-col>
             </v-row>
             <v-row>
               <v-col>Created At</v-col><v-col>{{ pipeline.Created_at }}</v-col>
@@ -247,9 +247,6 @@ export default {
   methods: {
 
     isLatestReport(){
-      if (this.latestReportByID == null) {
-        return ""
-      }
       if (this.latestReportByID !== null) {
         return this.latestReportByID.ID == this.pipeline.ID
       }
