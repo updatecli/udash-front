@@ -55,7 +55,7 @@
                 <h3>Publish</h3>
               </v-card-title>
               <v-card-text>
-                  export UPDATECLI_API_URL="{{ oauthaudience }}"
+                  export UPDATECLI_REPORT_API_URL="{{ oauthaudience }}"
                   <br/>
                   updatecli diff --config updatecli/updatecli.d/manifest.yaml --experimental
                   <br/>
