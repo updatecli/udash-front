@@ -26,15 +26,10 @@
             sm="12"
           >
             <p>
-            Udash is a new type of monitoring platform.
-            </p>
-            <p>
-            It brings flexibility by leveraging Updatecli Reports.
-            </p>
-            <p>
-            By using a declarative dependency management tool such as Updatecli, we can compare versions used within a project with the latest one published upstream.
-            </p>
-            <p>
+            Udash is a new type of monitoring platform.<br/>
+            It brings flexibility by leveraging Updatecli Reports.<br/>
+            By using a declarative dependency management tool such as Updatecli, <br/>
+            we can compare versions used within a project with the latest one published upstream.<br/>
             We can monitor file contents, Docker image tags, maven artifacts, and many more.
             </p>
           </v-col>
