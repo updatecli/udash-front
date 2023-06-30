@@ -1,5 +1,7 @@
 <template>
-  <v-container>
+  <v-container
+    v-if="pipeline"
+  >
     <v-row>
       <v-col
         class="text-right"
@@ -22,6 +24,7 @@
     </v-row>
   </v-container>
   <v-container
+    v-if="pipeline"
   >
     <v-row>
       <v-col
@@ -180,8 +183,9 @@
             Metadata
           </v-card-title>
           <v-card-text>
-            <v-row>
-              <v-col>State</v-col><v-col><v-icon icon="mdi-circle" :color="getStatusColor(latestReportByName.Pipeline.Result)"></v-icon></v-col>
+            <v-row
+            >
+              <v-col>State</v-col><v-col><v-icon icon="mdi-circle" :color="getStatusColor(pipeline.Result)"></v-icon></v-col>
             </v-row>
             <v-row>
               <v-col>Created At</v-col><v-col>{{ pipeline.Created_at }}</v-col>
@@ -198,6 +202,7 @@
         <v-card
           variant="outlined"
           v-show="!isLatestReport()"
+          v-if="latestReportByID"
         >
           <v-card-title>
             Newer report detected with similar name
@@ -205,13 +210,13 @@
 
           <v-card-text>
             <p>
-              Updated at {{  latestReportByName.Updated_at }}
+              Updated at {{  latestReportByID.Updated_at }}
             </p>
-              <v-icon icon="mdi-circle" :color="getStatusColor(latestReportByName.Pipeline.Result)"></v-icon>  {{ latestReportByName.Pipeline.Name }}
+              <v-icon icon="mdi-circle" :color="getStatusColor(latestReportByID.Pipeline.Result)"></v-icon>  {{ latestReportByID.Pipeline.Name }}
               <v-btn
                 icon="mdi-arrow-right-circle"
                 variant="flat"
-                :to=getPipelineReportLink(latestReportByName.ID)>
+                :to=getPipelineReportLink(latestReportByID.ID)>
               </v-btn>
           <v-divider></v-divider>
           </v-card-text>
@@ -230,7 +235,7 @@ export default {
     pipeline: {
       "Pipeline": {}
     },
-    latestReportByName: {
+    latestReportByID: {
       "Pipeline": {}
     },
   }),
@@ -242,7 +247,13 @@ export default {
   methods: {
 
     isLatestReport(){
-      return this.latestReportByName.ID == this.pipeline.ID
+      if (this.latestReportByID == null) {
+        return ""
+      }
+      if (this.latestReportByID !== null) {
+        return this.latestReportByID.ID == this.pipeline.ID
+      }
+      return ""
     },
 
     isConditions(){
@@ -310,8 +321,11 @@ export default {
       const data = await response.json();
 
       this.pipeline = data.data;
-      this.latestReportByName = data.latestReportByName
-      this.isLatestReport()
+
+      if (this.pipeline !== null) {
+        this.latestReportByID = data.latestReportByID
+        this.isLatestReport()
+      }
     },
   },
 
