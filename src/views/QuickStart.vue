@@ -108,7 +108,6 @@
 import ReleaseFooter from '../components/ReleaseFooter.vue';
 import SideNavigation from '../components/SideNavigation.vue';
 import HeadNavigation from '../components/HeadNavigation.vue';
-import authConfig from "../../auth_config.json";
 
 export default {
   name: 'QuickStartView',
@@ -119,9 +118,9 @@ export default {
   },
 
   data: () => ({
-    oauthclientid: authConfig.clientId,
-    oauthauthdomain: authConfig.domain,
-    oauthaudience: authConfig.audience,
+    oauthclientid: config.OAUTH_CLIENTID ,
+    oauthauthdomain:  config.OAUTH_DOMAIN,
+    oauthaudience: config.OAUTH_AUDIENCE,
     host: location.host,
     externalLinks:[
       {

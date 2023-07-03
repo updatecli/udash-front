@@ -4,7 +4,6 @@ import vuetify from './plugins/vuetify'
 import { loadFonts } from './plugins/webfontloader'
 import router from './router'
 import { createAuth0 } from "@auth0/auth0-vue";
-import authConfig from "../auth_config.json";
 
 loadFonts()
 
@@ -12,11 +11,11 @@ createApp(App).use(router)
   .use(vuetify)
   .use(
     createAuth0({
-      domain: authConfig.domain,
-      clientId: authConfig.clientId,
+      domain: config.OAUTH_DOMAIN,
+      clientId: config.OAUTH_CLIENTID,
       authorizationParams: {
         redirect_uri: window.location.origin,
-        audience: authConfig.audience,
+        audience: config.OAUTH_AUDIENCE,
       }
     })
   )

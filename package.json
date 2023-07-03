@@ -35,6 +35,9 @@
     "env": {
       "node": true
     },
+    "globals": {
+      "config": "readonly"
+    },
     "extends": [
       "plugin:vue/vue3-essential",
       "eslint:recommended"
