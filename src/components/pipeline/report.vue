@@ -205,7 +205,7 @@
           v-if="latestReportByID"
         >
           <v-card-title>
-            Newer report detected with similar name
+            Newer report detected
           </v-card-title>
 
           <v-card-text>
