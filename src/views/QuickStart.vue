@@ -44,7 +44,7 @@
                 <h3>Login</h3>
               </v-card-title>
               <v-card-text>
-                  updatecli login --oauth-authDomain "{{ oauthauthdomain }}" --oauth-clientId "{{ oauthclientid }}" "{{ oauthaudience }}"
+                  updatecli login "{{ host }}" --experimental
               </v-card-text>
             </v-card>
 
@@ -121,7 +121,7 @@ export default {
     oauthclientid: config.OAUTH_CLIENTID ,
     oauthauthdomain:  config.OAUTH_DOMAIN,
     oauthaudience: config.OAUTH_AUDIENCE,
-    host: location.host,
+    host: window.location.protocol + "//" + window.location.host,
     externalLinks:[
       {
         name: "Updatecli",
