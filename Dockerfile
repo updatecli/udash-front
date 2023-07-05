@@ -11,6 +11,7 @@ FROM nginx:stable-alpine
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 COPY docker/config.js /usr/share/nginx/html/config.js
+COPY docker/config.json /usr/share/nginx/html/config.json
 
 # Dynamic labels are defined from the goreleaser configuration ".goreleaser.yaml"
 LABEL org.opencontainers.image.authors="Olivier Vernin<me@olblak.com>"
