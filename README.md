@@ -20,10 +20,14 @@ npm run build
 npm run lint
 ```
 
-## Deploy to production
+### Deploy to production
 
-For being able to have runtime configuration, we rely on the file `/usr/share/nginx/html/config.js` with the following content:
+Udash front relies on
+This application relies on: the file `/usr/share/nginx/html/config.js` and `/usr/share/nginx/html/config.json` to provide runtime configuration.
 
+**config.js**
+
+.public/config.js
 ```
 const config = (() => {
   return {
@@ -34,8 +38,22 @@ const config = (() => {
 })();
 ```
 
-For the local development environment, this file must be located in `public/config.js`.
-It shouldn't be commit to the git repository
+A similar config file can be generate to simplify the updatecli login parameter
+
+**config.json**
+
+.public/config.json
+```
+{
+   "OAUTH_DOMAIN": "oauth domain",
+   "OAUTH_CLIENTID": "xxx",
+   "OAUTH_AUDIENCE": "http://localhost:8080/api"
+}
+})();
+```
+
+For the local development environment, those two files must be located in the directory `public`.
+A gitignore rule ensure those two files are not committed to the git repository.
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
