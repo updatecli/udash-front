@@ -22,8 +22,7 @@ npm run lint
 
 ### Deploy to production
 
-Udash front relies on
-This application relies on: the file `/usr/share/nginx/html/config.js` and `/usr/share/nginx/html/config.json` to provide runtime configuration.
+This application relies files `/usr/share/nginx/html/config.js` and `/usr/share/nginx/html/config.json` to provide runtime configuration.
 
 **config.js**
 
