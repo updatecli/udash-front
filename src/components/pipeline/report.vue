@@ -164,6 +164,11 @@
                   >
                     Upgrade to: {{ value.NewInformation }}
                   </v-chip>
+                  <v-chip
+                    v-if="value.DryRun == true"
+                  >
+                    DryRun
+                  </v-chip>
                 </v-chip-group>
               </v-card>
           </v-card-text>
