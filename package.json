@@ -11,7 +11,7 @@
     "@auth0/auth0-vue": "^2.2.0",
     "@mdi/font": "^7.2.96",
     "axios": "^1.4.0",
-    "core-js": "^3.31.0",
+    "core-js": "^3.31.1",
     "roboto-fontface": "^0.10.0",
     "vue": "^3.3.4",
     "vue-router": "^4.2.2",
