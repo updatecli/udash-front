@@ -73,7 +73,7 @@ export default {
   data: () => ({
     isLoading: true,
     pipelines: [],
-    itemsPerPage: 10,
+    itemsPerPage: 25,
     headers: [
       { title: "State", align: "start", key:'Result'},
       {
