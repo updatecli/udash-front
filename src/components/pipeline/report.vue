@@ -2,6 +2,21 @@
   <v-container
     v-if="pipeline"
   >
+      <v-overlay
+      :model-value="isLoading"
+      class="align-center justify-center"
+      disabled="True"
+      eager="True"
+      no-click-animation="True"
+      persistent="True"
+    >
+      <v-progress-circular
+        color="primary"
+        indeterminate
+        size="64"
+      ></v-progress-circular>
+    </v-overlay>
+
     <v-row>
       <v-col
         class="text-right"
@@ -126,14 +141,19 @@
           variant="outlined"
           v-if="isTargets()"
         >
-          <v-card-title><h4>Target</h4></v-card-title>
+          <v-card-title>
+            <h4>Target</h4>
+          </v-card-title>
           <v-card-text>
               <v-card
                 variant="flat"
                 v-for="(value, key) in pipeline.Pipeline.Targets" :key="key"
               >
                 <v-card-title>
-                  <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}</v-card-title>
+                  <v-row>
+                    <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}
+                  </v-row>
+                </v-card-title>
                 <v-card-text>
                   <p
                     v-if="value.Scm.URL"
@@ -237,6 +257,7 @@ export default {
   name: 'PipelineReportView',
 
   data: () => ({
+    isLoading: true,
     pipeline: {
       "Pipeline": {}
     },
@@ -323,12 +344,21 @@ export default {
       const data = await response.json();
 
       this.pipeline = data.data;
+      this.isLoading = false;
 
       if (this.pipeline !== null) {
         this.latestReportByID = data.latestReportByID
         this.isLatestReport()
       }
     },
+  },
+
+  watch: {
+      isLoading (val) {
+        val && setTimeout(() => {
+          this.isLoading = false
+        }, 3000)
+      },
   },
 
   async created() {

@@ -3,6 +3,21 @@
       class="py-8 px-6"
       fluid
   >
+    <v-overlay
+      :model-value="isLoading"
+      class="align-center justify-center"
+      disabled="True"
+      eager="True"
+      no-click-animation="True"
+      persistent="True"
+    >
+      <v-progress-circular
+        color="primary"
+        indeterminate
+        size="64"
+      ></v-progress-circular>
+    </v-overlay>
+
     <!-- Show Project Description -->
     <v-container>
       <!--
@@ -56,6 +71,7 @@ export default {
   },
 
   data: () => ({
+    isLoading: true,
     pipelines: [],
     itemsPerPage: 10,
     headers: [
@@ -85,6 +101,7 @@ export default {
         }
       });
       const data = await response.json();
+      this.isLoading = false
       this.pipelines = data.data
     },
     getPipelineLink: function(id){
@@ -117,6 +134,14 @@ export default {
           return "mdi-robot-off"
       }
     },
+  },
+
+  watch: {
+      isLoading (val) {
+        val && setTimeout(() => {
+          this.isLoading = false
+        }, 3000)
+      },
   },
 
   async created() {
