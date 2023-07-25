@@ -12,7 +12,7 @@
       persistent="True"
     >
       <v-progress-circular
-        color="primary"
+        color="black"
         indeterminate
         size="64"
       ></v-progress-circular>
