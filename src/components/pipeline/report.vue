@@ -57,35 +57,12 @@
           <v-card-text>
               <v-card
                 variant="flat"
-                v-for="(value, key) in pipeline.Pipeline.Sources" :key="key"
+                v-for="(data, key) in pipeline.Pipeline.Sources" :key="key"
               >
-                <v-card-title>
-                  <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}</v-card-title>
-                <v-card-text
-                >
-                  <p
-                    v-if="value.Scm.URL"
-                    class="pt-2 pb-4 pl-1"
-                  >
-                    <v-icon icon="mdi-git"></v-icon>{{ value.Scm.URL }} - {{ value.Scm.Branch.Source }}
-                  </p>
-                  <p
-                    class="pl-10"
-                  >
-                    {{ value.Description }}
-                  </p>
-                </v-card-text>
-                <v-chip-group>
-                  <v-spacer></v-spacer>
-                  <v-chip>
-                    <p>{{ key }}</p>
-                  </v-chip>
-                  <v-chip
-                    v-if="value.Information"
-                  >
-                    <p>{{ value.Information }}</p>
-                  </v-chip>
-                </v-chip-group>
+                <SourceComponent
+                  :id="key"
+                  :data="data"
+                ></SourceComponent>
               </v-card>
           </v-card-text>
         </v-card>
@@ -104,29 +81,12 @@
           <v-card-text>
               <v-card
                 variant="flat"
-                v-for="(value, key) in pipeline.Pipeline.Conditions" :key="key"
+                v-for="(data, key) in pipeline.Pipeline.Conditions" :key="key"
               >
-                <v-card-title>
-                  <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}</v-card-title>
-                <v-card-text>
-                  <p
-                    v-if="value.Scm.URL"
-                    class="pt-2 pb-4 pl-1"
-                  >
-                    <v-icon icon="mdi-git"></v-icon>{{ value.Scm.URL }} - {{ value.Scm.Branch.Source }}
-                  </p>
-                  <p
-                    class="pl-10"
-                  >
-                    {{ value.Description }}
-                  </p>
-                </v-card-text>
-                <v-chip-group>
-                  <v-spacer></v-spacer>
-                  <v-chip>
-                    <p>{{ key }}</p>
-                  </v-chip>
-                </v-chip-group>
+                <ConditionComponent
+                  :id="key"
+                  :data="data"
+                ></ConditionComponent>
               </v-card>
           </v-card-text>
         </v-card>
@@ -146,50 +106,13 @@
           </v-card-title>
           <v-card-text>
               <v-card
+                v-for="(data, key) in pipeline.Pipeline.Targets" :key="key"
                 variant="flat"
-                v-for="(value, key) in pipeline.Pipeline.Targets" :key="key"
               >
-                <v-card-title>
-                  <v-row>
-                    <v-icon icon="mdi-circle" :color="getStatusColor(value.Result)"></v-icon>  {{ value.Name }}
-                  </v-row>
-                </v-card-title>
-                <v-card-text>
-                  <p
-                    v-if="value.Scm.URL"
-                    class="pt-2 pb-4 pl-1"
-                  >
-                    <v-icon icon="mdi-git"></v-icon>{{ value.Scm.URL }} - {{ value.Scm.Branch.Source }}
-                  </p>
-
-                  <p
-                    class="pl-10"
-                  >
-                    {{ value.Description }}
-                  </p>
-                  </v-card-text>
-
-                <v-chip-group>
-                  <v-spacer></v-spacer>
-                  <v-chip
-                    v-if="value.Information"
-                  >
-                    <p>Information: {{ value.Information }}</p>
-                  </v-chip>
-                  <v-chip>
-                    <p>{{ key }}</p>
-                  </v-chip>
-                  <v-chip
-                    v-if="value.NewInformation"
-                  >
-                    Upgrade to: {{ value.NewInformation }}
-                  </v-chip>
-                  <v-chip
-                    v-if="value.DryRun == true"
-                  >
-                    DryRun
-                  </v-chip>
-                </v-chip-group>
+                <TargetComponent
+                  :id="key"
+                  :data="data"
+                ></TargetComponent>
               </v-card>
           </v-card-text>
         </v-card>
@@ -253,8 +176,18 @@
 
 <script>
 
+import SourceComponent from './_source.vue';
+import ConditionComponent from './_condition.vue';
+import TargetComponent from './_target.vue';
+
 export default {
   name: 'PipelineReportView',
+  
+  components: {
+    SourceComponent,
+    ConditionComponent,
+    TargetComponent,
+  },
 
   data: () => ({
     isLoading: true,
