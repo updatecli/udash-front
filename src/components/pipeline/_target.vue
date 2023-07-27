@@ -75,6 +75,15 @@
       </v-card-actions>
     </v-card>
   </v-container>
+  <v-expansion-panels>
+      <v-expansion-panel
+          v-if="data.ConsoleOutput"
+          title="Console"
+          :text="data.ConsoleOutput"
+          class="text-body-1"
+          tag="pre"
+      ></v-expansion-panel>
+  </v-expansion-panels>
 </template>
 
 <script>
