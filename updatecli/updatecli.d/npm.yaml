@@ -1,4 +1,4 @@
-name: "Bump Patch version for Golang module"
+name: "Bump NPM package version"
 
 scms:
   default:
@@ -21,8 +21,6 @@ actions:
 autodiscovery:
   scmid: default
   actionid:  default
+  groupby: all
   crawlers:
     npm:
-      versionfilter:
-        kind: semver
-        pattern: majoronly
