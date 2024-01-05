@@ -10,7 +10,7 @@
   "dependencies": {
     "@auth0/auth0-vue": "^2.3.3",
     "@mdi/font": "^7.4.47",
-    "axios": "^1.6.4",
+    "axios": "^1.6.5",
     "core-js": "^3.35.0",
     "roboto-fontface": "^0.10.0",
     "vue": "^3.4.5",
