@@ -14,7 +14,7 @@
     "core-js": "^3.33.1",
     "roboto-fontface": "^0.10.0",
     "vue": "^3.4.21",
-    "vue-router": "^4.2.5",
+    "vue-router": "^4.3.0",
     "vuetify": "^3.3.22",
     "webfontloader": "^1.6.28"
   },
