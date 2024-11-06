@@ -6,10 +6,10 @@
     <v-overlay
       :model-value="isLoading"
       class="align-center justify-center"
-      disabled="True"
-      eager="True"
-      no-click-animation="True"
-      persistent="True"
+      :disabled=true
+      :eager=true
+      :no-click-animation=true
+      :persistent=true
     >
       <v-progress-circular
         color="black"
@@ -31,12 +31,13 @@
             sm="12"
           >
 
-          <v-data-table
+          <!-- <SCMSummary :scmid="scmid"/>-->
+
+          <v-data-table-virtual
             v-model:items-per-page="itemsPerPage"
-            :headers="headers"
+            :headers="pipelinesHeaders"
             :items="pipelines"
             item-value="name"
-            density="compact"
             fixed-header
             max-height="600px"
           >
@@ -45,15 +46,15 @@
                 class="mx-4"
                 variant="text"
                 prepend-icon="mdi-arrow-right-circle"
-                :to=getPipelineLink(item.raw.ID)></v-btn>
+                :to=getPipelineLink(item.ID)></v-btn>
             </template>
             <template v-slot:item.Result="{ item }">
               <v-icon
-                :icon=getStatusIcon(item.raw.Result)
-                :color=getStatusColor(item.raw.Result)
+                :icon=getStatusIcon(item.Result)
+                :color=getStatusColor(item.Result)
                 ></v-icon>
             </template>
-          </v-data-table>
+          </v-data-table-virtual>
         </v-col>
       </v-row>
     </v-container>
@@ -61,20 +62,21 @@
 </template>
 
 <script>
-import { VDataTable } from 'vuetify/labs/VDataTable'
+import router from '../../router'
+//import SCMSummary from '../scm/_summary.vue'
 
 export default {
   name: 'PipelinesTable',
+  //components: {
+  //  SCMSummary,
+  //},
 
-  components: {
-    VDataTable,
+  props: {
+    scmid: {},
   },
 
   data: () => ({
-    isLoading: true,
-    pipelines: [],
-    itemsPerPage: 25,
-    headers: [
+    pipelinesHeaders: [
       { title: "State", align: "start", key:'Result'},
       {
         title: "Name",
@@ -86,6 +88,9 @@ export default {
       { title: "Updated at", key:'UpdatedAt'},
       { key: 'ID', sortable: false}
     ],
+    pipelines: [],
+    isLoading: true,
+    itemsPerPage: 25,
   }),
 
   beforeUnmount() {
@@ -95,7 +100,13 @@ export default {
   methods: {
     async getReportsData() {
       const token = await this.$auth0.getAccessTokenSilently();
-      const response = await fetch('/api/pipeline/reports', {
+
+      let queryURL = `/api/pipeline/reports`
+
+      if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
+        queryURL = queryURL + `?scmid=${this.scmid}`
+      }
+      const response = await fetch(queryURL, {
           headers: {
           Authorization: `Bearer ${token}`
         }
@@ -142,10 +153,23 @@ export default {
           this.isLoading = false
         }, 3000)
       },
+
+      scmid () {
+        this.getReportsData()
+      },
   },
 
   async created() {
     try {
+      //// Set the scmid from the query parameter
+      //router.push({ query: { scmid: "xxx" } })
+      if (router.currentRoute.value.query.scmid != undefined) {
+        let scmid = router.currentRoute.value.query.scmid
+        if (scmid != undefined) {
+          this.$emit('update-scmid', scmid)
+        }
+      }
+
       this.getReportsData()
     } catch (error) {
       console.log(error);

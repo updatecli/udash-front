@@ -19,7 +19,8 @@
           </v-col>
         </v-row>
       </v-container>
-      <PipelineReports/>
+      <PipelineSCMFilter :scmid="scmid" @update-scmid="updateSCMID"/>
+      <PipelineReports :scmid="scmid" @update-scmid="updateSCMID"/>
     </v-main>
 
     <ReleaseFooter/>
@@ -33,6 +34,8 @@ import SideNavigation from '../../components/SideNavigation.vue';
 import HeadNavigation from '../../components/HeadNavigation.vue';
 import PipelineReports from '../../components/pipeline/reports.vue';
 
+import PipelineSCMSFilter from '../../components/scm/_filter.vue';
+
 export default {
   name: 'PipelineReportsView',
   components: {
@@ -40,6 +43,7 @@ export default {
     SideNavigation,
     HeadNavigation,
     PipelineReports,
+    PipelineSCMFilter: PipelineSCMSFilter,
   },
   data: () => ({
     links:[
@@ -48,7 +52,14 @@ export default {
       to: "https://www.updatecli.io",
       icon: "mdi-arrow-right-circle",
       },
-  ]
-  })
+  ],
+    scmid: "",
+  }),
+
+  methods: {
+    updateSCMID(scmid) {
+      this.scmid = scmid;
+    },
+  }
 }
 </script>
