@@ -13,9 +13,9 @@
     "axios": "^1.6.0",
     "core-js": "^3.33.1",
     "roboto-fontface": "^0.10.0",
-    "vue": "^3.3.5",
-    "vue-router": "^4.2.5",
-    "vuetify": "^3.3.22",
+    "vue": "^3.4.31",
+    "vue-router": "^4.4.0",
+    "vuetify": "^3.6.11",
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
