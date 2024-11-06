@@ -15,7 +15,6 @@
         </v-toolbar-items>
     </v-toolbar>
 
-
     <v-container fluid>
         <v-card
             variant="flat"
@@ -102,6 +101,8 @@
                     return "red"
                   case "⚠":
                     return "orange"
+                  case "-":
+                    return "grey"
                   default:
                     return "yellow"
                 }

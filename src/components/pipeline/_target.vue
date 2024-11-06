@@ -107,6 +107,8 @@
                     return "red"
                   case "⚠":
                     return "orange"
+                  case "-":
+                    return "grey"
                   default:
                     return "yellow"
                 }
@@ -114,3 +116,4 @@
         }
     }
 </script>
+
