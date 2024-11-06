@@ -117,9 +117,6 @@ export default {
   },
 
   data: () => ({
-    oauthclientid: config.OAUTH_CLIENTID ,
-    oauthauthdomain:  config.OAUTH_DOMAIN,
-    oauthaudience: config.OAUTH_AUDIENCE,
     host: window.location.protocol + "//" + window.location.host,
     externalLinks:[
       {
