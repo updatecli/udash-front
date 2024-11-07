@@ -3,7 +3,7 @@
 
       <v-spacer></v-spacer>
       <v-btn
-        v-if="!isAuthenticated && !isLoading"
+        v-if="!isAuthenticated && !isLoading && isAuthEnabled"
         density="compact"
         variant="flat"
         @click.prevent="login"
@@ -13,7 +13,7 @@
 
       <v-menu
         class="text-center"
-        v-if="isAuthenticated"
+        v-if="isAuthenticated && isAuthEnabled"
       >
         <template v-slot:activator="{ props }">
           <v-btn density="compact" icon="mdi-account" v-bind="props"></v-btn>
@@ -50,23 +50,39 @@
     export default {
       name: 'HeadNavigation',
       setup() {
-        const auth0 = useAuth0();
 
-        return {
-          isAuthenticated: auth0.isAuthenticated,
-          isLoading: auth0.isLoading,
-          user: auth0.user,
-          login() {
-            auth0.loginWithRedirect();
-          },
-          logout() {
-            auth0.logout({
-              logoutParams: {
-                returnTo: window.location.origin
-              }
-            });
+        const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+
+        if (isAuthEnabled) {
+          const auth0 = useAuth0();
+
+          return {
+            isAuthEnabled: isAuthEnabled,
+            isAuthenticated: auth0.isAuthenticated,
+            isLoading: auth0.isLoading,
+            user: auth0.user,
+            login() {
+              auth0.loginWithRedirect();
+            },
+            logout() {
+              auth0.logout({
+                logoutParams: {
+                  returnTo: window.location.origin
+                }
+              });
+            }
           }
         }
+
+        return {
+          isAuthEnabled: isAuthEnabled,
+          isAuthenticated: true,
+          isLoading: false,
+          user: {
+            picture: 'https://cdn.vuetifyjs.com/images'
+          },
+        }
+
       },
       data: () => ({
       }),

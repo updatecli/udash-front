@@ -53,15 +53,25 @@ export default {
 
   methods: {
     async getSCMSData() {
-      const token = await this.$auth0.getAccessTokenSilently();
-      const response = await fetch('/api/pipeline/scms', {
-          headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      this.isLoading = false
-      this.scms = data.scms
+      const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+
+      if (auth_enabled) {
+        const token = await this.$auth0.getAccessTokenSilently();
+        const response = await fetch('/api/pipeline/scms', {
+            headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        this.isLoading = false
+        this.scms = data.scms
+      } else {
+
+        const response = await fetch('/api/pipeline/scms');
+        const data = await response.json();
+        this.isLoading = false
+        this.scms = data.scms
+      }
       this.repositories = this.scms.map(scm => scm.URL)
 
       if (this.repositories.length > 0) {

@@ -51,11 +51,22 @@
     export default {
         name: 'SideNavigation',
         setup() {
-          const auth0 = useAuth0();
-          return {
-            isAuthenticated: auth0.isAuthenticated,
-            isLoading: auth0.isLoading,
+
+          const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+
+          if (isAuthEnabled) {
+            const auth0 = useAuth0();
+            return {
+              isAuthenticated: auth0.isAuthenticated,
+              isLoading: auth0.isLoading,
+            }
           }
+
+          return {
+            isAuthenticated: true,
+            isLoading: false,
+          }
+
         },
         data: () => ({
             drawer: true,

@@ -270,20 +270,34 @@ export default {
     },
 
     async getPipelineReportData() {
-      const token = await this.$auth0.getAccessTokenSilently();
-      const response = await fetch('/api/pipeline/reports/' + this.$route.params.id, {
-          headers: {
-          Authorization: `Bearer ${token}`
+      const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+      if (isAuthEnabled) {
+        const token = await this.$auth0.getAccessTokenSilently();
+        const response = await fetch('/api/pipeline/reports/' + this.$route.params.id, {
+            headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+
+        this.pipeline = data.data;
+        this.isLoading = false;
+
+        if (this.pipeline !== null) {
+          this.latestReportByID = data.latestReportByID
+          this.isLatestReport()
         }
-      });
-      const data = await response.json();
+      } else {
+        const response = await fetch('/api/pipeline/reports/' + this.$route.params.id);
+        const data = await response.json();
 
-      this.pipeline = data.data;
-      this.isLoading = false;
+        this.pipeline = data.data;
+        this.isLoading = false;
 
-      if (this.pipeline !== null) {
-        this.latestReportByID = data.latestReportByID
-        this.isLatestReport()
+        if (this.pipeline !== null) {
+          this.latestReportByID = data.latestReportByID
+          this.isLatestReport()
+        }
       }
     },
   },

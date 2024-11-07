@@ -99,21 +99,31 @@ export default {
 
   methods: {
     async getReportsData() {
-      const token = await this.$auth0.getAccessTokenSilently();
 
       let queryURL = `/api/pipeline/reports`
 
       if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
         queryURL = queryURL + `?scmid=${this.scmid}`
       }
-      const response = await fetch(queryURL, {
-          headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      this.isLoading = false
-      this.pipelines = data.data
+
+      const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+
+      if (isAuthEnabled){
+        const token = await this.$auth0.getAccessTokenSilently();
+        const response = await fetch(queryURL, {
+            headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        this.isLoading = false
+        this.pipelines = data.data
+      } else {
+        const response = await fetch(queryURL);
+        const data = await response.json();
+        this.isLoading = false
+        this.pipelines = data.data
+      }
     },
     getPipelineLink: function(id){
       return `/pipeline/reports/${id}`
@@ -129,6 +139,8 @@ export default {
           return "red"
         case "⚠":
           return "orange"
+        case "-":
+          return "grey"
         default:
           return "blue"
       }
