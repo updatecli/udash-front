@@ -1,71 +1,76 @@
 <template>
     <v-container
-        v-for="(scmData, url) in data"
-        :key="url"
         fluid
     >
-        <v-toolbar
-            density="compact"
-            class="text-white"
+        <v-row
+            v-for="(scmData, url) in data"
+            :key="url"
         >
-            <v-toolbar-title
-                class="flex text-center"
-            >
-                <v-icon>{{ getGitIcon(url) }}</v-icon>{{  sanitizeURL(url) }}
-            </v-toolbar-title>
-
-        </v-toolbar>
-
-        <v-card
-            variant="flat"
-        >
-            <v-card-text>
-                <v-timeline
+            <v-col>
+                <v-toolbar
                     density="compact"
-                    align="start"
-                    justify="center"
-                    direction="vertical"
-                    line-thickness="2"
-                    line-color="grey-darken-3"
+                    class="text-white"
                 >
-                    <v-timeline-item
-                        v-for="(branchData, branch) in scmData"
-                        :key="branch"
-                        dot-color="grey-darken-3"
-                        icon-color="white"
-                        fill-dot
-                        icon="mdi-source-branch"
+                    <v-toolbar-title
+                        class="flex text-center"
                     >
-                        <v-card
-                            :href="`/pipeline/reports?scmid=${branchData.id}`"
-                        >
-                            <v-card-title
-                                class="bg-grey"
-                            >
-                                {{  branch }}
-                            </v-card-title>
-                        </v-card>
-                        <v-card-text
-                            variant="outlined"
-                            class="text-center"
-                        >
-                            {{  branchData.total_result }} reports
-                            <PolarArea :data="getPolarAreaData(url, branch)" :options="polarAreaOptions" />
+                        <v-icon>{{ getGitIcon(url) }}</v-icon>{{  sanitizeURL(url) }}
+                    </v-toolbar-title>
 
-                        </v-card-text>
-                        <!--
-                        <v-timeline-item-icon
-                            color="primary"
+                </v-toolbar>
+
+                <v-card
+                    variant="flat"
+                >
+                    <v-card-text>
+                        <v-timeline
+                            density="compact"
+                            align="start"
+                            justify="center"
+                            direction="vertical"
+                            line-thickness="2"
+                            line-color="grey-darken-3"
                         >
-                            <v-icon>mdi-source-branch</v-icon>
-                            {{  branch }}
-                        </v-timeline-item-icon>
-                    -->
-                    </v-timeline-item>
-                </v-timeline>
-            </v-card-text>
-            <v-divider></v-divider>
-        </v-card>
+                            <v-timeline-item
+                                v-for="(branchData, branch) in scmData"
+                                :key="branch"
+                                dot-color="grey-darken-3"
+                                icon-color="white"
+                                fill-dot
+                                icon="mdi-source-branch"
+                            >
+                                <v-card
+                                    :href="`/pipeline/reports?scmid=${branchData.id}`"
+                                >
+                                    <v-card-title
+                                        class="bg-grey"
+                                    >
+                                        {{  branch }}
+                                    </v-card-title>
+                                </v-card>
+                                <v-card-text
+                                    variant="outlined"
+                                    class="text-center"
+                                >
+                                    {{  branchData.total_result }} reports
+                                    <PolarArea :data="getPolarAreaData(url, branch)" :options="polarAreaOptions" />
+
+                                </v-card-text>
+                                <!--
+                                <v-timeline-item-icon
+                                    color="primary"
+                                >
+                                    <v-icon>mdi-source-branch</v-icon>
+                                    {{  branch }}
+                                </v-timeline-item-icon>
+                            -->
+                            </v-timeline-item>
+                        </v-timeline>
+                    </v-card-text>
+                    <v-divider></v-divider>
+                </v-card>
+            </v-col>
+        </v-row>
     </v-container>
 </template>
 
