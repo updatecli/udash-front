@@ -70,7 +70,7 @@
             getStatusColor: function(input){
                 switch (input) {
                   case "✔":
-                    return "success"
+                    return "green"
                   case "✗":
                     return "red"
                   case "⚠":
