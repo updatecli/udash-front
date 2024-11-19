@@ -134,7 +134,7 @@ export default {
     getStatusColor: function(status){
       switch (status) {
         case "✔":
-          return "success"
+          return "green"
         case "✗":
           return "red"
         case "⚠":
@@ -153,8 +153,10 @@ export default {
           return "mdi-robot-angry"
         case "⚠":
           return "mdi-robot-confused"
-        default:
+        case "-":
           return "mdi-robot-off"
+        default:
+          return "mdi-robot-dead"
       }
     },
   },
@@ -173,16 +175,9 @@ export default {
 
   async created() {
     try {
-      //// Set the scmid from the query parameter
-      //router.push({ query: { scmid: "xxx" } })
       if (router.currentRoute.value.query.scmid != undefined) {
-        let scmid = router.currentRoute.value.query.scmid
-        if (scmid != undefined) {
-          this.$emit('update-scmid', scmid)
-        }
+          this.$emit('update-scmid', router.currentRoute.value.query.scmid)
       }
-
-      this.getReportsData()
     } catch (error) {
       console.log(error);
     }
