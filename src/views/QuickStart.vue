@@ -44,7 +44,7 @@
                 <h3>Login</h3>
               </v-card-title>
               <v-card-text>
-                  updatecli login "{{ host }}" --experimental
+                  updatecli udash login "{{ host }}" --experimental
               </v-card-text>
             </v-card>
 
@@ -56,9 +56,7 @@
               </v-card-title>
               <v-card-text>
                   <br/>
-                  updatecli diff --config updatecli/updatecli.d/manifest.yaml --experimental
-                  <br/>
-                  updatecli apply --config updatecli/updatecli.d/manifest.yaml --experimental
+                  updatecli diff --experimental ghcr.io/updatecli/policies/policies/autodiscovery/all:latest
               </v-card-text>
             </v-card>
           </v-text-area>
