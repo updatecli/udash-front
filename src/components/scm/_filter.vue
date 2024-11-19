@@ -3,12 +3,16 @@
       class="py-8 px-6"
       fluid
   >
-    <v-form v-model="filterForm" @submit.prevent="applyFilter">
+    <v-form
+      v-model="filterForm"
+      @submit.prevent="applyFilter"
+    >
       <!-- Repository Dropdown -->
        <v-select
         label="Git Repository"
         :items="repositories"
         :rules="[v => !!v || 'Git repository is required']"
+        prepend-inner-icon="mdi-git"
         v-model="repository"
         ></v-select>
 
@@ -16,6 +20,7 @@
         label="Git Branch"
         :items="branches"
         :rules="[v => !!v || 'Git branch is required']"
+        prepend-inner-icon="mdi-source-branch"
         v-model="branch"
         ></v-select>
       
@@ -27,6 +32,8 @@
 </template>
 
 <script>
+import router from '../../router'
+
 export default {
   name: 'PipelineSCMS',
 
@@ -55,9 +62,16 @@ export default {
     async getSCMSData() {
       const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
+      const restrictedSCM = router.currentRoute.value.query.scmid
+
       if (auth_enabled) {
         const token = await this.$auth0.getAccessTokenSilently();
-        const response = await fetch('/api/pipeline/scms', {
+        let query = `/api/pipeline/scms`;
+        if (restrictedSCM != undefined) {
+          query = query + `?scmid=${restrictedSCM}`
+        }
+
+        const response = await fetch(query, {
             headers: {
             Authorization: `Bearer ${token}`
           }
@@ -67,7 +81,12 @@ export default {
         this.scms = data.scms
       } else {
 
-        const response = await fetch('/api/pipeline/scms');
+        let query = `/api/pipeline/scms`;
+        if (restrictedSCM != undefined) {
+          query = query + `?scmid=${restrictedSCM}`
+        }
+
+        const response = await fetch(query);
         const data = await response.json();
         this.isLoading = false
         this.scms = data.scms
