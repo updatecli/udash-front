@@ -12,6 +12,8 @@
         label="Git Repository"
         :items="repositories"
         :rules="[v => !!v || 'Git repository is required']"
+        item-value="id"
+        item-title="text"
         prepend-inner-icon="mdi-git"
         v-model="repository"
         ></v-select>
@@ -94,20 +96,39 @@ export default {
 
       let urlArray = []
       for (var i = 0 ; i < this.scms.length; i++) {
-        console.log(this.scms[i])
         if (urlArray.includes(this.scms[i].URL)) {
           continue
         }
         urlArray.push(this.scms[i].URL)
-        this.repositories.push(this.scms[i].URL)
+
+        this.repositories.push({
+          id: this.scms[i].URL,
+          text: this.prettifyURL(this.scms[i].URL)
+        })
+
       }
 
       //this.repositories = this.scms.map(scm => scm.URL)
 
+
       if (this.repositories.length > 0) {
-        this.repository = this.repositories[0]
+        this.repository = this.repositories[0].id
       }
     },
+
+    prettifyURL: function(url) {
+       if (url === undefined) {
+           return "";
+       }
+
+       url = url.replace(/https?:\/\//, '');
+       url = url.replace(/http?:\/\//, '');
+       url = url.replace(/\/$/, '');
+       url = url.replace(/\.git$/, '');
+
+       return url;
+   },
+
 
     getScmID(url, branch) {
       return this.scms.find(scm => scm.URL === url && scm.Branch === branch).ID
