@@ -91,7 +91,18 @@ export default {
         this.isLoading = false
         this.scms = data.scms
       }
-      this.repositories = this.scms.map(scm => scm.URL)
+
+      let urlArray = []
+      for (var i = 0 ; i < this.scms.length; i++) {
+        console.log(this.scms[i])
+        if (urlArray.includes(this.scms[i].URL)) {
+          continue
+        }
+        urlArray.push(this.scms[i].URL)
+        this.repositories.push(this.scms[i].URL)
+      }
+
+      //this.repositories = this.scms.map(scm => scm.URL)
 
       if (this.repositories.length > 0) {
         this.repository = this.repositories[0]
