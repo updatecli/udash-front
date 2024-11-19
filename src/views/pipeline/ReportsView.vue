@@ -20,6 +20,11 @@
         </v-row>
       </v-container>
       <PipelineSCMFilter :scmid="scmid" @update-scmid="updateSCMID"/>
+      <PipelineSCMSummary
+        :scmid="scmid"
+        @update-scmid="updateSCMID"
+        class="align-center justify-center"
+      />
       <PipelineReports :scmid="scmid" @update-scmid="updateSCMID"/>
     </v-main>
 
@@ -34,7 +39,8 @@ import SideNavigation from '../../components/SideNavigation.vue';
 import HeadNavigation from '../../components/HeadNavigation.vue';
 import PipelineReports from '../../components/pipeline/reports.vue';
 
-import PipelineSCMSFilter from '../../components/scm/_filter.vue';
+import PipelineSCMSummary from '../../components/scm/_summary.vue';
+import PipelineSCMFilter from '../../components/scm/_filter.vue';
 
 export default {
   name: 'PipelineReportsView',
@@ -43,7 +49,8 @@ export default {
     SideNavigation,
     HeadNavigation,
     PipelineReports,
-    PipelineSCMFilter: PipelineSCMSFilter,
+    PipelineSCMFilter,
+    PipelineSCMSummary
   },
   data: () => ({
     links:[
