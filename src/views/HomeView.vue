@@ -53,6 +53,16 @@
             </div>
           </v-col>
         </v-row>
+        <v-row>
+          <v-col
+            cols="auto"
+            lg="8"
+            md="8"
+            sm="12"
+          >
+            <PipelineSCMSSummary/>
+          </v-col>
+        </v-row>
       </v-container>
     </v-main>
 
@@ -64,6 +74,7 @@
 import ReleaseFooter from '../components/ReleaseFooter.vue';
 import SideNavigation from '../components/SideNavigation.vue';
 import HeadNavigation from '../components/HeadNavigation.vue';
+import PipelineSCMSSummary from '../components/scm/_summary.vue';
 
 export default {
   name: 'HomeView',
@@ -71,6 +82,7 @@ export default {
     ReleaseFooter,
     SideNavigation,
     HeadNavigation,
+    PipelineSCMSSummary,
   },
   data: () => ({
     links:[
