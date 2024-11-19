@@ -30,6 +30,17 @@
         <!--<v-btn type="submit" color="primary" :disabled="!filterForm">Filter</v-btn>-->
     </v-form>
 
+    <div class="text-center">
+      <v-btn
+        v-if="isRestrictedSCM()"
+        @click="resetRestrictedSCM"
+        color="darken-grey-3"
+        variant="outlined"
+        justify-center
+      >Reset Filter
+      </v-btn>
+    </div>
+
   </v-container>
 </template>
 
@@ -51,6 +62,7 @@ export default {
     repositories : [],
     branches: [],
     branch : "",
+    restrictedSCM: ""
   }),
 
   beforeUnmount() {
@@ -64,13 +76,11 @@ export default {
     async getSCMSData() {
       const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
-      const restrictedSCM = router.currentRoute.value.query.scmid
-
       if (auth_enabled) {
         const token = await this.$auth0.getAccessTokenSilently();
         let query = `/api/pipeline/scms`;
-        if (restrictedSCM != undefined) {
-          query = query + `?scmid=${restrictedSCM}`
+        if (this.restrictedSCM != "") {
+          query = query + `?scmid=${this.restrictedSCM}`
         }
 
         const response = await fetch(query, {
@@ -84,8 +94,8 @@ export default {
       } else {
 
         let query = `/api/pipeline/scms`;
-        if (restrictedSCM != undefined) {
-          query = query + `?scmid=${restrictedSCM}`
+        if (this.restrictedSCM != "") {
+          query = query + `?scmid=${this.restrictedSCM}`
         }
 
         const response = await fetch(query);
@@ -95,6 +105,7 @@ export default {
       }
 
       let urlArray = []
+      this.repositories = []
       for (var i = 0 ; i < this.scms.length; i++) {
         if (urlArray.includes(this.scms[i].URL)) {
           continue
@@ -105,15 +116,24 @@ export default {
           id: this.scms[i].URL,
           text: this.prettifyURL(this.scms[i].URL)
         })
-
       }
 
-      //this.repositories = this.scms.map(scm => scm.URL)
-
-
-      if (this.repositories.length > 0) {
+      if (this.repositories.length > 0 && this.repository == "" ){
         this.repository = this.repositories[0].id
       }
+    },
+
+    isRestrictedSCM() {
+      return this.restrictedSCM != ""
+    },
+
+    resetRestrictedSCM() {
+      const queryParams = { ...router.currentRoute.query }
+      delete queryParams.scmid
+      router.replace({ query: queryParams })
+
+      this.restrictedSCM = ""
+      this.getSCMSData()
     },
 
     prettifyURL: function(url) {
@@ -177,6 +197,9 @@ export default {
 
   async created() {
     try {
+      if (router.currentRoute.value.query.scmid != undefined) {
+        this.restrictedSCM = router.currentRoute.value.query.scmid
+      }
       this.getSCMSData()
     } catch (error) {
       console.log(error);
