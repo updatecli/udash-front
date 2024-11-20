@@ -1,76 +1,104 @@
 <template>
     <v-container
+        class="py-8 px-6"
         fluid
     >
-        <v-row
-            v-for="(scmData, url) in data"
-            :key="url"
+        <v-expansion-panels
+            multiple
+            flat
+            tile
+            v-model="localExpandedSummary"
         >
-            <v-col>
-                <v-toolbar
-                    density="compact"
-                    class="text-white"
+            <v-expansion-panel
+                v-for="(scmData, url) in data"
+                :key="url"
+                :hide-actions="true"
+
+            >
+                <v-expansion-panel-title
                 >
-                    <v-toolbar-title
-                        class="flex text-center"
+                    <v-toolbar
+                        density="compact"
+                        class="text-white"
                     >
-                        <v-icon>{{ getGitIcon(url) }}</v-icon>{{  sanitizeURL(url) }}
-                    </v-toolbar-title>
-
-                </v-toolbar>
-
-                <v-card
-                    variant="flat"
-                >
-                    <v-card-text>
-                        <v-timeline
-                            density="compact"
-                            align="start"
-                            justify="center"
-                            direction="vertical"
-                            line-thickness="2"
-                            line-color="grey-darken-3"
+                        <v-toolbar-title
+                            class="flex text-center"
                         >
-                            <v-timeline-item
-                                v-for="(branchData, branch) in scmData"
-                                :key="branch"
-                                dot-color="grey-darken-3"
-                                icon-color="white"
-                                fill-dot
-                                icon="mdi-source-branch"
+                            <v-icon>{{ getGitIcon(url) }}</v-icon>{{  sanitizeURL(url) }}
+                        </v-toolbar-title>
+                    </v-toolbar>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
+                    <v-card
+                        variant="flat"
+                    >
+                        <v-card-text>
+                            <v-timeline
+                                density="compact"
+                                align="start"
+                                justify="center"
+                                direction="vertical"
+                                line-thickness="2"
+                                line-color="grey-darken-3"
                             >
-                                <v-card
-                                    :href="`/pipeline/reports?scmid=${branchData.id}`"
+                                <v-timeline-item
+                                    v-for="(branchData, branch) in scmData"
+                                    :key="branch"
+                                    dot-color="grey-darken-3"
+                                    icon-color="white"
+                                    fill-dot
+                                    icon="mdi-source-branch"
                                 >
-                                    <v-card-title
-                                        class="bg-grey"
+                                    <v-card
+                                        min-width="300"
+                                        flat
                                     >
-                                        {{  branch }}
-                                    </v-card-title>
-                                </v-card>
-                                <v-card-text
-                                    variant="outlined"
-                                    class="text-center"
-                                >
-                                    {{  branchData.total_result }} reports
-                                    <PolarArea :data="getPolarAreaData(url, branch)" :options="polarAreaOptions" />
+                                        <v-card-title
+                                            variant="flat"
+                                        >
+                                            <v-toolbar
+                                                density="compact"
+                                                class="text-white"
+                                                variant="text"
+                                                flat
+                                            >
+                                                <v-toolbar-title
+                                                    class="flex text-center"
+                                                >
+                                                    {{  branch  }}
+                                                </v-toolbar-title>
 
-                                </v-card-text>
-                                <!--
-                                <v-timeline-item-icon
-                                    color="primary"
-                                >
-                                    <v-icon>mdi-source-branch</v-icon>
-                                    {{  branch }}
-                                </v-timeline-item-icon>
-                            -->
-                            </v-timeline-item>
-                        </v-timeline>
-                    </v-card-text>
-                    <v-divider></v-divider>
-                </v-card>
-            </v-col>
-        </v-row>
+                                                <v-btn
+                                                    class="text-right"
+                                                    justify-center
+                                                    v-if="!hideButton"
+                                                    :to="`/pipeline/reports?scmid=${branchData.id}`"
+                                                    icon="mdi-arrow-right-circle"
+                                                    slim
+                                                    density="compact"
+                                                >
+                                                </v-btn>
+                                            </v-toolbar>
+                                        </v-card-title>
+                                        <v-card-text
+                                            variant="outlined"
+                                            class="text-center"
+                                        >
+                                            {{  branchData.total_result }} reports
+                                            <PolarArea
+                                                :data="getPolarAreaData(url, branch)"
+                                                :options="polarAreaOptions"
+                                            />
+                                        </v-card-text>
+                                    </v-card>
+                                </v-timeline-item>
+                            </v-timeline>
+                        </v-card-text>
+                        <v-divider></v-divider>
+                    </v-card>
+                </v-expansion-panel-text>
+            </v-expansion-panel>
+        </v-expansion-panels>
     </v-container>
 </template>
 
@@ -97,9 +125,18 @@ export default {
     name: "SCMSummary",
     props: {
         scmid: {},
+        hideButton: {
+            type: Boolean,
+            default: false
+        },
+        expandedSummary: {
+            type: Array,
+            default: () => [],
+        }
     },
     data: () => ({
         data: {},
+        localExpandedSummary: [],
         polarAreaData: {},
         polarAreaOptions: {
             responsive: true,
@@ -109,6 +146,9 @@ export default {
     watch: {
       scmid () {
         this.getSummaryData();
+      },
+      expandedSummary(newVal) {
+        this.localExpandedSummary = newVal;
       },
   },
 
@@ -272,7 +312,6 @@ export default {
                             ]
                         }
                     }
-
                 }
             }
         },

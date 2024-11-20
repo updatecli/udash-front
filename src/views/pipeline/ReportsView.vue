@@ -21,6 +21,8 @@
       </v-container>
       <PipelineSCMFilter :scmid="scmid" @update-scmid="updateSCMID"/>
       <PipelineSCMSummary
+        :hideButton=true
+        :expanded-summary="[0]"
         :scmid="scmid"
         @update-scmid="updateSCMID"
         class="align-center justify-center"
