@@ -3,21 +3,6 @@
       class="py-8 px-6"
       fluid
   >
-    <v-overlay
-      :model-value="isLoading"
-      class="align-center justify-center"
-      :disabled=true
-      :eager=true
-      :no-click-animation=true
-      :persistent=true
-    >
-      <v-progress-circular
-        color="black"
-        indeterminate
-        size="64"
-      ></v-progress-circular>
-    </v-overlay>
-
     <!-- Show Project Description -->
     <v-container>
       <!--
@@ -62,14 +47,9 @@
 </template>
 
 <script>
-import router from '../../router'
-//import SCMSummary from '../scm/_summary.vue'
 
 export default {
   name: 'PipelinesTable',
-  //components: {
-  //  SCMSummary,
-  //},
 
   props: {
     scmid: {},
@@ -89,17 +69,18 @@ export default {
       { key: 'ID', sortable: false}
     ],
     pipelines: [],
-    isLoading: true,
     itemsPerPage: 25,
   }),
 
-  beforeUnmount() {
-    this.cancelAutoUpdate();
+  watch: {
+    scmid() {
+        this.getReportsData()
+    }
   },
 
   methods: {
     async getReportsData() {
-
+      this.$emit('loaded', false)
       let queryURL = `/api/pipeline/reports`
 
       if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
@@ -116,20 +97,16 @@ export default {
           }
         });
         const data = await response.json();
-        this.isLoading = false
         this.pipelines = data.data
       } else {
         const response = await fetch(queryURL);
         const data = await response.json();
-        this.isLoading = false
         this.pipelines = data.data
       }
+      this.$emit('loaded', true)
     },
     getPipelineLink: function(id){
       return `/pipeline/reports/${id}`
-    },
-    cancelAutoUpdate() {
-      clearInterval(this.timer);
     },
     getStatusColor: function(status){
       switch (status) {
@@ -161,23 +138,9 @@ export default {
     },
   },
 
-  watch: {
-      isLoading (val) {
-        val && setTimeout(() => {
-          this.isLoading = false
-        }, 3000)
-      },
-
-      scmid () {
-        this.getReportsData()
-      },
-  },
-
   async created() {
     try {
-      if (router.currentRoute.value.query.scmid != undefined) {
-          this.$emit('update-scmid', router.currentRoute.value.query.scmid)
-      }
+      this.getReportsData()
     } catch (error) {
       console.log(error);
     }

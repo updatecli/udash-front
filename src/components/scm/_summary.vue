@@ -124,7 +124,10 @@ export default {
     },
     name: "SCMSummary",
     props: {
-        scmid: {},
+        scmid: {
+            type: String,
+            default: ''
+        },
         hideButton: {
             type: Boolean,
             default: false
@@ -154,19 +157,23 @@ export default {
 
     methods: {
         async getSummaryData() {
+            this.$emit('loaded', false)
             const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
             const restrictedSCM = router.currentRoute.value.query.scmid
 
             let query = `/api/pipeline/scms?summary=true`;
             if (restrictedSCM != undefined) {
                 query = query + `&&scmid=${restrictedSCM}`
+            } else if ( this.scmid != "" ){
+                query = query + `&&scmid=${this.scmid}`
+            }
+
+            if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
+                query += `&&scmid=${this.scmid}`;
             }
 
             if (auth_enabled) {
                 const token = await this.$auth0.getAccessTokenSilently();
-                if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
-                    query += `&&scmid=${this.scmid}`;
-                }
                 const response = await fetch(query, {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -176,15 +183,13 @@ export default {
                 this.data = data.data;
                 this.updatePolarAreaData();
             } else {
-                if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
-                    query += `&&scmid=${this.scmid}`;
-                }
                 const response = await fetch(query);
                 const data = await response.json();
                 this.data = data.data;
                 this.updatePolarAreaData();
             }
 
+            this.$emit('loaded', true)
         },
 
         resetFilter: function() {
@@ -316,13 +321,12 @@ export default {
             }
         },
     },
-
     async created() {
         try {
             this.getSummaryData();
-        } catch (error) {
-            console.error(error);
+        } catch(error) {
+            console.log(error);
         }
-    },
+    }
 }
 </script>

@@ -5,6 +5,21 @@
 
     <v-main>
       <v-container>
+        <v-overlay
+        :model-value="isLoading"
+        class="align-center justify-center"
+        :disabled=false
+        :eager=true
+        :no-click-animation=true
+        :persistent=false
+        :opacity="0"
+        >
+        <v-progress-circular
+          color="black"
+          indeterminate
+          size="64"
+        ></v-progress-circular>
+      </v-overlay>
         <v-row>
           <v-col
             class="text-right"
@@ -61,7 +76,9 @@
             md="12"
             sm="12"
           >
-            <PipelineSCMSSummary/>
+            <PipelineSCMSSummary
+              @loaded="setSummaryLoaded"
+            />
           </v-col>
         </v-row>
       </v-container>
@@ -85,7 +102,11 @@ export default {
     HeadNavigation,
     PipelineSCMSSummary,
   },
+  beforeUnmount() {
+    this.cancelAutoUpdate();
+  },
   data: () => ({
+    isLoading: true,
     links:[
       {
         name: "QuickStart",
@@ -98,6 +119,21 @@ export default {
         icon: "mdi-arrow-right-circle",
       },
   ]
-  })
+  }),
+  watch: {
+    isLoading: function (val) {
+      val && setTimeout(() => {
+        this.isLoading = false
+      }, 10000)
+    }
+  },
+  methods: {
+    cancelAutoUpdate: function() {
+      clearInterval(this.timer);
+    },
+    setSummaryLoaded: function(val) {
+      this.isLoading = !val
+    },
+  }
 }
 </script>

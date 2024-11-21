@@ -5,10 +5,11 @@
       <v-overlay
       :model-value="isLoading"
       class="align-center justify-center"
-      disabled="True"
-      eager="True"
-      no-click-animation="True"
-      persistent="True"
+      :disabled="true"
+      :eager="true"
+      :no-click-animation="true"
+      :persistent="true"
+      :opacity="0"
     >
       <v-progress-circular
         color="black"
@@ -182,7 +183,7 @@ import TargetComponent from './_target.vue';
 
 export default {
   name: 'PipelineReportView',
-  
+
   components: {
     SourceComponent,
     ConditionComponent,

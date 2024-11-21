@@ -51,11 +51,13 @@ export default {
   name: 'PipelineSCMS',
 
   props: {
-    scmid: {},
+    scmid: {
+      type: String,
+      default: ""
+    },
   },
 
   data: () => ({
-    isLoading: true,
     filterForm: false,
     scms: [],
     repository: "",
@@ -74,14 +76,17 @@ export default {
 
   methods: {
     async getSCMSData() {
+      this.$emit('loaded', false)
       const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+
+      let query = `/api/pipeline/scms`;
+
+      if (this.restrictedSCM != "") {
+        query = query + `?scmid=${this.restrictedSCM}`
+      }
 
       if (auth_enabled) {
         const token = await this.$auth0.getAccessTokenSilently();
-        let query = `/api/pipeline/scms`;
-        if (this.restrictedSCM != "") {
-          query = query + `?scmid=${this.restrictedSCM}`
-        }
 
         const response = await fetch(query, {
             headers: {
@@ -89,18 +94,11 @@ export default {
           }
         });
         const data = await response.json();
-        this.isLoading = false
         this.scms = data.scms
       } else {
 
-        let query = `/api/pipeline/scms`;
-        if (this.restrictedSCM != "") {
-          query = query + `?scmid=${this.restrictedSCM}`
-        }
-
         const response = await fetch(query);
         const data = await response.json();
-        this.isLoading = false
         this.scms = data.scms
       }
 
@@ -116,11 +114,15 @@ export default {
           id: this.scms[i].URL,
           text: this.prettifyURL(this.scms[i].URL)
         })
+
+        if ( i == 0) {
+          this.repository = this.scms[i].URL
+          this.branch = this.scms[i].Branch
+          this.applyFilter()
+          this.$emit('loaded', true)
+        }
       }
 
-      if (this.repositories.length > 0 && this.repository == "" ){
-        this.repository = this.repositories[0].id
-      }
     },
 
     isRestrictedSCM() {
@@ -165,42 +167,44 @@ export default {
   },
 
   watch: {
-      isLoading (val) {
-        val && setTimeout(() => {
-          this.isLoading = false
-        }, 3000)
-      },
-
       repository (val) {
-        var b = []
+        var newRepositoryBranches = []
         for (var i =0 ; i < this.scms.length; i++) {
           if (this.scms[i].URL == val) {
-              if (this.scms[i].Branch == "main") {
-                this.branch = "main"
-              }
-
-              if (this.scms[i].Branch == "master" && this.branch == "" ){  
-                this.branch = "master"
-              }
-            b.push(this.scms[i].Branch)
+            if (newRepositoryBranches.includes(this.scms[i].Branch)) {
+              continue
+            }
+              newRepositoryBranches.push(this.scms[i].Branch)
           }
         }
 
-        this.branches = b
+        if (newRepositoryBranches.length == 0) {
+          this.branches = []
+          this.branch = ""
+          return
+        }else {
+          this.branches = newRepositoryBranches
+          this.branch = newRepositoryBranches[0]
+        }
+
         this.applyFilter()
       },
 
       branch () {
         this.applyFilter()
       },
+      restrictedSCM () {
+        this.getSCMSData()
+      }
   },
 
   async created() {
     try {
-      if (router.currentRoute.value.query.scmid != undefined) {
-        this.restrictedSCM = router.currentRoute.value.query.scmid
-      }
-      this.getSCMSData()
+        if (router.currentRoute.value.query.scmid != undefined) {
+          this.restrictedSCM = router.currentRoute.value.query.scmid
+        } else {
+          this.getSCMSData()
+        }
     } catch (error) {
       console.log(error);
     }
