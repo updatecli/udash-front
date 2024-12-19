@@ -145,6 +145,29 @@
           </v-card-text>
         </v-card>
         <v-divider
+          v-if="isActions()"
+          :color="getStatusColor(pipeline.Pipeline.Result)"
+          thickness="30"></v-divider>
+
+        <v-card
+          variant="outlined"
+          v-if="isActions()"
+        >
+          <v-card-title><h4>Follow up</h4></v-card-title>
+          <v-card-text>
+              <v-card
+                variant="flat"
+                v-for="(data, key) in pipeline.Pipeline.Actions" :key="key"
+              >
+                <ActionComponent
+                  :id="key"
+                  :data="data"
+                ></ActionComponent>
+              </v-card>
+          </v-card-text>
+        </v-card>
+
+        <v-divider
           :color="getStatusColor(pipeline.Pipeline.Result)"
           v-show="!isLatestReport()"
           thickness="30"></v-divider>
@@ -176,7 +199,7 @@
 </template>
 
 <script>
-
+import ActionComponent from './_action.vue';
 import SourceComponent from './_source.vue';
 import ConditionComponent from './_condition.vue';
 import TargetComponent from './_target.vue';
@@ -185,6 +208,7 @@ export default {
   name: 'PipelineReportView',
 
   components: {
+    ActionComponent,
     SourceComponent,
     ConditionComponent,
     TargetComponent,
@@ -206,6 +230,15 @@ export default {
 
   methods: {
 
+    isActions(){
+      for (const action in this.pipeline.Pipeline.Actions) {
+        if (this.pipeline.Pipeline.Actions[action].actionUrl !== undefined){
+          return true
+        }
+      }
+      return false;
+    },
+
     isLatestReport(){
       if (this.latestReportByID !== null) {
         return this.latestReportByID.ID == this.pipeline.ID
@@ -221,14 +254,14 @@ export default {
     },
 
     isSources(){
-      for (const condition in this.pipeline.Pipeline.Sources) {
+      for (const source in this.pipeline.Pipeline.Sources) {
         return true
       }
       return false;
     },
 
     isTargets(){
-      for (const condition in this.pipeline.Pipeline.Targets) {
+      for (const target in this.pipeline.Pipeline.Targets) {
         return true
       }
       return false;
