@@ -25,6 +25,7 @@
             item-value="name"
             fixed-header
             max-height="600px"
+            :sort-by="sortBy"
           >
             <template v-slot:item.ID="{ item }">
               <v-btn
@@ -56,6 +57,10 @@ export default {
   },
 
   data: () => ({
+    sortBy: [{
+      key: 'UpdatedAt',
+      order: 'desc'
+    }],
     pipelinesHeaders: [
       { title: "State", align: "start", key:'Result'},
       {
