@@ -49,7 +49,9 @@
           {{ data.Description }}
       </v-card-text>
 
-      <v-card-actions>
+      <v-card-actions
+        v-if="isInformationUpdated()"
+      >
           <v-spacer></v-spacer>
           <v-btn
             v-if="data.Information"
@@ -64,12 +66,23 @@
           >
           </v-btn>
 
-
           <v-btn
             variant="outlined"
             v-if="data.NewInformation"
           >
             {{ data.NewInformation }}
+          </v-btn>
+          <v-spacer></v-spacer>
+      </v-card-actions>
+      <v-card-actions
+        v-else
+      >
+          <v-spacer></v-spacer>
+          <v-btn
+            v-if="data.Information"
+            variant="outlined"
+          >
+            <p>{{ data.Information }}</p>
           </v-btn>
           <v-spacer></v-spacer>
       </v-card-actions>
@@ -87,6 +100,7 @@
 </template>
 
 <script>
+
     export default {
         name: "TargetComponent",
 
@@ -99,6 +113,9 @@
         ],
 
         methods: {
+            isInformationUpdated: function(){
+                return this.data.Information !== this.data.NewInformation
+            },
             getStatusColor: function(input){
                 switch (input) {
                   case "✔":
