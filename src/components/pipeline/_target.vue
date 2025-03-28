@@ -87,18 +87,6 @@
           </v-btn>
           <v-spacer></v-spacer>
       </v-card-actions>
-      <v-card-actions
-        v-else
-      >
-          <v-spacer></v-spacer>
-          <v-btn
-            v-if="data.Information"
-            variant="outlined"
-          >
-            <p>{{ data.Information }}</p>
-          </v-btn>
-          <v-spacer></v-spacer>
-      </v-card-actions>
     </v-card>
   </v-container>
 
