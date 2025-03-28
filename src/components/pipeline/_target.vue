@@ -57,20 +57,21 @@
             v-if="data.Information"
             variant="outlined"
           >
-            <p>{{ data.Information }}</p>
+            <p>{{ sanitizedInformation }}</p>
           </v-btn>
 
           <v-btn
             icon="mdi-arrow-right"
             v-if="data.NewInformation"
           >
+            {{ sanitizedNewInformation }}
           </v-btn>
 
           <v-btn
             variant="outlined"
             v-if="data.NewInformation"
           >
-            {{ data.NewInformation }}
+            {{ sanitizedNewInformation }}
           </v-btn>
           <v-spacer></v-spacer>
       </v-card-actions>
@@ -79,30 +80,57 @@
       >
           <v-spacer></v-spacer>
           <v-btn
-            v-if="data.Information"
+            v-if="data.NewInformation"
             variant="outlined"
           >
-            <p>{{ data.Information }}</p>
+            <p>{{ sanitizedNewInformation }}</p>
           </v-btn>
           <v-spacer></v-spacer>
       </v-card-actions>
     </v-card>
   </v-container>
-  <v-expansion-panels>
-      <v-expansion-panel
-          v-if="data.ConsoleOutput"
-          title="Console"
-          :text="data.ConsoleOutput"
-          class="text-body-1"
-          tag="pre"
-      ></v-expansion-panel>
-  </v-expansion-panels>
+
+  <ChangelogComponent
+    v-if="data.Changelogs"
+    :data="data.Changelogs"
+  ></ChangelogComponent>
+
+  <ConsoleOutputComponent
+    v-if="data.ConsoleOutput"
+    :data="data.ConsoleOutput"
+  ></ConsoleOutputComponent>
+
 </template>
 
 <script>
 
+  import ConsoleOutputComponent from './_consoleOutput.vue'
+  import ChangelogComponent from './_changelog.vue'
+
     export default {
         name: "TargetComponent",
+
+        components: {
+          ConsoleOutputComponent,
+          ChangelogComponent,
+        },
+
+        computed: {
+          sanitizedInformation: function(){
+              if (this.data.Information.length > 72) {
+                return this.data.Information.substring(0, 69) + "..."
+              }
+
+              return this.data.Information
+          },
+          sanitizedNewInformation: function(){
+              if (this.data.NewInformation.length > 72) {
+                return this.data.NewInformation.substring(0, 69) + "..."
+              }
+
+              return this.data.NewInformation
+          },
+        },
 
         data: () => ({
         }),
@@ -114,6 +142,10 @@
 
         methods: {
             isInformationUpdated: function(){
+                if (this.data.Information == "unknown") {
+                  return false
+                }
+
                 return this.data.Information !== this.data.NewInformation
             },
             getStatusColor: function(input){

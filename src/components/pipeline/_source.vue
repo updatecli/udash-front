@@ -52,37 +52,48 @@
                     v-if="data.Information"
                     variant="outlined"
                 >
-                    <p>{{ data.Information }}</p>
+                    <p>{{ sanitizedInformation }}</p>
                 </v-btn>
                 <v-spacer></v-spacer>
             </v-card-actions>
         </v-card>
     </v-container>
-    <v-expansion-panels>
-        <v-expansion-panel
-            v-if="data.Changelog"
-            title="Changelog"
-            :text="data.Changelog"
-            tag="pre"
-            class="text-body-1"
-            inset
 
-        ></v-expansion-panel>
-    </v-expansion-panels>
-    <v-expansion-panels>
-        <v-expansion-panel
-            v-if="data.ConsoleOutput"
-            title="Console"
-            :text="data.ConsoleOutput"
-            class="text-body-1"
-            tag="pre"
-        ></v-expansion-panel>
-    </v-expansion-panels>
+    <ChangelogComponent
+        v-if="data.Changelogs"
+        :data="data.Changelogs"
+    ></ChangelogComponent>
+
+    <ConsoleOutputComponent
+        v-if="data.ConsoleOutput"
+        :data="data.ConsoleOutput"
+    ></ConsoleOutputComponent>
+
 </template>
 
 <script>
+
+    import ConsoleOutputComponent from './_consoleOutput.vue'
+    import ChangelogComponent from './_changelog.vue'
+
     export default {
         name: "SourceComponent",
+
+        components: {
+            ConsoleOutputComponent,
+            ChangelogComponent,
+        },
+
+        computed: {
+            sanitizedInformation: function(){
+                // Arbitrary limit of 72 characters
+                if (this.data.Information.length > 72 ) {
+                    return this.data.Information.substring(0, 69 ) + "..."
+                }
+
+              return this.data.Information
+            },
+        },
 
         data: () => ({
         }),
