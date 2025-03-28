@@ -43,20 +43,23 @@
             </v-card-text>
         </v-card>
    </v-container>
-   <v-expansion-panels>
-       <v-expansion-panel
-           v-if="data.ConsoleOutput"
-           title="Console"
-           :text="data.ConsoleOutput"
-           class="text-body-1"
-           tag="pre"
-       ></v-expansion-panel>
-   </v-expansion-panels>
+
+   <ConsoleOutputComponent
+     v-if="data.ConsoleOutput"
+     :data="data.ConsoleOutput"
+   ></ConsoleOutputComponent>
+
 </template>
 
 <script>
+    import ConsoleOutputComponent from './_consoleOutput.vue'
+
     export default {
         name: "ConditionComponent",
+
+        components: {
+            ConsoleOutputComponent,
+        },
 
         data: () => ({
         }),

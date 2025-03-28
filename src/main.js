@@ -5,7 +5,21 @@ import { loadFonts } from './plugins/webfontloader'
 import router from './router'
 import { createAuth0 } from "@auth0/auth0-vue";
 
+import hljs from 'highlight.js'
+//import 'highlight.js/styles/atom-one-dark.css'
+import 'highlight.js/styles/default.css'
+
 loadFonts()
+
+// Custom directive for highlight.js
+const highlightDirective = {
+  beforeMount(el) {
+    hljs.highlightElement(el)
+  },
+  updated(el) {
+    hljs.highlightElement(el)
+  }
+}
 
 createApp(App).use(router)
   .use(vuetify)
@@ -19,4 +33,5 @@ createApp(App).use(router)
       }
     })
   )
+  .directive('highlight', highlightDirective) // Register the directive globally
   .mount('#app')
