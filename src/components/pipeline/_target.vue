@@ -63,9 +63,7 @@
           <v-btn
             icon="mdi-arrow-right"
             v-if="data.NewInformation"
-          >
-            {{ sanitizedNewInformation }}
-          </v-btn>
+          ></v-btn>
 
           <v-btn
             variant="outlined"
