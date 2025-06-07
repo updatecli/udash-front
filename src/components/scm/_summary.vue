@@ -245,7 +245,7 @@ export default {
         },
 
         updatePolarAreaData: function(){
-            const labels = ['Success', 'Warning', 'Error', 'Skipped','Others'];
+            const labels = ['✔', '⚠', '✗', '-','?'];
             const labelColors = [
                 'green',
                 'orange',
