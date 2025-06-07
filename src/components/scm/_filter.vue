@@ -28,6 +28,15 @@
       
         <!-- Filter repository-->
         <!--<v-btn type="submit" color="primary" :disabled="!filterForm">Filter</v-btn>-->
+
+        <div
+          align="center"
+          justify="center"
+        >
+          <v-btn
+            @click="applyFilter"
+          >Search</v-btn>
+        </div>
     </v-form>
 
     <div class="text-center">
@@ -186,13 +195,8 @@ export default {
           this.branches = newRepositoryBranches
           this.branch = newRepositoryBranches[0]
         }
-
-        this.applyFilter()
       },
 
-      branch () {
-        this.applyFilter()
-      },
       restrictedSCM () {
         this.getSCMSData()
       }
