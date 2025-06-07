@@ -30,6 +30,12 @@
             to="/pipeline/reports"
             value="reports"></v-list-item>
           <v-list-item
+            prepend-icon="mdi-transit-connection-variant"
+            v-if="isAuthenticated"
+            title="Configs"
+            to="/pipeline/configs"
+            value="configs"></v-list-item>
+          <v-list-item
             prepend-icon="mdi-book-open-variant"
             v-if="isAuthenticated"
             title="Quickstart"
