@@ -112,6 +112,8 @@ import {
   Legend
 } from 'chart.js'
 
+import { UDASH_API_VERSION } from '@/constants';
+
 import { PolarArea } from 'vue-chartjs'
 
 import router from '../../router'
@@ -161,7 +163,7 @@ export default {
             const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
             const restrictedSCM = router.currentRoute.value.query.scmid
 
-            let query = `/api/pipeline/scms?summary=true`;
+            let query = `/api/${ UDASH_API_VERSION}/pipeline/scms?summary=true`;
             if (restrictedSCM != undefined) {
                 query = query + `&&scmid=${restrictedSCM}`
             } else if ( this.scmid != "" ){
@@ -245,7 +247,7 @@ export default {
         },
 
         updatePolarAreaData: function(){
-            const labels = ['Success', 'Warning', 'Error', 'Skipped','Others'];
+            const labels = ['✔', '⚠', '✗', '-','?'];
             const labelColors = [
                 'green',
                 'orange',
@@ -258,9 +260,7 @@ export default {
             }
 
             for (let url in this.data) {
-
                 for ( let branch in this.data[url] ) {
-
                     if (this.data[url][branch].total_result === undefined) {
                         continue;
                     }

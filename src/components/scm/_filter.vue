@@ -25,20 +25,31 @@
         prepend-inner-icon="mdi-source-branch"
         v-model="branch"
         ></v-select>
-      
+
         <!-- Filter repository-->
         <!--<v-btn type="submit" color="primary" :disabled="!filterForm">Filter</v-btn>-->
+
+        <div
+          align="center"
+          justify="center"
+          class="py-4"
+        >
+          <v-btn
+            class="pr-4"
+            @click="applyFilter"
+          >Search</v-btn>
+
+          <v-btn
+            v-if="isRestrictedSCM()"
+            @click="resetRestrictedSCM"
+            color="darken-grey-3"
+            justify-center
+            class="pl-4"
+          >Reset</v-btn>
+        </div>
     </v-form>
 
     <div class="text-center">
-      <v-btn
-        v-if="isRestrictedSCM()"
-        @click="resetRestrictedSCM"
-        color="darken-grey-3"
-        variant="outlined"
-        justify-center
-      >Reset Filter
-      </v-btn>
     </div>
 
   </v-container>
@@ -46,6 +57,8 @@
 
 <script>
 import router from '../../router'
+
+import { UDASH_API_VERSION } from '@/constants';
 
 export default {
   name: 'PipelineSCMS',
@@ -79,7 +92,7 @@ export default {
       this.$emit('loaded', false)
       const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
-      let query = `/api/pipeline/scms`;
+      let query = `/api/${ UDASH_API_VERSION }/pipeline/scms`;
 
       if (this.restrictedSCM != "") {
         query = query + `?scmid=${this.restrictedSCM}`
@@ -186,13 +199,8 @@ export default {
           this.branches = newRepositoryBranches
           this.branch = newRepositoryBranches[0]
         }
-
-        this.applyFilter()
       },
 
-      branch () {
-        this.applyFilter()
-      },
       restrictedSCM () {
         this.getSCMSData()
       }

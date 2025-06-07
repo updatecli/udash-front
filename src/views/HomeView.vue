@@ -118,6 +118,11 @@ export default {
         to: "/pipeline/reports",
         icon: "mdi-arrow-right-circle",
       },
+      {
+        name: "Configs",
+        to: "/pipeline/configs",
+        icon: "mdi-arrow-right-circle",
+      },
   ]
   }),
   watch: {

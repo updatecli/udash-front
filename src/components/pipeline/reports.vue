@@ -18,6 +18,7 @@
 
           <!-- <SCMSummary :scmid="scmid"/>-->
 
+
           <v-data-table-virtual
             v-model:items-per-page="itemsPerPage"
             :headers="pipelinesHeaders"
@@ -40,6 +41,9 @@
                 :color=getStatusColor(item.Result)
                 ></v-icon>
             </template>
+            <template v-slot:item.UpdatedAt="{ item }">
+              {{ toLocalDate(item.UpdatedAt) }}
+            </template>
           </v-data-table-virtual>
         </v-col>
       </v-row>
@@ -48,6 +52,11 @@
 </template>
 
 <script>
+
+import { getStatusColor, getStatusIcon } from '@/composables/status';
+import { toLocalDate } from '@/composables/date'
+
+import { UDASH_API_VERSION } from '@/constants';
 
 export default {
   name: 'PipelinesTable',
@@ -63,14 +72,13 @@ export default {
     }],
     pipelinesHeaders: [
       { title: "State", align: "start", key:'Result'},
+      { title: "Time", key:'UpdatedAt'},
       {
         title: "Name",
         align: 'start',
         sortable: true,
         key: 'Name'
       },
-      { title: "Created at", key:'CreatedAt'},
-      { title: "Updated at", key:'UpdatedAt'},
       { key: 'ID', sortable: false}
     ],
     pipelines: [],
@@ -84,9 +92,13 @@ export default {
   },
 
   methods: {
+    toLocalDate (rawDate) {
+      return toLocalDate(rawDate)
+    },
+
     async getReportsData() {
       this.$emit('loaded', false)
-      let queryURL = `/api/pipeline/reports`
+      let queryURL = `/api/${ UDASH_API_VERSION }/pipeline/reports`
 
       if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
         queryURL = queryURL + `?scmid=${this.scmid}`
@@ -114,32 +126,10 @@ export default {
       return `/pipeline/reports/${id}`
     },
     getStatusColor: function(status){
-      switch (status) {
-        case "✔":
-          return "green"
-        case "✗":
-          return "red"
-        case "⚠":
-          return "orange"
-        case "-":
-          return "grey"
-        default:
-          return "blue"
-      }
+      return getStatusColor(status);
     },
     getStatusIcon: function(status){
-      switch (status) {
-        case "✔":
-          return "mdi-robot-love"
-        case "✗":
-          return "mdi-robot-angry"
-        case "⚠":
-          return "mdi-robot-confused"
-        case "-":
-          return "mdi-robot-off"
-        default:
-          return "mdi-robot-dead"
-      }
+      return getStatusIcon(status);
     },
   },
 
