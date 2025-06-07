@@ -80,13 +80,15 @@
             <v-btn
               @click="applyFilter"
             >Search</v-btn>
-          </v-col>  
+          </v-col>
         </v-row>
     </v-form>
   </v-container>
 </template>
 
 <script>
+
+import { UDASH_API_VERSION } from '@/constants';
 
 export default {
   name: 'ConfigsSearchFilter',
@@ -118,7 +120,7 @@ export default {
       this.$emit('loaded', false)
       const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
-      let query = `/api/pipeline/config/kinds?type=${this.configType}`;
+      let query = `/api/${ UDASH_API_VERSION }/pipeline/config/kinds?type=${this.configType}`;
 
       if (auth_enabled) {
         const token = await this.$auth0.getAccessTokenSilently();

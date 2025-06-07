@@ -86,6 +86,8 @@
 import {toYAML } from '@/composables/yaml'
 import { toLocalDate } from '@/composables/date'
 
+import { UDASH_API_VERSION } from '@/constants';
+
 export default {
   name: 'ConfigsTable',
   props: {
@@ -140,7 +142,7 @@ export default {
       this.resourceType = this.configsFilters.type;
 
       this.$emit('loaded', false)
-      let queryURL = `/api/pipeline/config/${this.resourceType}s/search`
+      let queryURL = `/api/${ UDASH_API_VERSION }/pipeline/config/${this.resourceType}s/search`
 
       const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
@@ -152,7 +154,7 @@ export default {
 
       if (this.resourceType != "" && this.resourceType !== undefined) {
         jsonReqBody.type = this.resourceType
-      } 
+      }
 
       if (isAuthEnabled){
         const token = await this.$auth0.getAccessTokenSilently();
@@ -190,15 +192,5 @@ export default {
       return `/pipeline/configs/${this.resourceType}/${id}`
     },
   },
-
-  // Avoid unnecessary API calls if filters are not set
-  // To be uncommented when filters are set
-  // async created() {
-  //   try {
-  //     this.getConfigsData()
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // },
 }
 </script>

@@ -91,7 +91,7 @@
               {{ extractGitURLInfo(scmURL).provider }}/{{ extractGitURLInfo(scmURL).owner }}/{{ extractGitURLInfo(scmURL).repo }}
             </div>
 
-            
+
           </v-card-title>
           <v-card-title
             v-else
@@ -119,7 +119,7 @@
                   </v-card-title>
                   <v-card-subtitle>
                     <span>Kind: {{ report.Kind }}</span>
-                  </v-card-subtitle>  
+                  </v-card-subtitle>
                   <v-card-text
                   >
                     {{  report.Description }}
@@ -163,7 +163,7 @@
               <v-card-subtitle>
                 <span>Kind: {{ report.Kind }}</span><br>
                 <span>Type: {{ report.Type }}</span>
-              </v-card-subtitle>  
+              </v-card-subtitle>
               <v-card-text
               >
                 {{  report.Description }}
@@ -210,7 +210,6 @@
               {{ extractGitURLInfo(scmURL).provider }}/{{ extractGitURLInfo(scmURL).owner }}/{{ extractGitURLInfo(scmURL).repo }}
             </div>
 
-            
           </v-card-title>
           <v-card-title
             v-else
@@ -239,7 +238,7 @@
                   <v-card-subtitle>
                     <span>Kind: {{ report.Kind }}</span>
                     <span>Type: {{ report.Type }}</span>
-                  </v-card-subtitle>  
+                  </v-card-subtitle>
                   <v-card-text
                   >
                     {{  report.Description }}
@@ -283,7 +282,7 @@
               <v-card-subtitle>
                 <span>Kind: {{ report.Kind }}</span><br>
                 <span>Type: {{ report.Type }}</span>
-              </v-card-subtitle>  
+              </v-card-subtitle>
               <v-card-text
               >
                 {{  report.Description }}
@@ -330,7 +329,6 @@
               {{ extractGitURLInfo(scmURL).provider }}/{{ extractGitURLInfo(scmURL).owner }}/{{ extractGitURLInfo(scmURL).repo }}
             </div>
 
-            
           </v-card-title>
           <v-card-title
             v-else
@@ -359,7 +357,7 @@
                   <v-card-subtitle>
                     <span>Kind: {{ report.Kind }}</span>
                     <span>Type: {{ report.Type }}</span>
-                  </v-card-subtitle>  
+                  </v-card-subtitle>
                   <v-card-text
                   >
                     {{  report.Description }}
@@ -403,7 +401,7 @@
               <v-card-subtitle>
                 <span>Kind: {{ report.Kind }}</span><br>
                 <span>Type: {{ report.Type }}</span>
-              </v-card-subtitle>  
+              </v-card-subtitle>
               <v-card-text
               >
                 {{  report.Description }}
@@ -426,8 +424,10 @@
 
 <script>
 
-import { extractGitURLInfo } from '@/composables/git' 
+import { extractGitURLInfo } from '@/composables/git'
 import { toYAML } from '@/composables/yaml'
+
+import { UDASH_API_VERSION } from '@/constants';
 
 export default {
   name: 'PipelineConfigView',
@@ -682,7 +682,7 @@ export default {
 
     async getConfigData() {
       this.$emit('loaded', false)
-      let queryURL = `/api/pipeline/config/${this.configType}s/search`
+      let queryURL = `/api/${ UDASH_API_VERSION }/pipeline/config/${this.configType}s/search`
 
       const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
@@ -725,7 +725,7 @@ export default {
 
     async getPipelineConfigReportsData() {
       const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
-      const queryURL = `/api/pipeline/reports/search`;
+      const queryURL = `/api/${ UDASH_API_VERSION }/pipeline/reports/search`;
 
       if (this.configID === "") {
         console.error('Resource ID is not defined in the route parameters.');
