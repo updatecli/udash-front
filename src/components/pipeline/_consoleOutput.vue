@@ -2,7 +2,7 @@
   <v-expansion-panels>
     <v-card
       width="100%"
-      flat
+      variant="flat"
       density="compact"
     >
       <v-card-title>
@@ -12,14 +12,13 @@
         <v-expansion-panel
             class="text-body-1"
             tag="pre"
+            elevation="0"
         >
           <v-expansion-panel-title>
             Output
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-              <code v-highlight class="language-bash">
-                {{  data }}
-              </code>
+              <code v-highlight class="language-bash">{{  data }}</code>
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-card-text>

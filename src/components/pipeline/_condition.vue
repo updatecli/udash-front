@@ -4,7 +4,10 @@
         class="text-white"
     >
         <v-toolbar-title>
-            <v-icon icon="mdi-circle" :color="getStatusColor(data.Result)"></v-icon>  {{ data.Name }}
+            <v-icon
+              :icon="getStatusIcon(data.Result)"
+              :color="getStatusColor(data.Result)"
+            ></v-icon>  {{ data.Name }}
         </v-toolbar-title>
 
         <v-toolbar-items>
@@ -37,10 +40,7 @@
                 <v-divider></v-divider>
             </v-card-subtitle>
 
-            <v-card-text>
-                {{ data.Description }}
-
-            </v-card-text>
+            <v-card-text>{{ data.Description }}</v-card-text>
         </v-card>
    </v-container>
 
@@ -53,6 +53,8 @@
 
 <script>
     import ConsoleOutputComponent from './_consoleOutput.vue'
+
+    import { getStatusColor, getStatusIcon } from '@/composables/status';
 
     export default {
         name: "ConditionComponent",
@@ -71,18 +73,10 @@
 
         methods: {
             getStatusColor: function(input){
-                switch (input) {
-                  case "✔":
-                    return "green"
-                  case "✗":
-                    return "red"
-                  case "⚠":
-                    return "orange"
-                  case "-":
-                    return "grey"
-                  default:
-                    return "yellow"
-                }
+              return getStatusColor(input);
+            },
+            getStatusIcon: function(input){
+              return getStatusIcon(input);
             }
         }
     }

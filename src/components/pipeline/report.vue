@@ -42,19 +42,107 @@
   <v-container
     v-if="pipeline"
   >
+    <!-- Show metadata -->
+    <v-row>
+      <v-col>
+        <v-card
+          variant="flat"
+        >
+          <v-card-text>
+            <v-table density>
+              <tbody>
+                <tr>
+                  <td>Result</td>
+                  <td><v-icon
+                      :icon="getStatusIcon(pipeline.Pipeline.Result)"
+                      :color="getStatusColor(pipeline.Pipeline.Result)"
+                      size="large"
+                      ></v-icon></td>
+                </tr>
+                <tr>
+                  <td>Time</td>
+                  <td>{{ pipeline.Updated_at }}</td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Show link to latest report -->
+     <v-row
+        v-if="latestReportByID"
+     >
+      <v-col>
+        <v-card
+          variant="outlined"
+          v-show="!isLatestReport()"
+        >
+          <v-card-title>
+            Newer report detected
+          </v-card-title>
+
+          <v-card-text>
+            <p>
+              Updated at {{ latestReportByID.Updated_at }}
+            </p>
+              <v-icon :icon="getStatusIcon(latestReportByID.Pipeline.Result)" :color="getStatusColor(latestReportByID.Pipeline.Result)"></v-icon>  {{ latestReportByID.Pipeline.Name }}
+              <v-btn
+                icon="mdi-arrow-right-circle"
+                variant="flat"
+                :to=getPipelineReportLink(latestReportByID.ID)>
+              </v-btn>
+          <v-divider></v-divider>
+          </v-card-text>
+        </v-card>
+      </v-col>
+     </v-row>
+
     <v-row>
       <v-col
         cols="auto"
-        lg="8"
-        md="8"
+        lg="12"
+        md="12"
         sm="12"
       >
+
+        <v-container
+          class="d-flex justify-center align-center"
+        >
+          <v-btn-toggle v-model="resourceStage">
+            <v-btn
+              v-if="isSources()"
+              variant="text"
+              value="source"
+              :class="{ 'v-btn--active': stage === 'source' }"
+            >Source</v-btn>
+            <v-btn
+              v-if="isConditions()"
+              variant="text"
+              value="condition"
+              :class="{ 'v-btn--active': stage === 'condition' }"
+            >Condition</v-btn>
+            <v-btn
+              v-if="isTargets()"
+              variant="text"
+              value="target"
+              :class="{ 'v-btn--active': stage === 'target' }"
+            >Target</v-btn>
+            <v-btn
+              v-if="isActions()"
+              variant="text"
+              value="action"
+              :class="{ 'v-btn--active': stage === 'target' }"
+            >Action</v-btn>
+          </v-btn-toggle>
+        </v-container>
+
         <!-- Show Sources -->
         <v-card
           variant="outlined"
-          v-if="isSources()"
+          v-if="isSources() && resourceStage === 'source'"
         >
-          <v-card-title><h4>Source</h4></v-card-title>
           <v-card-text>
               <v-card
                 variant="flat"
@@ -68,17 +156,11 @@
           </v-card-text>
         </v-card>
 
-        <v-divider
-          v-if="isConditions()"
-          :color="getStatusColor(pipeline.Pipeline.Result)"
-          thickness="30"></v-divider>
-
         <!-- Show Conditions -->
         <v-card
           variant="outlined"
-          v-if="isConditions()"
+          v-if="isConditions() && resourceStage === 'condition'"
         >
-          <v-card-title><h4>Condition</h4></v-card-title>
           <v-card-text>
               <v-card
                 variant="flat"
@@ -92,19 +174,11 @@
           </v-card-text>
         </v-card>
 
-        <v-divider
-          v-if="isTargets()"
-          :color="getStatusColor(pipeline.Pipeline.Result)"
-          thickness="30"></v-divider>
-
         <!-- Show Targets -->
         <v-card
           variant="outlined"
-          v-if="isTargets()"
+          v-if="isTargets() && resourceStage === 'target'"
         >
-          <v-card-title>
-            <h4>Target</h4>
-          </v-card-title>
           <v-card-text>
               <v-card
                 v-for="(data, key) in pipeline.Pipeline.Targets" :key="key"
@@ -117,43 +191,11 @@
               </v-card>
           </v-card-text>
         </v-card>
-      </v-col>
-      <v-col
-        class="text-left"
-        cols="auto"
-        lg="4"
-        md="4"
-        sm="12"
-      >
+        <!-- Show Actions -->
         <v-card
           variant="outlined"
+          v-if="isActions() && resourceStage === 'action'"
         >
-          <v-card-title>
-            Metadata
-          </v-card-title>
-          <v-card-text>
-            <v-row
-            >
-              <v-col>State</v-col><v-col><v-icon icon="mdi-circle" :color="getStatusColor(pipeline.Pipeline.Result)"></v-icon></v-col>
-            </v-row>
-            <v-row>
-              <v-col>Created At</v-col><v-col>{{ pipeline.Created_at }}</v-col>
-            </v-row>
-            <v-row>
-              <v-col>Updated At</v-col><v-col>{{ pipeline.Updated_at }}</v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-        <v-divider
-          v-if="isActions()"
-          :color="getStatusColor(pipeline.Pipeline.Result)"
-          thickness="30"></v-divider>
-
-        <v-card
-          variant="outlined"
-          v-if="isActions()"
-        >
-          <v-card-title><h4>Follow up</h4></v-card-title>
           <v-card-text>
               <v-card
                 variant="flat"
@@ -164,33 +206,6 @@
                   :data="data"
                 ></ActionComponent>
               </v-card>
-          </v-card-text>
-        </v-card>
-
-        <v-divider
-          :color="getStatusColor(pipeline.Pipeline.Result)"
-          v-show="!isLatestReport()"
-          thickness="30"></v-divider>
-        <v-card
-          variant="outlined"
-          v-show="!isLatestReport()"
-          v-if="latestReportByID"
-        >
-          <v-card-title>
-            Newer report detected
-          </v-card-title>
-
-          <v-card-text>
-            <p>
-              Updated at {{  latestReportByID.Updated_at }}
-            </p>
-              <v-icon icon="mdi-circle" :color="getStatusColor(latestReportByID.Pipeline.Result)"></v-icon>  {{ latestReportByID.Pipeline.Name }}
-              <v-btn
-                icon="mdi-arrow-right-circle"
-                variant="flat"
-                :to=getPipelineReportLink(latestReportByID.ID)>
-              </v-btn>
-          <v-divider></v-divider>
           </v-card-text>
         </v-card>
       </v-col>
@@ -204,6 +219,8 @@ import SourceComponent from './_source.vue';
 import ConditionComponent from './_condition.vue';
 import TargetComponent from './_target.vue';
 
+import { getStatusColor, getStatusIcon } from '@/composables/status';
+
 export default {
   name: 'PipelineReportView',
 
@@ -216,6 +233,7 @@ export default {
 
   data: () => ({
     isLoading: true,
+    resourceStage: "source",
     pipeline: {
       "Pipeline": {}
     },
@@ -229,6 +247,20 @@ export default {
   },
 
   methods: {
+
+    getDefaultStage(){
+      if (this.isActions()) {
+        return "action"
+      } else if (this.isSources()) {
+        return "source"
+      } else if (this.isConditions()) {
+        return "condition"
+      } else if (this.isTargets()) {
+        return "target"
+      }
+
+      return "source";
+    },
 
     isActions(){
       for (const action in this.pipeline.Pipeline.Actions) {
@@ -276,31 +308,11 @@ export default {
     },
 
     getStatusColor: function(input){
-      switch (input) {
-        case "✔":
-          return "success"
-        case "✗":
-          return "red"
-        case "⚠":
-          return "orange"
-        case "-":
-          return "grey"
-        default:
-          return "yellow"
-      }
+      return getStatusColor(input);
     },
 
     getStatusIcon: function(status){
-      switch (status) {
-        case "✔":
-          return "mdi-robot-love"
-        case "✗":
-          return "mdi-robot-angry"
-        case "⚠":
-          return "mdi-robot-confused"
-        default:
-          return "mdi-robot-off"
-      }
+      return getStatusIcon(status);
     },
 
     async getPipelineReportData() {
@@ -333,6 +345,8 @@ export default {
           this.isLatestReport()
         }
       }
+
+      this.resourceStage = this.getDefaultStage();
     },
   },
 

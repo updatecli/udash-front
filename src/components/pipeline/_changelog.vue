@@ -4,7 +4,7 @@
    {{ data.Published_at }}
     <v-card
       width="100%"
-      flat
+      variant="flat"
       density="compact"
     >
       <v-card-title>
@@ -17,13 +17,14 @@
           tag="pre"
           class="text-body-1"
           inset
+          elevation="0"
         >
           <v-expansion-panel-title>
             {{  changelog.Title }}
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-card
-              variant="flat"
+              variant="outlined"
             >
               <v-card-title></v-card-title>
               <v-card-subtitle

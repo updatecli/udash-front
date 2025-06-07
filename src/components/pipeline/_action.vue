@@ -1,5 +1,4 @@
 <template>
-
     <v-toolbar
         density="compact"
         class="text-white"
@@ -32,22 +31,5 @@
             'data',
             'id'
         ],
-
-        methods: {
-            getStatusColor: function(input){
-                switch (input) {
-                  case "✔":
-                    return "success"
-                  case "✗":
-                    return "red"
-                  case "⚠":
-                    return "orange"
-                  case "-":
-                    return "grey"
-                  default:
-                    return "yellow"
-                }
-            }
-        }
     }
 </script>

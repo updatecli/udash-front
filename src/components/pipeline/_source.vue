@@ -5,7 +5,7 @@
     >
         <v-toolbar-title>
             <v-icon
-                icon="mdi-circle"
+                :icon="getStatusIcon(data.Result)"
                 :color="getStatusColor(data.Result)"
             ></v-icon>  {{ data.Name }}
         </v-toolbar-title>
@@ -76,6 +76,8 @@
     import ConsoleOutputComponent from './_consoleOutput.vue'
     import ChangelogComponent from './_changelog.vue'
 
+    import { getStatusColor, getStatusIcon } from '@/composables/status';
+
     export default {
         name: "SourceComponent",
 
@@ -105,18 +107,10 @@
 
         methods: {
             getStatusColor: function(input){
-                switch (input) {
-                  case "✔":
-                    return "success"
-                  case "✗":
-                    return "red"
-                  case "⚠":
-                    return "orange"
-                  case "-":
-                    return "grey"
-                  default:
-                    return "yellow"
-                }
+                return getStatusColor(input);
+            },
+            getStatusIcon: function(input){
+                return getStatusIcon(input);
             }
         }
     }
