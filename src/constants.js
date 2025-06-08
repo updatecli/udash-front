@@ -1,1 +1,1 @@
-export const UDASH_API_VERSION = "alpha"
+export const UDASH_API_VERSION = ""
