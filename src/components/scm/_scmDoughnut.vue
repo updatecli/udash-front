@@ -23,7 +23,7 @@ const centerTextPlugin = {
     if (!text) return
 
     ctx.save()
-    ctx.font = 'bold 36px'
+    ctx.font = 'bold 18px Roboto'
     ctx.fillStyle = '#333'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
