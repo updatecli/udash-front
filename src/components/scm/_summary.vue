@@ -84,10 +84,10 @@
                                             variant="outlined"
                                             class="text-center"
                                         >
-                                            {{  branchData.total_result }} reports
-                                            <PolarArea
-                                                :data="getPolarAreaData(url, branch)"
-                                                :options="polarAreaOptions"
+                                            <SCMDoughnut
+                                                :chartData="getDoughnutData(url, branch)"
+                                                :chartOptions="doughnutOptions"
+                                                :centerText="branchData.total_result"
                                             />
                                         </v-card-text>
                                     </v-card>
@@ -114,15 +114,15 @@ import {
 
 import { UDASH_API_VERSION } from '@/constants';
 
-import { PolarArea } from 'vue-chartjs'
-
 import router from '../../router'
+
+import SCMDoughnut from './_scmDoughnut.vue'
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
 
 export default {
     components: {
-        PolarArea
+        SCMDoughnut,
     },
     name: "SCMSummary",
     props: {
@@ -142,8 +142,8 @@ export default {
     data: () => ({
         data: {},
         localExpandedSummary: [],
-        polarAreaData: {},
-        polarAreaOptions: {
+        doughnutData: {},
+        doughnutOptions: {
             responsive: true,
         },
     }),
@@ -183,12 +183,12 @@ export default {
                 });
                 const data = await response.json();
                 this.data = data.data;
-                this.updatePolarAreaData();
+                this.updateDoughnutData();
             } else {
                 const response = await fetch(query);
                 const data = await response.json();
                 this.data = data.data;
-                this.updatePolarAreaData();
+                this.updateDoughnutData();
             }
 
             this.$emit('loaded', true)
@@ -229,31 +229,38 @@ export default {
 
         },
 
-        getPolarAreaData(url, branch) {
+        getDoughnutData(url, branch) {
 
             if (url === undefined || branch === undefined) {
                 return {};
             }
 
-            if (this.polarAreaData[url] === undefined) {
+            if (this.doughnutData[url] === undefined) {
                 return {};
             }
 
-            if (this.polarAreaData[url][branch] === undefined) {
+            if (this.doughnutData[url][branch] === undefined) {
                 return {};
             }
 
-            return this.polarAreaData[url][branch];
+            return this.doughnutData[url][branch];
         },
 
-        updatePolarAreaData: function(){
-            const labels = ['✔', '⚠', '✗', '-','?'];
+        updateDoughnutData: function(){
+            const labels = [
+                '✔ Success',
+                '⚠ Warning',
+                '✗ Error',
+                '- Skipped',
+                '? Unknown',
+            ];
             const labelColors = [
-                'green',
-                'orange',
-                'red',
-                'grey',
-                'blue'];
+               'rgba(16, 185, 129, 0.7)',  // Green
+               'rgba(245, 158, 11, 0.7)',  // Amber
+               'rgba(220, 38, 38, 0.7)',   // Red
+               'rgba(107, 114, 128, 0.7)', // Gray
+               'rgba(139, 92, 246, 0.7)',  // Purple
+            ];
 
             if (this.data === undefined) {
                 return;
@@ -285,29 +292,27 @@ export default {
                         }
                     }
 
-                    if (this.polarAreaData[url] === undefined) {
-                        this.polarAreaData[url] = {};
+                    if (this.doughnutData[url] === undefined) {
+                        this.doughnutData[url] = {};
                     }
 
-                    if (this.polarAreaData[url][branch] === undefined) {
-                        this.polarAreaData[url][branch] = {};
+                    if (this.doughnutData[url][branch] === undefined) {
+                        this.doughnutData[url][branch] = {};
                     }
 
                     if (this.data[url][branch].total_result === successResults) {
 
-                        this.polarAreaData[url][branch] = {
-                            labels: ['All is good'],
+                        this.doughnutData[url][branch] = {
+                            labels: labels,
                             datasets: [
                                 {
-                                    data: [successResults],
-                                    backgroundColor: [
-                                        'green'
-                                    ]
+                                    data: [successResults,warningResults, errorResults, skippedResults, otherResults],
+                                    backgroundColor: labelColors,
                                 }
                             ]
                             }
                     } else {
-                        this.polarAreaData[url][branch] = {
+                        this.doughnutData[url][branch] = {
                             labels: labels,
                             datasets: [
                                 {
