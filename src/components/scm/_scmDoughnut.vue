@@ -27,7 +27,11 @@ const centerTextPlugin = {
     ctx.fillStyle = '#333'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText(text, width / 2, height / 2 + yOffset)
+
+    const lines = text.split('\n')
+    lines.forEach((line, i) => {
+        ctx.fillText(line, width / 2, height / 2 + yOffset + i * 20); // 20px line height
+    });
     ctx.restore()
   },
 }
@@ -53,12 +57,12 @@ export default {
         this.options.plugins = {}
         // Set center text if provided
         this.options.plugins.centerText = {
-            text: this.centerText,
+            text: 'Total' + '\n' + String(this.centerText),
             yOffset: -5,
         }
 
         if (this.chartData.labels.length === 5) {
-            this.options.plugins.centerText.yOffset = -30
+            this.options.plugins.centerText.yOffset = -50
         }
 
         // Set default legend position
