@@ -300,27 +300,14 @@ export default {
                         this.doughnutData[url][branch] = {};
                     }
 
-                    if (this.data[url][branch].total_result === successResults) {
-
-                        this.doughnutData[url][branch] = {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    data: [successResults,warningResults, errorResults, skippedResults, otherResults],
-                                    backgroundColor: labelColors,
-                                }
-                            ]
+                    this.doughnutData[url][branch] = {
+                        labels: labels,
+                        datasets: [
+                            {
+                                data: [successResults,warningResults, errorResults, skippedResults, otherResults],
+                                backgroundColor: labelColors
                             }
-                    } else {
-                        this.doughnutData[url][branch] = {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    data: ["0",warningResults, errorResults, skippedResults, otherResults],
-                                    backgroundColor: labelColors
-                                }
-                            ]
-                        }
+                        ]
                     }
                 }
             }
