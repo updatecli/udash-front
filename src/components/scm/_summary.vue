@@ -1,8 +1,5 @@
 <template>
-    <v-container
-        class="py-8 px-6"
-        fluid
-    >
+    <v-container>
         <v-expansion-panels
             multiple
             flat
@@ -12,7 +9,7 @@
             <v-expansion-panel
                 v-for="(scmData, url) in data"
                 :key="url"
-                :hide-actions="true"
+                :hide-actions="false"
 
             >
                 <v-expansion-panel-title
@@ -124,7 +121,7 @@ export default {
     components: {
         SCMDoughnut,
     },
-    name: "SCMSummary",
+    name: "SCMDashboard",
     props: {
         scmid: {
             type: String,

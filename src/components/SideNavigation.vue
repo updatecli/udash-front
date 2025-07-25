@@ -24,23 +24,23 @@
             to="/"
             value="home"></v-list-item>
           <v-list-item
-            prepend-icon="mdi-satellite-variant"
+            prepend-icon="mdi-book-open-variant"
             v-if="isAuthenticated"
             title="Reports"
             to="/pipeline/reports"
             value="reports"></v-list-item>
+          <v-list-item
+            v-if="isAuthenticated"
+            prepend-icon="mdi-satellite-variant"
+            title="SCM"
+            to="/scm/dashboard"
+            value="scmSummary"></v-list-item>
           <v-list-item
             prepend-icon="mdi-transit-connection-variant"
             v-if="isAuthenticated"
             title="Configs"
             to="/pipeline/configs"
             value="configs"></v-list-item>
-          <v-list-item
-            prepend-icon="mdi-book-open-variant"
-            v-if="isAuthenticated"
-            title="Quickstart"
-            to="/quickstart"
-            value="quickstart"></v-list-item>
           <v-list-item
             prepend-icon="mdi-alien"
             v-if="isAuthenticated"

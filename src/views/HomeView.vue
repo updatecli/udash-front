@@ -5,21 +5,6 @@
 
     <v-main>
       <v-container>
-        <v-overlay
-        :model-value="isLoading"
-        class="align-center justify-center"
-        :disabled=false
-        :eager=true
-        :no-click-animation=true
-        :persistent=false
-        :opacity="0"
-        >
-        <v-progress-circular
-          color="black"
-          indeterminate
-          size="64"
-        ></v-progress-circular>
-      </v-overlay>
         <v-row>
           <v-col
             class="text-right"
@@ -69,16 +54,50 @@
             </div>
           </v-col>
         </v-row>
+
         <v-row>
           <v-col
+            class="text-right"
             cols="auto"
-            lg="12"
-            md="12"
+            lg="8"
+            md="8"
             sm="12"
           >
-            <PipelineSCMSSummary
-              @loaded="setSummaryLoaded"
-            />
+          <h2>Report View </h2>
+
+          <v-text-area>
+            <p>
+              The report "view" allows to visualize Updatecli pipeline report.
+            </p>
+            <p>
+              Updatecli must be configured to publish reports after each pipeline execution.
+            </p>
+
+            <v-divider></v-divider>
+              <v-card
+                variant="flat"
+              >
+                <v-card-title>
+                  <h3>Login</h3>
+                </v-card-title>
+                <v-card-text>
+                  updatecli udash login "{{ host }}" --experimental
+                </v-card-text>
+              </v-card>
+
+              <v-card
+                variant="flat"
+              >
+                <v-card-title>
+                  <h3>Publish</h3>
+                </v-card-title>
+                <v-card-text>
+                  <br/>
+                  updatecli diff --experimental ghcr.io/updatecli/policies/policies/autodiscovery/all:latest
+                </v-card-text>
+              </v-card>
+            </v-text-area>
+
           </v-col>
         </v-row>
       </v-container>
@@ -92,7 +111,6 @@
 import ReleaseFooter from '../components/ReleaseFooter.vue';
 import SideNavigation from '../components/SideNavigation.vue';
 import HeadNavigation from '../components/HeadNavigation.vue';
-import PipelineSCMSSummary from '../components/scm/_summary.vue';
 
 export default {
   name: 'HomeView',
@@ -100,10 +118,6 @@ export default {
     ReleaseFooter,
     SideNavigation,
     HeadNavigation,
-    PipelineSCMSSummary,
-  },
-  beforeUnmount() {
-    this.cancelAutoUpdate();
   },
   data: () => ({
     isLoading: true,
@@ -125,20 +139,5 @@ export default {
       },
   ]
   }),
-  watch: {
-    isLoading: function (val) {
-      val && setTimeout(() => {
-        this.isLoading = false
-      }, 10000)
-    }
-  },
-  methods: {
-    cancelAutoUpdate: function() {
-      clearInterval(this.timer);
-    },
-    setSummaryLoaded: function(val) {
-      this.isLoading = !val
-    },
-  }
 }
 </script>

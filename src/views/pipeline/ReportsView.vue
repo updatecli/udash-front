@@ -29,7 +29,7 @@
             sm="12"
           >
           <h1>
-            Reports <v-icon icon="mdi-satellite-variant"></v-icon>
+            Reports <v-icon icon="mdi-book-open-variant"></v-icon>
           </h1>
           </v-col>
         </v-row>
