@@ -59,7 +59,8 @@
         >
           <v-col
             cols="12"
-            lg="8"
+            lg="5"
+            offset-lg="3"
             md="12"
             sm="12"
           >
@@ -68,11 +69,11 @@
               class="mb-6 mt-6"
             >
               <v-card-title
-                class="text-center"
+                class="text-right"
               >What Udash Can Do</v-card-title>
 
                 <v-card-text class="text-body-1">
-                <v-divider class="mb-4 mt-4"></v-divider>
+                <v-divider thickness="5" class="mb-4 mt-4"></v-divider>
                 <p>
                   <strong>Udash</strong> gives you visibility into dependency updates by organizing and surfacing
                   <code>Updatecli</code> execution data in three key ways:
@@ -119,7 +120,8 @@
           </v-col>
           <v-col
             cols="12"
-            lg="8"
+            lg="5"
+            offset-lg="3"
             md="12"
             sm="12"
           >
@@ -128,11 +130,11 @@
               class="mb-6 mt-6"
             >
               <v-card-title
-                class="text-center"
+                class="text-right"
               >Configure Updatecli for Udash</v-card-title>
 
               <v-card-text class="text-body-1">
-                <v-divider class="mb-4 mt-4"></v-divider>
+                <v-divider thickness="5" class="mb-4 mt-4"></v-divider>
                 <p>
                   Udash relies on your local <strong>Updatecli</strong> to collect and report dependency information.
                   To start sending data to Udash, follow the steps below:
@@ -182,15 +184,6 @@
                     Customize your values.yaml file to tell Updatecli which GitHub repository to monitor.
                     <v-card flat>
                         <v-card-title class="d-flex justify-space-between align-center">
-                          <v-btn
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                            @click="copyToClipboard"
-                          >
-                          <v-icon start>mdi-content-copy</v-icon>
-                          Copy
-                          </v-btn>
                         </v-card-title>
                         <v-card-text>
                           <pre
@@ -217,7 +210,7 @@ scm:
                     </template>
                     Finally run Updatecli with the autodiscovery policy:
                     <v-code class="mt-1 d-block pa-2 bg-grey-lighten-4 rounded" style="white-space: pre; overflow-x: auto;">
-                      updatecli diff --experimental --values values.yaml ghcr.io/updatecli/policies/policies/autodiscovery/all:latest
+                      updatecli diff --experimental --values ./values.yaml ghcr.io/updatecli/policies/policies/autodiscovery/all:latest
                     </v-code>
                   </v-list-item>
                 </v-list>
@@ -234,7 +227,8 @@ scm:
           </v-col>
           <v-col
             cols="12"
-            lg="8"
+            lg="5"
+            offset-lg="3"
             md="12"
             sm="12"
           >
@@ -243,11 +237,11 @@ scm:
               class="mb-6 mt-6"
             >
               <v-card-title
-                class="text-center"
+                class="text-right"
               >Going Further</v-card-title>
 
               <v-card-text class="text-body-1">
-                <v-divider class="mb-4 mt-4"></v-divider>
+                <v-divider thickness="5" class="mb-4 mt-4"></v-divider>
                 <p>
                   This project is just getting started — and we’d love your help shaping its future!
                 </p>
