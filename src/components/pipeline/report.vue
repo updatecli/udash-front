@@ -27,7 +27,7 @@
         sm="12"
       >
         <h1>
-          Report <v-icon icon="mdi-satellite-variant"></v-icon>
+          Report <v-icon icon="mdi-book-open-variant"></v-icon>
         </h1>
       </v-col>
       <v-col
