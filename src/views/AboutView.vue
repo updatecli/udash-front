@@ -6,12 +6,41 @@
     <v-main>
       <v-container>
         <v-row>
-          <v-col>
-            <h1>About</h1>
+          <v-col
+            class="text-right"
+            cols="auto"
+            lg="8"
+            md="8"
+            sm="12"
+          >
+            <h1>About<v-icon icon="mdi-alien"></v-icon></h1>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col
+            class="text-right"
+            cols="auto"
+            lg="8"
+            md="8"
+            sm="12"
+          >
             <h2>License</h2>
-            <pre class="text-body-1">
-              {{ license }}
-            </pre>
+          </v-col>
+          </v-row>
+        <v-row>
+
+          <v-col>
+            <v-container
+              class="fill-height d-flex justify-center align-center"
+            >
+            <v-card flat >
+              <v-card-text>
+                <pre class="text-body-1">
+                  {{ license }}
+                </pre>
+              </v-card-text>
+            </v-card>
+            </v-container>
           </v-col>
         </v-row>
       </v-container>
