@@ -95,7 +95,52 @@
                     </v-card>
                 </v-expansion-panel-text>
             </v-expansion-panel>
+        <!-- Floating bottom indicator with pulse animation -->
+        <v-fab
+            v-if="hasMoreData && !isLoading"
+            class="scroll-indicator"
+            color="grey-darken-3"
+            size="small"
+            location="bottom center"
+            @click="loadMoreData"
+        >
+            <v-icon class="pulse-animation">mdi-chevron-down</v-icon>
+        </v-fab>
+
+        <!-- Data summary -->
+        <div v-if="totalCount > 0" class="text-center pa-2">
+            <v-chip variant="outlined" size="small">
+                {{ Object.keys(data).length }} of {{ totalCount }} SCMs
+            </v-chip>
+        </div>
         </v-expansion-panels>
+
+        <!-- Progress indicator -->
+        <v-card v-if="totalCount > 0" variant="flat" class="mt-4 v-col-6 offset-3">
+            <v-card-text>
+                <div class="d-flex align-center justify-space-between mb-2">
+                    <span class="text-body-2">Loading Progress</span>
+                    <span class="text-body-2">{{ Object.keys(data).length }} / {{ totalCount }}</span>
+                </div>
+                <v-progress-linear
+                    :model-value="(Object.keys(data).length / totalCount) * 100"
+                    color="grey-darken-3"
+                    height="8"
+                ></v-progress-linear>
+
+                <div v-if="hasMoreData" class="text-center mt-3">
+                    <v-btn
+                        v-if="!isLoading"
+                        color="grey-darken-3"
+                        variant="text"
+                        @click="loadMoreData"
+                        append-icon="mdi-chevron-down"
+                    >
+                        Load More
+                    </v-btn>
+                </div>
+            </v-card-text>
+        </v-card>
     </v-container>
 </template>
 
@@ -143,11 +188,18 @@ export default {
         doughnutOptions: {
             responsive: true,
         },
+        currentPage: 1,
+        itemsPerPage: 1,
+        totalCount: 0,
+        isLoading: false,
+        hasMoreData: true,
+        loadedPages: new Set(),
     }),
 
     watch: {
       scmid () {
-        this.getSummaryData();
+        this.resetPagination();
+        this.getSummaryData(1,true);
       },
       expandedSummary(newVal) {
         this.localExpandedSummary = newVal;
@@ -155,40 +207,114 @@ export default {
   },
 
     methods: {
-        async getSummaryData() {
+        resetPagination() {
+            this.currentPage = 1;
+            this.totalCount = 0;
+            this.hasMoreData = true;
+            this.loadedPages.clear();
+            this.data = {};
+            this.doughnutData = {};
+        },
+
+        async getSummaryData(page= 1 , reset = false) {
+            // Avoid duplicate requests for the same page
+            if (this.loadedPages.has(page) && !reset) {
+                return;
+            }
+
+            this.isLoading= true;
             this.$emit('loaded', false)
-            const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
-            const restrictedSCM = router.currentRoute.value.query.scmid
 
-            let query = `/api/${ UDASH_API_VERSION}/pipeline/scms?summary=true`;
-            if (restrictedSCM != undefined) {
-                query = query + `&&scmid=${restrictedSCM}`
-            } else if ( this.scmid != "" ){
-                query = query + `&&scmid=${this.scmid}`
-            }
+                        try {
+                const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+                const restrictedSCM = router.currentRoute.value.query.scmid;
 
-            if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
-                query += `&&scmid=${this.scmid}`;
-            }
+                // Build query with pagination parameters
+                const params = new URLSearchParams();
+                params.append('summary', 'true');
+                params.append('limit', this.itemsPerPage);
+                params.append('page', this.currentPage);
 
-            if (auth_enabled) {
-                const token = await this.$auth0.getAccessTokenSilently();
-                const response = await fetch(query, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-                const data = await response.json();
-                this.data = data.data;
+                // Add SCM ID filter if provided
+                if (restrictedSCM) {
+                    params.append('scmid', restrictedSCM);
+                } else if (this.scmid && this.scmid !== '') {
+                    params.append('scmid', this.scmid);
+                }
+
+                let query = `/api/${UDASH_API_VERSION}/pipeline/scms?${params.toString()}`;
+
+                let response;
+                if (auth_enabled) {
+                    const token = await this.$auth0.getAccessTokenSilently();
+                    response = await fetch(query, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                } else {
+                    response = await fetch(query);
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const responseData = await response.json();
+
+                // Handle different response structures
+                const scmData = responseData.data || responseData.scms || responseData;
+                const totalCount = responseData.total_count || 0;
+
+                // Update total count
+                this.totalCount = totalCount;
+
+                if (reset) {
+                    // Reset data for new search
+                    this.data = scmData;
+                    this.localExpandedSummary = Object.keys(scmData);
+                } else {
+                    // Merge new data with existing data
+                    this.data = { ...this.data, ...scmData };
+                    const newKeys = Object.keys(this.data);
+                    this.localExpandedSummary = [...new Set([...this.localExpandedSummary, ...newKeys])];
+                }
+
+                // Mark this page as loaded
+                this.loadedPages.add(page);
+
+                // Check if there's more data to load
+                this.hasMoreData = Object.keys(this.data).length < this.totalCount;
+
+                // Update doughnut chart data
                 this.updateDoughnutData();
-            } else {
-                const response = await fetch(query);
-                const data = await response.json();
-                this.data = data.data;
-                this.updateDoughnutData();
-            }
 
-            this.$emit('loaded', true)
+            } catch (error) {
+                console.error('Error fetching summary data:', error);
+                // Handle error appropriately
+            } finally {
+                this.isLoading = false;
+                this.$emit('loaded', true);
+            }
+        },
+
+        async loadMoreData() {
+            if (this.hasMoreData && !this.isLoading) {
+                this.currentPage++;
+                await this.getSummaryData(this.currentPage, false);
+            }
+        },
+
+        // Infinite scroll handler
+        handleScroll() {
+            const scrollHeight = document.documentElement.scrollHeight;
+            const scrollTop = document.documentElement.scrollTop;
+            const clientHeight = document.documentElement.clientHeight;
+
+            // Load more data when user is near the bottom (100px threshold)
+            if (scrollTop + clientHeight >= scrollHeight - 100) {
+                this.loadMoreData();
+            }
         },
 
         resetFilter: function() {
@@ -312,10 +438,49 @@ export default {
     },
     async created() {
         try {
-            this.getSummaryData();
+            this.getSummaryData(1, true);
         } catch(error) {
             console.log(error);
         }
+    },
+    mounted() {
+        // Add infinite scroll listener
+        window.addEventListener('scroll', this.handleScroll);
+    },
+
+    beforeUnmount() {
+        // Clean up scroll listener if using infinite scroll
+        window.removeEventListener('scroll', this.handleScroll);
     }
 }
 </script>
+
+<style scoped>
+.scroll-indicator {
+    position: fixed !important;
+    bottom: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+</style>
