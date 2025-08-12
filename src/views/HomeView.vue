@@ -4,317 +4,158 @@
     <SideNavigation/>
 
     <v-main>
-      <v-container>
-        <v-row>
-          <v-col
-            class="text-right"
-            cols="auto"
-            lg="8"
-            md="8"
-            sm="12"
-          >
-          <h1>Udash <v-icon icon="mdi-home-city"></v-icon></h1>
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col
-            class="text-right"
-            cols="auto"
-            lg="8"
-            md="8"
-            sm="12"
-          >
-            <p>
-            Udash is an innovative monitoring platform designed to provide<br/>
-            flexibility and insight into your project's dependencies.<br/>
-            Powered by Updatecli, Udash enables a declarative approach to dependency monitoring.<br/>
-            By integrating Updatecli’s capabilities, Udash helps streamline dependency updates,<br/>
-            improve security by identifying outdated versions,
-            and maintain consistency across your projects, all in a flexible, declarative framework.
+      <!-- Hero Section -->
+      <v-container class="hero-section py-16">
+        <v-row align="center" justify="center">
+          <v-col cols="12" lg="8" md="10" class="text-center">
+            <h1 class="display-2 font-weight-bold mb-4">
+              Udash <v-icon size="large" icon="mdi-home-city" color="grey-darken-3"></v-icon>
+            </h1>
+            <p class="text-h6 mb-8 text-medium-emphasis">
+              An innovative monitoring platform for your project's dependencies
             </p>
-          </v-col>
-          <v-col
-            cols="auto"
-            lg="4"
-            md="4"
-            sm="12"
-            >
-            <div
-              v-for="link in links"
-              :key="link.name"
-              >
+            <div class="d-flex flex-wrap justify-center gap-4 mb-8">
               <v-btn
-                class="mx-4"
-                variant="text"
+                v-for="link in primaryLinks"
+                :key="link.name"
+                :to="link.to"
                 :prepend-icon="link.icon"
-                :to="link.to">
+                color="grey-darken-3"
+                variant="elevated"
+                size="large"
+                class="mx-2"
+              >
                 {{ link.name }}
               </v-btn>
             </div>
           </v-col>
         </v-row>
+      </v-container>
 
-        <v-row
-        >
-          <v-col
-            cols="12"
-            lg="5"
-            offset-lg="3"
-            md="12"
-            sm="12"
-          >
-            <v-card
-              flat
-              class="mb-6 mt-6"
-            >
-              <v-card-title
-                class="text-right"
-              >What Udash Can Do</v-card-title>
-
-                <v-card-text class="text-body-1">
-                <v-divider thickness="5" class="mb-4 mt-4"></v-divider>
-                <p>
-                  <strong>Udash</strong> gives you visibility into dependency updates by organizing and surfacing
-                  <code>Updatecli</code> execution data in three key ways:
-                </p>
-
-                <v-list class="mt-4" lines="two" density="comfortable">
-                  <v-list-item>
-                    <template #prepend>
-                      <v-icon color="primary">mdi-book-open-variant</v-icon>
-                    </template>
-                    <v-list-item-title>Reports: Search by Git Repository and Branch</v-list-item-title>
-                    <v-list-item-subtitle>
-                      Quickly find pipelines associated with specific repositories and branches for audit or debugging purposes.
-                    </v-list-item-subtitle>
-                  </v-list-item>
-
-                  <v-list-item>
-                    <template #prepend>
-                      <v-icon color="primary">mdi-transit-connection-variant</v-icon>
-                    </template>
-                    <v-list-item-title>Configs: Search by Updatecli Configuration</v-list-item-title>
-                    <v-list-item-subtitle>
-                      Filter pipelines based on the Updatecli manifest or policy used to trigger them.
-                    </v-list-item-subtitle>
-                  </v-list-item>
-
-                  <v-list-item>
-                    <template #prepend>
-                      <v-icon color="primary">mdi-satellite-variant</v-icon>
-                    </template>
-                    <v-list-item-title>Dashboard: Visualize Update Status by Git Repository</v-list-item-title>
-                    <v-list-item-subtitle>
-                      View which repositories are up-to-date or require attention with a clear visual overview.
-                    </v-list-item-subtitle>
-                  </v-list-item>
-                </v-list>
-
-                <p class="mt-6">
-                  These capabilities help teams stay ahead of dependency drift, automate update workflows,
-                  and maintain consistency across codebases.
-                </p>
-              </v-card-text>
-            </v-card>
+      <!-- Features Section -->
+      <v-container class="py-12">
+        <v-row>
+          <v-col cols="12" class="text-center mb-8">
+            <h2 class="text-h4 font-weight-bold mb-4">What Udash Can Do</h2>
+            <p class="text-h6 text-medium-emphasis">
+              Get visibility into dependency updates with three key capabilities
+            </p>
           </v-col>
+        </v-row>
+        
+        <v-row>
           <v-col
+            v-for="feature in features"
+            :key="feature.title"
             cols="12"
-            lg="5"
-            offset-lg="3"
-            md="12"
-            sm="12"
+            md="4"
+            class="mb-6"
           >
-            <v-card
-              flat
-              class="mb-6 mt-6"
-            >
-              <v-card-title
-                class="text-right"
-              >Configure Updatecli for Udash</v-card-title>
-
-              <v-card-text class="text-body-1">
-                <v-divider thickness="5" class="mb-4 mt-4"></v-divider>
-                <p>
-                  Udash relies on your local <strong>Updatecli</strong> to collect and report dependency information.
-                  To start sending data to Udash, follow the steps below:
-                </p>
-
-                <!--
-                <v-alert type="warning" class="my-4" border="start" colored-border>
-                  <strong>Note:</strong> Authentication is currently in alpha and not required for now.
-                </v-alert>
-                -->
-
-                <v-list class="mb-6">
-                  <v-list-item class="mb-2">
-                    <template #prepend>
-                      <v-icon color="primary">mdi-numeric-1</v-icon>
-                    </template>
-                    Authenticate your Updatecli client with Udash to configure Updatecli to send data to Udash.
-                    <v-code class="mt-1 d-block pa-2 bg-grey-lighten-4 rounded" style="white-space: pre; overflow-x: auto;">
-                      updatecli udash login "{{ host }}" --experimental
-                    </v-code>
-                  </v-list-item>
-                  <v-divider></v-divider>
-                  <v-list-item class="mb-2">
-                    <template #prepend>
-                      <v-icon color="primary">mdi-numeric-2</v-icon>
-                    </template>
-                    Authenticate with ghcr.io(GitHub Container Registry) to allow Updatecli to pull the latest Updatecli policy from the GitHub Container Registry.
-                    <v-code class="mt-1 d-block pa-2 bg-grey-lighten-4 rounded" style="white-space: pre; overflow-x: auto;">
-                      docker login ghcr.io
-                    </v-code>
-                  </v-list-item>
-                  <v-divider></v-divider>
-                  <v-list-item class="mb-2">
-                    <template #prepend>
-                      <v-icon color="primary">mdi-numeric-3</v-icon>
-                    </template>
-                    Export your GitHub Personal Access Token (PAT) as an environment variable to allow Updatecli to access your GitHub repository.
-                    <v-code class="mt-1 d-block pa-2 bg-grey-lighten-4 rounded" style="white-space: pre; overflow-x: auto;">
-                      export GITHUB_TOKEN="your_github_personal_access_token"
-                    </v-code>
-                  </v-list-item>
-                  <v-divider></v-divider>
-                  <v-list-item class="mb-2">
-                    <template #prepend>
-                      <v-icon color="primary">mdi-numeric-4</v-icon>
-                    </template>
-                    Customize your values.yaml file to tell Updatecli which GitHub repository to monitor.
-                    <v-card flat>
-                        <v-card-title class="d-flex justify-space-between align-center">
-                        </v-card-title>
-                        <v-card-text>
-                          <pre
-                            class="rounded bg-grey-lighten-4 pa-4"
-                            style="overflow-x: auto; white-space: pre-wrap;"
-                          >
-<code>
-scm:
-  enabled: true
-  kind: github
-  owner: "insert your GitHub repository owner"
-  repository: "insert your GitHub repository name"
-  branch: main
-  # url: "insert your GitHub repository URL"
-</code>
-                          </pre>
-                        </v-card-text>
-                      </v-card>
-                  </v-list-item>
-                  <v-divider></v-divider>
-                  <v-list-item class="mb-2">
-                    <template #prepend>
-                      <v-icon color="primary">mdi-numeric-5</v-icon>
-                    </template>
-                    Finally run Updatecli with the autodiscovery policy:
-                    <v-code class="mt-1 d-block pa-2 bg-grey-lighten-4 rounded" style="white-space: pre; overflow-x: auto;">
-                      updatecli diff --experimental --values ./values.yaml ghcr.io/updatecli/policies/policies/autodiscovery/all:latest
-                    </v-code>
-                  </v-list-item>
-                </v-list>
-
-                <p>
-                  After this setup, every time you run <code>updatecli</code>, a pipeline execution report will be automatically published to Udash.<br/>
-                  This enables dashboards and insights without manual data entry.<br/>
-
-                  More documentation is available on <a href="https://www.updatecli.io/docs/prologue/quick-start/">updatecli.io</a> to better understand how to leverage Updatecli with Udash.
-                </p>
-
-              </v-card-text>
-            </v-card>
-          </v-col>
-          <v-col
-            cols="12"
-            lg="5"
-            offset-lg="3"
-            md="12"
-            sm="12"
-          >
-            <v-card
-              flat
-              class="mb-6 mt-6"
-            >
-              <v-card-title
-                class="text-right"
-              >Going Further</v-card-title>
-
-              <v-card-text class="text-body-1">
-                <v-divider thickness="5" class="mb-4 mt-4"></v-divider>
-                <p>
-                  This project is just getting started — and we’d love your help shaping its future!
-                </p>
-
-                <p>
-                  As a community-oriented initiative, <strong>all contributions are welcome and appreciated</strong>.
-                  Whether you're a developer, user, or advocate, here are a few great ways to get involved:
-                </p>
-
-                <v-list class="mb-4" density="comfortable" lines="one">
-                  <v-list-item>
-                    <template #prepend>
-                      <v-icon color="primary">mdi-star-outline</v-icon>
-                    </template>
-                    <v-list-item-title>
-                      Star the repositories:
-                      <a href="https://github.com/updatecli/updatecli" target="_blank">updatecli</a>,
-                      <a href="https://github.com/updatecli/udash" target="_blank">udash</a>,
-                      and
-                      <a href="https://github.com/updatecli/udash-front" target="_blank">udash-front</a>
-                    </v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item>
-                    <template #prepend>
-                      <v-icon color="primary">mdi-lightbulb-outline</v-icon>
-                    </template>
-                    <v-list-item-title>
-                      Propose a new feature by opening an issue
-                    </v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item>
-                    <template #prepend>
-                      <v-icon color="primary">mdi-thumb-up-outline</v-icon>
-                    </template>
-                    <v-list-item-title>
-                      Upvote existing feature requests to show your support
-                    </v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item>
-                    <template #prepend>
-                      <v-icon color="primary">mdi-code-tags</v-icon>
-                    </template>
-                    <v-list-item-title>
-                      Contribute code or docs to any
-                      <a href="https://github.com/updatecli" target="_blank">Updatecli repository</a>
-                    </v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item>
-                    <template #prepend>
-                      <v-icon color="primary">mdi-heart-outline</v-icon>
-                    </template>
-                    <v-list-item-title>
-                      Spread the word and share the project!
-                    </v-list-item-title>
-                  </v-list-item>
-                </v-list>
-
-                <p>
-                  For more details on contributing, please read our
-                  <a href="https://github.com/updatecli/udash/blob/main/CONTRIBUTING.md" target="_blank">CONTRIBUTING guide</a>.
-                </p>
-              </v-card-text>
-
+            <v-card height="100%" flat class="pa-4 text-center">
+              <v-icon
+                :icon="feature.icon"
+                size="48"
+                color="grey-darken-3"
+                class="mb-4"
+              ></v-icon>
+              <v-card-title class="text-h6 mb-2">{{ feature.title }}</v-card-title>
+              <v-card-text>{{ feature.description }}</v-card-text>
             </v-card>
           </v-col>
         </v-row>
+      </v-container>
 
+      <!-- Quick Start Section -->
+      <v-container class="py-12 bg-grey-lighten-5">
+        <v-row justify="center">
+          <v-col cols="12" lg="8" md="10">
+            <v-card flat class="pa-6">
+              <v-card-title class="text-h4 text-center mb-6">Get Started</v-card-title>
+              
+              <!-- Tabs for different sections -->
+              <v-tabs v-model="activeTab" centered>
+                <v-tab value="quickstart">Quick Start</v-tab>
+                <v-tab value="configure">Configure</v-tab>
+                <v-tab value="contribute">Contribute</v-tab>
+              </v-tabs>
+
+              <v-window v-model="activeTab" class="mt-6">
+                <!-- Quick Start Tab -->
+                <v-window-item value="quickstart">
+                  <div class="text-center py-8">
+                    <v-icon icon="mdi-rocket-launch" size="64" color="grey-darken-3" class="mb-4"></v-icon>
+                    <h3 class="text-h5 mb-4">Ready to start monitoring?</h3>
+                    <p class="mb-6">
+                      Connect your Updatecli instance to Udash in just a few steps
+                    </p>
+                    <v-btn
+                      color="grey-darken-3"
+                      size="large"
+                      @click="activeTab = 'configure'"
+                      append-icon="mdi-arrow-right"
+                    >
+                      View Setup Guide
+                    </v-btn>
+                  </div>
+                </v-window-item>
+
+                <!-- Configure Tab -->
+                <v-window-item value="configure">
+                  <v-expansion-panels variant="accordion">
+                    <v-expansion-panel
+                      v-for="(step, index) in configSteps"
+                      :key="index"
+                      :title="`${index + 1}. ${step.title}`"
+                    >
+                      <v-expansion-panel-text>
+                        <p class="mb-3">{{ step.description }}</p>
+                        <pre>
+                          <v-code class="d-block pa-3 bg-grey-lighten-4">
+                            {{ step.code }}
+                          </v-code>
+                        </pre>
+                      </v-expansion-panel-text>
+                    </v-expansion-panel>
+                  </v-expansion-panels>
+                </v-window-item>
+
+                <!-- Contribute Tab -->
+                <v-window-item value="contribute">
+                  <div class="text-center py-4">
+                    <v-icon icon="mdi-heart" size="48" color="red" class="mb-4"></v-icon>
+                    <h3 class="text-h5 mb-4">Join Our Community</h3>
+                    <p class="mb-6">
+                      Help shape the future of dependency monitoring
+                    </p>
+                    <v-row>
+                      <v-col
+                        v-for="contribute in contributeWays"
+                        :key="contribute.title"
+                        cols="12"
+                        sm="6"
+                        md="4"
+                      >
+                        <v-btn
+                          :href="contribute.link"
+                          target="_blank"
+                          variant="outlined"
+                          :prepend-icon="contribute.icon"
+                          block
+                          class="mb-2"
+                        >
+                          {{ contribute.title }}
+                        </v-btn>
+                      </v-col>
+                    </v-row>
+                  </div>
+                </v-window-item>
+              </v-window>
+            </v-card>
+          </v-col>
+        </v-row>
       </v-container>
     </v-main>
+    
     <ReleaseFooter/>
   </v-app>
 </template>
@@ -332,24 +173,107 @@ export default {
     HeadNavigation,
   },
   data: () => ({
-    isLoading: true,
-    links:[
+    activeTab: 'quickstart',
+    host: window.location.origin,
+    
+    primaryLinks: [
       {
         name: "Dashboard",
         to: "/scm/dashboard",
-        icon: "mdi-arrow-right-circle",
+        icon: "mdi-satellite-variant",
       },
       {
         name: "Reports",
         to: "/pipeline/reports",
-        icon: "mdi-arrow-right-circle",
+        icon: "mdi-book-open-variant",
       },
       {
         name: "Configs",
         to: "/pipeline/configs",
-        icon: "mdi-arrow-right-circle",
+        icon: "mdi-transit-connection-variant",
       },
-  ]
-  }),
+    ],
+    
+    features: [
+      {
+        title: "Dashboard",
+        icon: "mdi-satellite-variant",
+        description: "Visualize update status by Git repository with clear visual overviews."
+      },
+      {
+        title: "Reports",
+        icon: "mdi-book-open-variant",
+        description: "Search pipelines by Git repository and branch for audit or debugging purposes."
+      },
+      {
+        title: "Configs",
+        icon: "mdi-transit-connection-variant", 
+        description: "Filter pipelines based on Updatecli manifests or policies used to trigger them."
+      }
+    ],
+    
+    configSteps: [
+      {
+        title: "Authenticate with Udash",
+        description: "Configure Updatecli to send data to Udash",
+        code: `updatecli udash login "${window.location.origin}" --experimental`
+      },
+      {
+        title: "Login to GitHub Container Registry",
+        description: `Allow Updatecli to pull the latest policies
+        Updatecli relies on Docker credential to retrieve its policies from the GitHub Registry.`,
+        code: "docker login ghcr.io"
+      },
+      {
+        title: "Set GitHub Token",
+        description: "Export your GitHub Personal Access Token",
+        code: 'export GITHUB_TOKEN="your_github_personal_access_token"'
+      },
+      {
+        title: "Create values.yaml",
+        description: "Configure your repository details",
+        code: `
+scm:
+  enabled: true
+  kind: github
+  owner: "your-github-username"
+  repository: "your-repository-name"
+  branch: main`
+      },
+      {
+        title: "Run Updatecli",
+        description: "Execute with the autodiscovery policy",
+        code: "updatecli diff --experimental --values ./values.yaml ghcr.io/updatecli/policies/policies/autodiscovery/all:latest"
+      }
+    ],
+    
+    contributeWays: [
+      {
+        title: "Star on GitHub",
+        icon: "mdi-star",
+        link: "https://github.com/updatecli/udash"
+      },
+      {
+        title: "Report Issues",
+        icon: "mdi-bug",
+        link: "https://github.com/updatecli/udash/issues"
+      },
+      {
+        title: "Contribute Code",
+        icon: "mdi-code-tags",
+        link: "https://github.com/updatecli/udash/blob/main/CONTRIBUTING.md"
+      }
+    ]
+  })
 }
 </script>
+
+<style scoped>
+.hero-section {
+  background: linear-gradient(135deg, rgba(var(--v-theme-grey-darken-3), 0.1) 0%, rgba(var(--v-theme-secondary), 0.1) 100%);
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+</style>
