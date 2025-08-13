@@ -194,7 +194,6 @@
 <script>
 import { toYAML } from '@/composables/yaml'
 import { toLocalDate } from '@/composables/date'
-import { UDASH_API_VERSION } from '@/constants';
 
 export default {
   name: 'ConfigsTable',
@@ -303,7 +302,7 @@ export default {
       this.$emit('loaded', false);
 
       try {
-        let queryURL = `/api/${UDASH_API_VERSION}/pipeline/config/${this.resourceType}s/search`;
+        let queryURL = `/api/pipeline/config/${this.resourceType}s/search`;
         const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
         // Build request body with pagination

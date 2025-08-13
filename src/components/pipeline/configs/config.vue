@@ -161,7 +161,6 @@
 <script>
 import { extractGitURLInfo } from '@/composables/git'
 import { toYAML } from '@/composables/yaml'
-import { UDASH_API_VERSION } from '@/constants'
 import GitRepositorySection from './GitRepositorySection.vue'
 import ReportCard from './ReportCard.vue'
 
@@ -384,7 +383,7 @@ export default {
       this.$emit('loaded', false)
 
       try {
-        const queryURL = `/api/${UDASH_API_VERSION}/pipeline/config/${this.configType}s/search`
+        const queryURL = `/api/pipeline/config/${this.configType}s/search`
         const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true'
 
         const jsonReqBody = { id: this.configID }
@@ -427,7 +426,7 @@ export default {
 
       try {
         const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true'
-        const queryURL = `/api/${UDASH_API_VERSION}/pipeline/reports/search`
+        const queryURL = `/api/pipeline/reports/search`
 
         const jsonReqBody = {}
         const fieldMap = {
