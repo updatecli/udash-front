@@ -154,8 +154,6 @@ import {
   Legend
 } from 'chart.js'
 
-import { UDASH_API_VERSION } from '@/constants';
-
 import router from '../../router'
 
 import SCMDoughnut from './_scmDoughnut.vue'
@@ -242,7 +240,7 @@ export default {
                     params.append('scmid', this.scmid);
                 }
 
-                let query = `/api/${UDASH_API_VERSION}/pipeline/scms?${params.toString()}`;
+                let query = `/api/pipeline/scms?${params.toString()}`;
 
                 let response;
                 if (auth_enabled) {

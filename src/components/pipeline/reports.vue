@@ -67,8 +67,6 @@
 import { getStatusColor, getStatusIcon } from '@/composables/status';
 import { toLocalDate } from '@/composables/date'
 
-import { UDASH_API_VERSION } from '@/constants';
-
 export default {
   name: 'PipelinesTable',
 
@@ -112,7 +110,7 @@ export default {
 
     async getReportsData(page =1 ) {
       this.$emit('loaded', false)
-      let queryURL = `/api/${ UDASH_API_VERSION }/pipeline/reports`
+      let queryURL = `/api/pipeline/reports`
 
       const params = new URLSearchParams();
       if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {

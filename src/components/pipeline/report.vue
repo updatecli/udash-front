@@ -221,8 +221,6 @@ import TargetComponent from './_target.vue';
 
 import { getStatusColor, getStatusIcon } from '@/composables/status';
 
-import { UDASH_API_VERSION } from '@/constants';
-
 export default {
   name: 'PipelineReportView',
 
@@ -321,7 +319,7 @@ export default {
       const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
       if (isAuthEnabled) {
         const token = await this.$auth0.getAccessTokenSilently();
-        const response = await fetch(`/api/${ UDASH_API_VERSION }/pipeline/reports/` + this.$route.params.id, {
+        const response = await fetch(`/api/pipeline/reports/` + this.$route.params.id, {
             headers: {
             Authorization: `Bearer ${token}`
           }
@@ -336,7 +334,7 @@ export default {
           this.isLatestReport()
         }
       } else {
-        const response = await fetch(`/api/${ UDASH_API_VERSION }/pipeline/reports/` + this.$route.params.id);
+        const response = await fetch(`/api/pipeline/reports/` + this.$route.params.id);
         const data = await response.json();
 
         this.pipeline = data.data;
