@@ -4,43 +4,164 @@
     <SideNavigation/>
 
     <v-main>
-      <v-container>
-        <v-row>
-          <v-col
-            class="text-right"
-            cols="auto"
-            lg="8"
-            md="8"
-            sm="12"
-          >
-            <h1>About<v-icon icon="mdi-alien"></v-icon></h1>
+      <v-container class="py-8">
+        <!-- Header Section -->
+        <v-row class="mb-8">
+          <v-col cols="12" class="text-center">
+            <h1 class="text-h3 font-weight-bold mb-4">
+              About Udash
+              <v-icon size="large" color="grey-darken-3" class="ml-2">mdi-alien</v-icon>
+            </h1>
+            <p class="text-h6 text-medium-emphasis">
+              An innovative monitoring platform for your project's dependencies
+            </p>
           </v-col>
         </v-row>
-        <v-row>
-          <v-col
-            class="text-right"
-            cols="auto"
-            lg="8"
-            md="8"
-            sm="12"
-          >
-            <h2>License</h2>
-          </v-col>
-          </v-row>
-        <v-row>
 
-          <v-col>
-            <v-container
-              class="fill-height d-flex justify-center align-center"
-            >
-            <v-card flat >
+        <!-- Project Overview -->
+        <v-row class="mb-8">
+          <v-col cols="12" lg="8" class="mx-auto">
+            <v-card flat class="pa-6">
+              <v-card-title class="text-h5 mb-4">
+                <v-icon class="mr-2">mdi-rocket-launch</v-icon>
+                What is Udash?
+              </v-card-title>
               <v-card-text>
-                <pre class="text-body-1">
-                  {{ license }}
-                </pre>
+                <p class="text-body-1 mb-4">
+                  Udash is a powerful web dashboard designed to work seamlessly with 
+                  <a href="https://updatecli.io" target="_blank" class="text-decoration-none">Updatecli</a>, 
+                  providing comprehensive visibility into your dependency update workflows. 
+                  It transforms raw pipeline data into actionable insights through intuitive visualizations.
+                </p>
+                <v-row>
+                  <v-col cols="12" md="4" class="text-center">
+                    <v-icon size="48" color="grey-darken-3" class="mb-2">mdi-book-open-variant</v-icon>
+                    <h4 class="text-h6">Monitor</h4>
+                    <p class="text-body-2">Track pipeline executions and results</p>
+                  </v-col>
+                  <v-col cols="12" md="4" class="text-center">
+                    <v-icon size="48" color="grey-darken-3" class="mb-2">mdi-satellite-variant</v-icon>
+                    <h4 class="text-h6">Visualize</h4>
+                    <p class="text-body-2">See dependency updates at a glance</p>
+                  </v-col>
+                  <v-col cols="12" md="4" class="text-center">
+                    <v-icon size="48" color="grey-darken-3" class="mb-2">mdi-transit-connection-variant</v-icon>
+                    <h4 class="text-h6">Manage</h4>
+                    <p class="text-body-2">Control and audit your update processes</p>
+                  </v-col>
+                </v-row>
               </v-card-text>
             </v-card>
-            </v-container>
+          </v-col>
+        </v-row>
+
+        <!-- Community Links -->
+        <v-row class="mb-8">
+          <v-col cols="12">
+            <v-card flat class="pa-6">
+              <v-card-title class="text-center mb-4">
+                <v-icon class="mr-2" color="red">mdi-heart</v-icon>
+                Join Our Community
+              </v-card-title>
+              <v-card-text>
+                <v-row class="text-center">
+                  <v-col
+                    v-for="link in communityLinks"
+                    :key="link.name"
+                    cols="6"
+                    md="3"
+                  >
+                    <v-btn
+                      :href="link.url"
+                      target="_blank"
+                      variant="outlined"
+                      :prepend-icon="link.icon"
+                      block
+                      class="mb-2"
+                    >
+                      {{ link.name }}
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <!-- License Section -->
+        <v-row>
+          <v-col cols="12">
+            <v-card flat>
+              <v-card-title class="d-flex align-center justify-space-between">
+                <div class="d-flex align-center">
+                  <v-icon class="mr-2">mdi-scale-balance</v-icon>
+                  License Information
+                </div>
+                <v-chip color="success" variant="tonal">
+                  AGPL v3
+                </v-chip>
+              </v-card-title>
+              
+              <v-card-text>
+                <v-expansion-panels flat variant="accordion">
+                  <v-expansion-panel>
+                    <v-expansion-panel-title>
+                      <div class="d-flex align-center">
+                        <v-icon class="mr-2">mdi-file-document-outline</v-icon>
+                        View Full License Text
+                      </div>
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <div class="license-container">
+                        <pre class="text-body-2">{{ license }}</pre>
+                      </div>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
+                </v-expansion-panels>
+                
+                <div class="mt-4">
+                  <p class="text-body-1 mb-3">
+                    Udash is free and open-source software licensed under the 
+                    <strong>GNU Affero General Public License v3.0</strong>.
+                  </p>
+                  <v-alert
+                    variant="tonal"
+                    class="mb-3"
+                  >
+                    <p class="mb-2">
+                      <strong>What this means:</strong>
+                    </p>
+                    <ul class="ml-4">
+                      <li>✅ You can use, modify, and distribute this software freely</li>
+                      <li>✅ You can use it for commercial purposes</li>
+                      <li>⚠️ If you modify and run it on a server, you must make the source code available</li>
+                      <li>⚠️ Any derivative works must also be licensed under AGPL v3</li>
+                    </ul>
+                  </v-alert>
+                  
+                  <div class="d-flex gap-2">
+                    <v-btn
+                      href="https://www.gnu.org/licenses/agpl-3.0.en.html"
+                      target="_blank"
+                      variant="outlined"
+                      prepend-icon="mdi-open-in-new"
+                      size="small"
+                    >
+                      Read License Summary
+                    </v-btn>
+                    <v-btn
+                      href="https://github.com/updatecli/udash/blob/main/LICENSE"
+                      target="_blank"
+                      variant="outlined"
+                      prepend-icon="mdi-github"
+                      size="small"
+                    >
+                      View on GitHub
+                    </v-btn>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
           </v-col>
         </v-row>
       </v-container>
@@ -56,15 +177,38 @@ import SideNavigation from '../components/SideNavigation.vue';
 import HeadNavigation from '../components/HeadNavigation.vue';
 
 export default {
-  name: 'DashboardView',
+  name: 'AboutView',
   components: {
     ReleaseFooter,
     SideNavigation,
     HeadNavigation,
-},
+  },
+  
   data: () => ({
-    license: `
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+    communityLinks: [
+      {
+        name: 'GitHub',
+        icon: 'mdi-github',
+        url: 'https://github.com/updatecli/updatecli'
+      },
+      {
+        name: 'Chat',
+        icon: 'mdi-chat',
+        url: 'https://matrix.to/#/#Updatecli_community:gitter.im'
+      },
+      {
+        name: 'Documentation',
+        icon: 'mdi-book-open-variant',
+        url: 'https://updatecli.io/'
+      },
+      {
+        name: 'Issues',
+        icon: 'mdi-bug',
+        url: 'https://github.com/updatecli/updatecli/issues'
+      }
+    ],
+    
+    license: `                    GNU AFFERO GENERAL PUBLIC LICENSE
                       Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -725,8 +869,40 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-
-    `,
-}),
+    `
+  }),
 }
 </script>
+
+<style scoped>
+.license-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-surface-variant), 0.3);
+  border: 1px solid rgba(var(--v-theme-outline), 0.2);
+}
+
+.license-container pre {
+  margin: 0;
+  padding: 16px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .license-container {
+    max-height: 250px;
+  }
+  
+  .license-container pre {
+    font-size: 0.7rem;
+    padding: 12px;
+  }
+}
+</style>

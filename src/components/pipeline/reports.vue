@@ -26,8 +26,8 @@
             item-value="name"
             fixed-header
             max-height="600px"
-            :sort-by="sortBy"
           >
+            <!-- Disabling sort-by for now as I find it a bit confusing :sort-by="sortBy"-->
             <template v-slot:item.ID="{ item }">
               <v-btn
                 class="mx-4"
@@ -45,6 +45,17 @@
               {{ toLocalDate(item.UpdatedAt) }}
             </template>
           </v-data-table-virtual>
+
+          <v-pagination
+            v-model="currentPage"
+            :length="Math.ceil(totalItems / itemsPerPage)"
+            :total-visible="7"
+            @update:model-value="onPageChange"
+          ></v-pagination>
+
+          <div class="text-center mt-2">
+            <small>Total: {{ totalItems }} reports</small>
+          </div>
         </v-col>
       </v-row>
     </v-container>
@@ -55,8 +66,6 @@
 
 import { getStatusColor, getStatusIcon } from '@/composables/status';
 import { toLocalDate } from '@/composables/date'
-
-import { UDASH_API_VERSION } from '@/constants';
 
 export default {
   name: 'PipelinesTable',
@@ -83,11 +92,14 @@ export default {
     ],
     pipelines: [],
     itemsPerPage: 25,
+    totalItems: 0,
+    currentPage: 1,
   }),
 
   watch: {
     scmid() {
-        this.getReportsData()
+        this.currentPage = 1;
+        this.getReportsData(1)
     }
   },
 
@@ -96,31 +108,57 @@ export default {
       return toLocalDate(rawDate)
     },
 
-    async getReportsData() {
+    async getReportsData(page =1 ) {
       this.$emit('loaded', false)
-      let queryURL = `/api/${ UDASH_API_VERSION }/pipeline/reports`
+      let queryURL = `/api/pipeline/reports`
 
+      const params = new URLSearchParams();
       if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
-        queryURL = queryURL + `?scmid=${this.scmid}`
+        params.append('scmid', this.scmid);
       }
+
+      params.append('limit', this.itemsPerPage);
+      params.append('page',  this.currentPage);
+
+      queryURL += `?${params.toString()}`;
 
       const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
-      if (isAuthEnabled){
-        const token = await this.$auth0.getAccessTokenSilently();
-        const response = await fetch(queryURL, {
+      try {
+        let response;
+        if (isAuthEnabled) {
+          const token = await this.$auth0.getAccessTokenSilently();
+          response = await fetch(queryURL, {
             headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+              Authorization: `Bearer ${token}`
+            }
+          });
+        } else {
+          response = await fetch(queryURL);
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
-        this.pipelines = data.data
-      } else {
-        const response = await fetch(queryURL);
-        const data = await response.json();
-        this.pipelines = data.data
+
+        // Update both pipelines and total count
+        this.pipelines = data.data || data.reports || []; // Handle different response structures
+        this.totalItems = data.total_count || 0;
+        this.currentPage = page;
+
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+        this.pipelines = [];
+        this.totalItems = 0;
       }
+
       this.$emit('loaded', true)
+
+    },
+    onPageChange(page) {
+      this.getReportsData(page);
     },
     getPipelineLink: function(id){
       return `/pipeline/reports/${id}`
@@ -135,7 +173,7 @@ export default {
 
   async created() {
     try {
-      this.getReportsData()
+      this.getReportsData(1)
     } catch (error) {
       console.log(error);
     }
