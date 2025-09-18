@@ -5,7 +5,7 @@
 
     <v-main>
       <!-- Hero Section -->
-      <v-container class="hero-section py-16">
+      <v-container class="hero-section">
         <v-row align="center" justify="center">
           <v-col cols="12" lg="8" md="10" class="text-center">
             <h1 class="display-2 font-weight-bold mb-4">
@@ -14,35 +14,12 @@
             <p class="text-h6 mb-8 text-medium-emphasis">
               An innovative monitoring platform for your project's dependencies
             </p>
-            <div class="d-flex flex-wrap justify-center gap-4 mb-8">
-              <v-btn
-                v-for="link in primaryLinks"
-                :key="link.name"
-                :to="link.to"
-                :prepend-icon="link.icon"
-                color="grey-darken-3"
-                variant="elevated"
-                size="large"
-                class="mx-2"
-              >
-                {{ link.name }}
-              </v-btn>
-            </div>
           </v-col>
         </v-row>
       </v-container>
 
       <!-- Features Section -->
       <v-container class="py-12">
-        <v-row>
-          <v-col cols="12" class="text-center mb-8">
-            <h2 class="text-h4 font-weight-bold mb-4">What Udash Can Do</h2>
-            <p class="text-h6 text-medium-emphasis">
-              Get visibility into dependency updates with three key capabilities
-            </p>
-          </v-col>
-        </v-row>
-        
         <v-row>
           <v-col
             v-for="feature in features"
@@ -51,16 +28,18 @@
             md="4"
             class="mb-6"
           >
-            <v-card height="100%" flat class="pa-4 text-center">
-              <v-icon
-                :icon="feature.icon"
-                size="48"
-                color="grey-darken-3"
-                class="mb-4"
-              ></v-icon>
-              <v-card-title class="text-h6 mb-2">{{ feature.title }}</v-card-title>
-              <v-card-text>{{ feature.description }}</v-card-text>
-            </v-card>
+            <router-link :to="feature.to" style="text-decoration: none; color: inherit;">
+              <v-card height="100%" flat class="pa-4 text-center" hover>
+                <v-icon
+                  :icon="feature.icon"
+                  size="48"
+                  color="grey-darken-3"
+                  class="mb-4"
+                ></v-icon>
+                <v-card-title class="text-h6 mb-2">{{ feature.title }}</v-card-title>
+                <v-card-text>{{ feature.description }}</v-card-text>
+              </v-card>
+            </router-link>
           </v-col>
         </v-row>
       </v-container>
@@ -86,7 +65,7 @@
                     <v-icon icon="mdi-rocket-launch" size="64" color="grey-darken-3" class="mb-4"></v-icon>
                     <h3 class="text-h5 mb-4">Ready to start monitoring?</h3>
                     <p class="mb-6">
-                      Connect your Updatecli instance to Udash in just a few steps
+                      Connect your Updatecli runner to Udash in just a few steps
                     </p>
                     <v-btn
                       color="grey-darken-3"
@@ -176,39 +155,24 @@ export default {
     activeTab: 'quickstart',
     host: window.location.origin,
     
-    primaryLinks: [
-      {
-        name: "Dashboard",
-        to: "/scm/dashboard",
-        icon: "mdi-satellite-variant",
-      },
-      {
-        name: "Reports",
-        to: "/pipeline/reports",
-        icon: "mdi-book-open-variant",
-      },
-      {
-        name: "Configs",
-        to: "/pipeline/configs",
-        icon: "mdi-transit-connection-variant",
-      },
-    ],
-    
     features: [
       {
         title: "Dashboard",
-        icon: "mdi-satellite-variant",
-        description: "Visualize update status by Git repository with clear visual overviews."
+        icon: "mdi-view-dashboard",
+        description: "Visualize update status by Git repository with clear visual overviews.",
+        to: "/scm/dashboard"
       },
       {
         title: "Reports",
         icon: "mdi-book-open-variant",
-        description: "Search pipelines by Git repository and branch for audit or debugging purposes."
+        description: "Search pipelines by Git repository and branch for audit or debugging purposes.",
+        to: "/pipeline/reports"
       },
       {
         title: "Configs",
         icon: "mdi-transit-connection-variant", 
-        description: "Filter pipelines based on Updatecli manifests or policies used to trigger them."
+        description: "Filter pipelines based on Updatecli manifests or policies used to trigger them.",
+        to: "/pipeline/configs"
       }
     ],
     
@@ -220,7 +184,7 @@ export default {
       },
       {
         title: "Login to GitHub Container Registry",
-        description: `Allow Updatecli to pull the latest policies
+        description: `Allow Updatecli to retrieve policies. 
         Updatecli relies on Docker credential to retrieve its policies from the GitHub Registry.`,
         code: "docker login ghcr.io"
       },
