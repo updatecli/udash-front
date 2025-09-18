@@ -44,6 +44,23 @@
             <template v-slot:item.UpdatedAt="{ item }">
               {{ toLocalDate(item.UpdatedAt) }}
             </template>
+            <template v-slot:item.Action="{ item }">
+              <div v-for="(actionURL, index) in getActionsURL(item)" :key="index">
+                <v-tooltip :text="getActionTooltipText(actionURL)">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      class="mx-4"
+                      variant="text"
+                      :prepend-icon="getActionProviderIcon(actionURL.url)"
+                      :href="actionURL.url"
+                      target="_blank"
+                      rel="noopener"
+                      v-bind="props"
+                    ></v-btn>
+                  </template>
+                </v-tooltip>
+              </div>
+            </template>
           </v-data-table-virtual>
 
           <v-pagination
@@ -65,6 +82,7 @@
 <script>
 
 import { getStatusColor, getStatusIcon } from '@/composables/status';
+import { extractGitURLInfo } from '@/composables/git'
 import { toLocalDate } from '@/composables/date'
 
 export default {
@@ -80,15 +98,16 @@ export default {
       order: 'desc'
     }],
     pipelinesHeaders: [
-      { title: "State", align: "start", key:'Result'},
-      { title: "Time", key:'UpdatedAt'},
+      { title: "State", align: "start", key:'Result', width: '80px'},
+      { title: "Time", key:'UpdatedAt', width: '200px'},
+      { title: "Action", key: 'Action', align:'start', width: '200px'},
       {
         title: "Name",
         align: 'start',
         sortable: true,
         key: 'Name'
       },
-      { key: 'ID', sortable: false}
+      { key: 'ID', sortable: false, width:'80px' },
     ],
     pipelines: [],
     itemsPerPage: 25,
@@ -106,6 +125,34 @@ export default {
   methods: {
     toLocalDate (rawDate) {
       return toLocalDate(rawDate)
+    },
+
+    getActionProviderIcon(url) {
+      const info = extractGitURLInfo(url)
+      const icons = {
+        'github': 'mdi-github',
+        'gitlab': 'mdi-gitlab',
+        'bitbucket': 'mdi-bitbucket'
+      }
+      return icons[info?.provider] || 'mdi-git'
+    },
+
+    getActionTooltipText(action) {
+      return `${action.title} - Open ${action.url}`
+    },
+
+    getActionsURL(pipeline){
+      let actionURLs = []
+      if (pipeline.Report.Actions) {
+
+        for (const [action] of Object.entries(pipeline.Report.Actions)) {
+          const actionURL = pipeline.Report.Actions[action].actionUrl
+          if (actionURL) {
+            actionURLs.push({"url": actionURL, title: pipeline.Report.Actions[action].title} )
+          }
+        }
+      }
+      return actionURLs
     },
 
     async getReportsData(page =1 ) {

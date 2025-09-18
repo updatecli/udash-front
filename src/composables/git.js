@@ -1,7 +1,7 @@
 // Extracts information from a Git repository URL
 // Supports GitHub, GitLab, Gitea, and Bitbucket URLs
 export function extractGitURLInfo(url) {
-      const regex = /^(?:https?:\/\/|git@)(github\.com|gitlab\.com|gitea\.com|bitbucket\.org)[/:]([^/]+)\/([^/.]+)(?:\.git)?$/i;
+      const regex = /^(?:https?:\/\/|git@)(github\.com|gitlab\.com|gitea\.com|bitbucket\.org)[/:]([^/]+)\/([^/.]+)(?:\.git)?(?:\/.*)?$/i;
 
       const match = url.match(regex);
       if (match) {
