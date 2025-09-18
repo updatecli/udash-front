@@ -42,7 +42,7 @@
             to="/pipeline/configs"
             value="configs"></v-list-item>
           <v-list-item
-            prepend-icon="mdi-alien"
+            prepend-icon="mdi-information"
             v-if="isAuthenticated"
             title="About"
             to="/about"

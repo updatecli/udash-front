@@ -10,7 +10,7 @@
           <v-col cols="12" class="text-center">
             <h1 class="text-h3 font-weight-bold mb-4">
               About Udash
-              <v-icon size="large" color="grey-darken-3" class="ml-2">mdi-alien</v-icon>
+              <v-icon size="large" color="grey-darken-3" class="ml-2">mdi-information</v-icon>
             </h1>
             <p class="text-h6 text-medium-emphasis">
               An innovative monitoring platform for your project's dependencies
