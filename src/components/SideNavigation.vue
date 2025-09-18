@@ -31,8 +31,8 @@
             value="reports"></v-list-item>
           <v-list-item
             v-if="isAuthenticated"
-            prepend-icon="mdi-satellite-variant"
-            title="SCM"
+            prepend-icon="mdi-view-dashboard"
+            title="Dashboard"
             to="/scm/dashboard"
             value="scmSummary"></v-list-item>
           <v-list-item

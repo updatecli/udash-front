@@ -31,7 +31,7 @@
             md="8"
             sm="12"
           >
-            <h1>SCM <v-icon icon="mdi-satellite-variant"> </v-icon></h1>
+            <h1>Git Dashboard<v-icon icon="mdi-view-dashboard"> </v-icon></h1>
           </v-col>
         </v-row>
         <v-row>
@@ -91,7 +91,7 @@ export default {
       {
         name: "Reports",
         to: "/pipeline/reports",
-        icon: "mdi-satellite-variant",
+        icon: "mdi-view-dashboard",
       },
     ]
   }),
