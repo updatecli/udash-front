@@ -1,146 +1,180 @@
 <template>
     <v-container>
-        <v-expansion-panels
-            multiple
-            flat
-            tile
-            v-model="localExpandedSummary"
-        >
-            <v-expansion-panel
+        <!-- SCM Cards Layout -->
+        <v-row>
+            <v-col
                 v-for="(scmData, url) in data"
                 :key="url"
-                :hide-actions="false"
-
+                cols="12"
+                md="6"
+                lg="4"
+                class="mb-4"
             >
-                <v-expansion-panel-title
+                <v-card
+                    flat
+                    variant="flat"
+                    class="h-100"
                 >
-                    <v-toolbar
-                        density="compact"
-                        class="text-white"
-                    >
-                        <v-toolbar-title
-                            class="flex text-center"
-                        >
-                            <v-icon>{{ getGitIcon(url) }}</v-icon>{{  sanitizeURL(url) }}
-                        </v-toolbar-title>
-                    </v-toolbar>
-                </v-expansion-panel-title>
-                <v-expansion-panel-text>
-                    <v-card
-                        variant="flat"
-                    >
-                        <v-card-text>
-                            <v-timeline
-                                density="compact"
-                                align="start"
-                                justify="center"
-                                direction="vertical"
-                                line-thickness="2"
-                                line-color="grey-darken-3"
-                            >
-                                <v-timeline-item
-                                    v-for="(branchData, branch) in scmData"
-                                    :key="branch"
-                                    dot-color="grey-darken-3"
-                                    icon-color="white"
-                                    fill-dot
-                                    icon="mdi-source-branch"
-                                >
-                                    <v-card
-                                        min-width="300"
-                                        flat
-                                    >
-                                        <v-card-title
-                                            variant="flat"
-                                        >
-                                            <v-toolbar
-                                                density="compact"
-                                                class="text-white"
-                                                variant="text"
-                                                flat
-                                            >
-                                                <v-toolbar-title
-                                                    class="flex text-center"
-                                                >
-                                                    {{  branch  }}
-                                                </v-toolbar-title>
+                    <!-- SCM Header -->
+                    <v-card-title class="d-flex align-center pa-4">
+                        <v-icon class="mr-2">{{ getGitIcon(url) }}</v-icon>
+                        <span class="text-truncate">{{ sanitizeURL(url) }}</span>
+                    </v-card-title>
 
-                                                <v-btn
-                                                    class="text-right"
-                                                    justify-center
-                                                    v-if="!hideButton"
-                                                    :to="`/pipeline/reports?scmid=${branchData.id}`"
-                                                    icon="mdi-arrow-right-circle"
-                                                    slim
-                                                    density="compact"
+                    <v-divider></v-divider>
+
+                    <!-- Branches List -->
+                    <v-card-text class="pa-0">
+                        <div
+                            v-for="(branchData, branch) in scmData"
+                            :key="branch"
+                            class="branch-item"
+                        >
+                            <router-link
+                                v-if="!hideButton"
+                                :to="`/pipeline/reports?scmid=${branchData.id}`"
+                                style="text-decoration: none; color: inherit;"
+                            >
+                                <div class="clickable-branch">
+                                    <div class="d-flex align-center pa-4">
+                                        <div class="branch-info flex-grow-1">
+                                            <div class="d-flex align-center mb-2">
+                                                <v-icon
+                                                    size="small"
+                                                    class="mr-2"
+                                                    color="grey-darken-1"
                                                 >
-                                                </v-btn>
-                                            </v-toolbar>
-                                        </v-card-title>
-                                        <v-card-text
-                                            variant="outlined"
-                                            class="text-center"
-                                        >
+                                                    mdi-source-branch
+                                                </v-icon>
+                                                <div class="flex-grow-1">
+                                                    <div class="font-weight-medium">{{ branch }}</div>
+                                                    <div class="text-caption text-grey-darken-1">
+                                                        {{ branchData.total_result || 0 }} reports
+                                                    </div>
+                                                </div>
+                                                <!-- Visual indicator that it's clickable -->
+                                                <v-icon
+                                                    size="small"
+                                                    color="grey-lighten-1"
+                                                >
+                                                    mdi-chevron-right
+                                                </v-icon>
+                                            </div>
+
+                                            <!-- Status Summary -->
+                                            <div class="status-summary">
+                                                <v-chip
+                                                    v-for="(count, status) in branchData.total_result_by_type"
+                                                    :key="status"
+                                                    :color="getStatusColor(status)"
+                                                    size="x-small"
+                                                    class="mr-1 mb-1"
+                                                >
+                                                    {{ status }} {{ count }}
+                                                </v-chip>
+                                            </div>
+                                        </div>
+
+                                        <!-- Mini Doughnut Chart -->
+                                        <div class="chart-container">
                                             <SCMDoughnut
                                                 :chartData="getDoughnutData(url, branch)"
-                                                :chartOptions="doughnutOptions"
+                                                :chartOptions="miniDoughnutOptions"
                                                 :centerText="branchData.total_result"
+                                                size="small"
                                             />
-                                        </v-card-text>
-                                    </v-card>
-                                </v-timeline-item>
-                            </v-timeline>
-                        </v-card-text>
-                        <v-divider></v-divider>
-                    </v-card>
-                </v-expansion-panel-text>
-            </v-expansion-panel>
-        <!-- Floating bottom indicator with pulse animation -->
-        <v-fab
-            v-if="hasMoreData && !isLoading"
-            class="scroll-indicator"
-            color="grey-darken-3"
-            size="small"
-            location="bottom center"
-            @click="loadMoreData"
-        >
-            <v-icon class="pulse-animation">mdi-chevron-down</v-icon>
-        </v-fab>
+                                        </div>
+                                    </div>
+                                </div>
+                            </router-link>
 
-        <!-- Data summary -->
-        <div v-if="totalCount > 1" class="text-center pa-2">
-            <v-chip variant="outlined" size="small">
-                {{ Object.keys(data).length }} of {{ totalCount }} SCMs
-            </v-chip>
-        </div>
-        </v-expansion-panels>
+                            <!-- Non-clickable version for when hideButton is true -->
+                            <div v-else class="non-clickable-branch">
+                                <div class="d-flex align-center pa-4">
+                                    <div class="branch-info flex-grow-1">
+                                        <div class="d-flex align-center mb-2">
+                                            <v-icon
+                                                size="small"
+                                                class="mr-2"
+                                                color="grey-darken-1"
+                                            >
+                                                mdi-source-branch
+                                            </v-icon>
+                                            <div class="flex-grow-1">
+                                                <div class="font-weight-medium">{{ branch }}</div>
+                                                <div class="text-caption text-grey-darken-1">
+                                                    {{ branchData.total_result || 0 }} reports
+                                                </div>
+                                            </div>
+                                        </div>
 
-        <!-- Progress indicator -->
-        <v-card v-if="totalCount > 1" variant="flat" class="mt-4 v-col-6 offset-3">
-            <v-card-text>
-                <div class="d-flex align-center justify-space-between mb-2">
-                    <span class="text-body-2">Loading Progress</span>
-                    <span class="text-body-2">{{ Object.keys(data).length }} / {{ totalCount }}</span>
-                </div>
-                <v-progress-linear
-                    :model-value="(Object.keys(data).length / totalCount) * 100"
-                    color="grey-darken-3"
-                    height="8"
-                ></v-progress-linear>
+                                        <!-- Status Summary -->
+                                        <div class="status-summary">
+                                            <v-chip
+                                                v-for="(count, status) in branchData.total_result_by_type"
+                                                :key="status"
+                                                :color="getStatusColor(status)"
+                                                size="x-small"
+                                                class="mr-1 mb-1"
+                                            >
+                                                {{ status }} {{ count }}
+                                            </v-chip>
+                                        </div>
+                                    </div>
 
-                <div v-if="hasMoreData" class="text-center mt-3">
-                    <v-btn
-                        v-if="!isLoading"
-                        color="grey-darken-3"
-                        variant="text"
-                        @click="loadMoreData"
-                        append-icon="mdi-chevron-down"
-                    >
-                        Load More
-                    </v-btn>
-                </div>
-            </v-card-text>
-        </v-card>
+                                    <!-- Mini Doughnut Chart -->
+                                    <div class="chart-container">
+                                        <SCMDoughnut
+                                            :chartData="getDoughnutData(url, branch)"
+                                            :chartOptions="miniDoughnutOptions"
+                                            :centerText="branchData.total_result"
+                                            size="small"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <v-divider
+                                v-if="Object.keys(scmData).indexOf(branch) < Object.keys(scmData).length - 1"
+                            ></v-divider>
+                        </div>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <!-- Loading and Pagination Controls -->
+        <v-row v-if="totalCount > 1" justify="center">
+            <v-col cols="12" md="6">
+                <v-card variant="flat" class="text-center">
+                    <v-card-text>
+                        <div class="mb-3">
+                            <v-chip variant="outlined" size="small">
+                                {{ Object.keys(data).length }} of {{ totalCount }} SCMs
+                            </v-chip>
+                        </div>
+
+                        <v-progress-linear
+                            :model-value="(Object.keys(data).length / totalCount) * 100"
+                            color="grey-darken-3"
+                            height="6"
+                            rounded
+                            class="mb-3"
+                        ></v-progress-linear>
+
+                        <v-btn
+                            v-if="hasMoreData && !isLoading"
+                            color="grey-darken-3"
+                            variant="outlined"
+                            @click="loadMoreData"
+                            :loading="isLoading"
+                        >
+                            Load More
+                        </v-btn>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
     </v-container>
 </template>
 
@@ -174,17 +208,24 @@ export default {
             type: Boolean,
             default: false
         },
-        expandedSummary: {
-            type: Array,
-            default: () => [],
-        }
     },
     data: () => ({
         data: {},
-        localExpandedSummary: [],
         doughnutData: {},
         doughnutOptions: {
             responsive: true,
+        },
+        miniDoughnutOptions: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: true
+                }
+            }
         },
         currentPage: 1,
         itemsPerPage: 1,
@@ -193,16 +234,6 @@ export default {
         hasMoreData: true,
         loadedPages: new Set(),
     }),
-
-    watch: {
-      scmid () {
-        this.resetPagination();
-        this.getSummaryData(1,true);
-      },
-      expandedSummary(newVal) {
-        this.localExpandedSummary = newVal;
-      },
-  },
 
     methods: {
         resetPagination() {
@@ -270,12 +301,9 @@ export default {
                 if (reset) {
                     // Reset data for new search
                     this.data = scmData;
-                    this.localExpandedSummary = Object.keys(scmData);
                 } else {
                     // Merge new data with existing data
                     this.data = { ...this.data, ...scmData };
-                    const newKeys = Object.keys(this.data);
-                    this.localExpandedSummary = [...new Set([...this.localExpandedSummary, ...newKeys])];
                 }
 
                 // Mark this page as loaded
@@ -433,6 +461,16 @@ export default {
                 }
             }
         },
+
+        getStatusColor(status) {
+            switch(status) {
+                case '✔': return 'success';
+                case '⚠': return 'warning';
+                case '✗': return 'error';
+                case '-': return 'grey';
+                default: return 'purple';
+            }
+        }
     },
     async created() {
         try {
@@ -454,31 +492,41 @@ export default {
 </script>
 
 <style scoped>
-.scroll-indicator {
-    position: fixed !important;
-    bottom: 150px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+.branch-item {
+    transition: background-color 0.2s ease;
 }
 
-.pulse-animation {
-    animation: pulse 2s infinite;
+.branch-item:hover {
+    background-color: rgba(0, 0, 0, 0.02);
 }
 
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        opacity: 1;
+.chart-container {
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+}
+
+/* Medium screens and up */
+@media (min-width: 768px) {
+    .chart-container {
+        width: 150px;
+        height: 150px;
     }
-    50% {
-        transform: scale(1.1);
-        opacity: 0.7;
+}
+
+/* Large screens and up */
+@media (min-width: 1024px) {
+    .chart-container {
+        width: 200px;
+        height: 140px;
     }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
+}
+
+.status-summary {
+    max-width: 200px;
+}
+
+.branch-info {
+    min-width: 0; /* Allows text-truncate to work in flex */
 }
 </style>
