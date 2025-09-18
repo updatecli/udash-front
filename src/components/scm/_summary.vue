@@ -108,7 +108,7 @@
         </v-fab>
 
         <!-- Data summary -->
-        <div v-if="totalCount > 0" class="text-center pa-2">
+        <div v-if="totalCount > 1" class="text-center pa-2">
             <v-chip variant="outlined" size="small">
                 {{ Object.keys(data).length }} of {{ totalCount }} SCMs
             </v-chip>
@@ -116,7 +116,7 @@
         </v-expansion-panels>
 
         <!-- Progress indicator -->
-        <v-card v-if="totalCount > 0" variant="flat" class="mt-4 v-col-6 offset-3">
+        <v-card v-if="totalCount > 1" variant="flat" class="mt-4 v-col-6 offset-3">
             <v-card-text>
                 <div class="d-flex align-center justify-space-between mb-2">
                     <span class="text-body-2">Loading Progress</span>
