@@ -210,6 +210,23 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <v-row>
+      <v-col
+        cols="auto"
+        lg="12"
+        md="12"
+        sm="12"
+        class="text-center"
+      >
+          <v-card
+            variant="flat"
+            v-if="pipeline.Pipeline.Graph"
+          >
+              <PipelineGraphComponent :data="pipeline.Pipeline.Graph" />
+          </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -218,6 +235,7 @@ import ActionComponent from './_action.vue';
 import SourceComponent from './_source.vue';
 import ConditionComponent from './_condition.vue';
 import TargetComponent from './_target.vue';
+import PipelineGraphComponent from './_graph.vue';
 
 import { getStatusColor, getStatusIcon } from '@/composables/status';
 
@@ -229,6 +247,7 @@ export default {
     SourceComponent,
     ConditionComponent,
     TargetComponent,
+    PipelineGraphComponent,
   },
 
   data: () => ({
