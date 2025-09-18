@@ -41,8 +41,7 @@
       />
       <PipelineSCMSummary
         v-if="isFilterLoaded"
-        :hideButton=true
-        :expanded-summary="[0]"
+        :hideButton=false
         :scmid="scmid"
         @update-scmid="updateSCMID"
         @loaded="setSummaryLoaded"
