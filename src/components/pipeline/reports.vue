@@ -11,6 +11,44 @@
       <v-row>
         <v-col
             cols="auto"
+            lg="6"
+            md="6"
+            sm="12"
+            v-if="actionURLs && actionURLs.length > 0"
+          >
+          <h2 class="text-h5 font-weight-medium mb-2">
+            Actions
+          </h2>
+          <p class="text-body-1">
+            Actions to follow up.
+          </p>
+          <div>
+            <v-list>
+              <v-list-item
+                v-for="(action, index) in actionURLs"
+                :key="index"
+              >
+                <v-list-item-content>
+                  <v-list-item-title>
+                    <v-btn
+                      variant="text"
+                      :prepend-icon="getActionProviderIcon(action.url)"
+                      :href="action.url"
+                      target="_blank"
+                      rel="noopener"
+                    >{{ action.title }}</v-btn>
+
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </div>
+        </v-col>
+      </v-row>
+
+      <v-row>
+        <v-col
+            cols="auto"
             lg="12"
             md="12"
             sm="12"
@@ -93,6 +131,7 @@ export default {
   },
 
   data: () => ({
+    actionURLs: {},
     sortBy: [{
       key: 'UpdatedAt',
       order: 'desc'
@@ -154,6 +193,21 @@ export default {
       }
       return actionURLs
     },
+    getPipelinesActionsURL(){
+      let localActionURLs = []
+      this.pipelines.forEach(pipeline => {
+        if (pipeline.Report && pipeline.Report.Actions) {
+          for (const [action] of Object.entries(pipeline.Report.Actions)) {
+            const actionURL = pipeline.Report.Actions[action].actionUrl
+            if (actionURL) {
+              localActionURLs.push({"url": actionURL, title: pipeline.Report.Actions[action].title} )
+            }
+          }
+        }
+      });
+
+      this.actionURLs = localActionURLs
+    },
 
     async getReportsData(page =1 ) {
       this.$emit('loaded', false)
@@ -192,6 +246,7 @@ export default {
 
         // Update both pipelines and total count
         this.pipelines = data.data || data.reports || []; // Handle different response structures
+        this.getPipelinesActionsURL()
         this.totalItems = data.total_count || 0;
         this.currentPage = page;
 
