@@ -40,7 +40,7 @@
                     <p class="text-body-2">Track pipeline executions and results</p>
                   </v-col>
                   <v-col cols="12" md="4" class="text-center">
-                    <v-icon size="48" color="grey-darken-3" class="mb-2">mdi-satellite-variant</v-icon>
+                    <v-icon size="48" color="grey-darken-3" class="mb-2">mdi-view-dashboard</v-icon>
                     <h4 class="text-h6">Visualize</h4>
                     <p class="text-body-2">See dependency updates at a glance</p>
                   </v-col>
