@@ -27,3 +27,14 @@ export function getStatusIcon(status){
           return "mdi-help-circle"
       }
 }
+
+export function getStatusText(input){
+      const statusMap = {
+        '✔': 'Success',
+        '✗': 'Failed',
+        '⚠': 'Warning',
+        '-': 'Skipped',
+        '?': 'Unknown'
+      };
+      return statusMap[input] || input || 'Unknown';
+}
