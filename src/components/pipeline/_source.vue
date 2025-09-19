@@ -59,15 +59,15 @@
         </v-card>
     </v-container>
 
-    <ChangelogComponent
-        v-if="data.Changelogs"
-        :data="data.Changelogs"
-    ></ChangelogComponent>
-
     <ConsoleOutputComponent
         v-if="data.ConsoleOutput"
         :data="data.ConsoleOutput"
     ></ConsoleOutputComponent>
+
+    <ChangelogComponent
+        v-if="data.Changelogs"
+        :data="data.Changelogs"
+    ></ChangelogComponent>
 
 </template>
 
