@@ -34,25 +34,125 @@
           </v-col>
         </v-row>
       </v-container>
-      <PipelineSCMFilter
-        :scmid="scmid"
-        @update-scmid="updateSCMID"
-        @loaded="setFilterLoaded"
-      />
-      <PipelineSCMSummary
-        v-if="isFilterLoaded"
-        :hideButton=false
-        :scmid="scmid"
-        @update-scmid="updateSCMID"
-        @loaded="setSummaryLoaded"
-        class="align-center justify-center"
-      />
-      <PipelineReports
-        v-if="isFilterLoaded"
-        :scmid="scmid"
-        @update-scmid="updateSCMID"
-        @loaded="setReportsLoaded"
-      />
+      <v-container>
+        <v-row>
+          <v-col
+            cols="auto"
+            lg="12"
+            md="12"
+            sm="12"
+          >
+            <!-- Add explanatory header for filter -->
+            <div class="mb-3">
+              <h3 class="text-h6 d-flex align-items-center">
+                Filter Reports
+                <v-tooltip text="Search and filter pipeline reports by repository, branch, or status. Use the dropdown to select specific repositories or search by keywords.">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-bind="props"
+                      size="small"
+                      class="ml-2"
+                      color="grey-darken-1"
+                    >
+                      mdi-information-outline
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+              </h3>
+              <p class="text-caption text-grey-darken-1 mb-0">
+                Search repositories, branches, or filter by status
+              </p>
+            </div>
+
+            <PipelineSCMFilter
+              :scmid="scmid"
+              @update-scmid="updateSCMID"
+              @loaded="setFilterLoaded"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col
+            cols="auto"
+            lg="3"
+            md="3"
+            sm="12"
+          >
+            <!-- Add explanatory header -->
+            <div class="mb-3">
+              <h3 class="text-h6 d-flex align-items-center">
+                Latest Status Overview
+                <v-tooltip text="Shows the status summary from the most recent pipeline reports for the current repository branch">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-bind="props"
+                      size="small"
+                      class="ml-2"
+                      color="grey-darken-1"
+                    >
+                      mdi-information-outline
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+              </h3>
+              <p class="text-caption text-grey-darken-1 mb-0">
+                Current status from latest pipeline runs
+              </p>
+            </div>
+
+            <PipelineSCMSummary
+              v-if="isFilterLoaded"
+              :hideButton=true
+              :scmid="scmid"
+              :fullWidth=true
+              :disableLinks=true
+              :hideRepositoryTitle=true
+              @update-scmid="updateSCMID"
+              @loaded="setSummaryLoaded"
+              class="align-center justify-center"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col
+            cols="auto"
+            lg="12"
+            md="12"
+            sm="12"
+          >
+            <!-- Add explanatory header for pipeline reports -->
+            <div class="mb-3">
+              <h3 class="text-h6 d-flex align-items-center">
+                Detailed Reports
+                <v-tooltip text="Complete list of pipeline reports with detailed information including timestamps, status, and actions. Click on any report to view its configuration or access related resources like pull requests.">
+                  <template v-slot:activator="{ props }">
+                    <v-icon
+                      v-bind="props"
+                      size="small"
+                      class="ml-2"
+                      color="grey-darken-1"
+                    >
+                      mdi-information-outline
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+              </h3>
+              <p class="text-caption text-grey-darken-1 mb-0">
+                Historical pipeline execution data with full details
+              </p>
+            </div>
+
+            <PipelineReports
+              v-if="isFilterLoaded"
+              :scmid="scmid"
+              @update-scmid="updateSCMID"
+              @loaded="setReportsLoaded"
+            />
+          </v-col>
+        </v-row>
+
+      </v-container>
+
     </v-main>
 
     <ReleaseFooter/>
