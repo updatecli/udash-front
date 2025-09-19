@@ -3,11 +3,7 @@
       class="py-8 px-6"
       fluid
   >
-    <!-- Show Project Description -->
     <v-container>
-      <!--
-        Show Project application in a table
-      -->
       <v-row>
         <v-col
             cols="auto"
@@ -16,33 +12,72 @@
             sm="12"
             v-if="actionURLs && actionURLs.length > 0"
           >
-          <h2 class="text-h5 font-weight-medium mb-2">
-            Actions
-          </h2>
-          <p class="text-body-1">
-            Actions to follow up.
-          </p>
-          <div>
-            <v-list>
-              <v-list-item
-                v-for="(action, index) in actionURLs"
-                :key="index"
-              >
-                <v-list-item-content>
-                  <v-list-item-title>
-                    <v-btn
-                      variant="text"
-                      :prepend-icon="getActionProviderIcon(action.url)"
-                      :href="action.url"
-                      target="_blank"
-                      rel="noopener"
-                    >{{ action.title }}</v-btn>
-
-                  </v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list>
+          <div class="mb-3">
+            <h4 class="d-flex align-items-center mb-2">
+              Quick Actions
+              <v-tooltip text="Actions extracted from your pipeline reports that may require follow-up, such as pull requests.">
+                <template v-slot:activator="{ props }">
+                  <v-icon
+                    v-bind="props"
+                    size="small"
+                    class="ml-2"
+                    color="grey-darken-1"
+                  >
+                    mdi-information-outline
+                  </v-icon>
+                </template>
+              </v-tooltip>
+            </h4>
+            <p class="text-caption text-grey-darken-1 mb-0">
+              {{ actionURLs.length }} action{{ actionURLs.length !== 1 ? 's' : '' }} found across your pipeline reports
+            </p>
           </div>
+
+          <!-- Enhanced Actions Card -->
+          <v-card flat class="mb-4 action-summary-card">
+            <v-card-text class="pa-0">
+              <v-list density="compact" class="py-0">
+                <v-list-item
+                  v-for="(action, index) in actionURLs"
+                  :key="index"
+                  :href="action.url"
+                  target="_blank"
+                  rel="noopener"
+                  class="action-list-item"
+                >
+                  <template v-slot:prepend>
+                    <v-avatar size="32" class="mr-3">
+                      <v-icon
+                        :color="getProviderColor(action.url)"
+                        size="18"
+                      >
+                        {{ getActionProviderIcon(action.url) }}
+                      </v-icon>
+                    </v-avatar>
+                  </template>
+
+                  <v-list-item-title class="text-body-2 font-weight-medium">
+                    {{ action.title }}
+                  </v-list-item-title>
+
+                  <v-list-item-subtitle class="text-caption">
+                    {{ getProviderName(action.url) }}
+                  </v-list-item-subtitle>
+
+                  <template v-slot:append>
+                    <v-icon size="small" color="grey-lighten-1">
+                      mdi-open-in-new
+                    </v-icon>
+                  </template>
+
+                  <!-- Add divider except for last item -->
+                  <template v-if="index < actionURLs.length - 1">
+                    <v-divider class="my-2"></v-divider>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
         </v-col>
       </v-row>
 
@@ -53,9 +88,15 @@
             md="12"
             sm="12"
           >
-
-          <!-- <SCMSummary :scmid="scmid"/>-->
-
+          <!-- Add header for reports table -->
+          <div class="mb-3">
+            <h4 class="d-flex align-items-center mb-2">
+              Pipeline Reports
+            </h4>
+            <p class="text-caption text-grey-darken-1 mb-0">
+              Detailed execution history and status information
+            </p>
+          </div>
 
           <v-data-table-virtual
             v-model:items-per-page="itemsPerPage"
@@ -65,7 +106,7 @@
             fixed-header
             max-height="600px"
           >
-            <!-- Disabling sort-by for now as I find it a bit confusing :sort-by="sortBy"-->
+            <!-- Your existing table templates -->
             <template v-slot:item.ID="{ item }">
               <v-btn
                 class="mx-4"
@@ -118,7 +159,6 @@
 </template>
 
 <script>
-
 import { getStatusColor, getStatusIcon } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git'
 import { toLocalDate } from '@/composables/date'
@@ -131,7 +171,7 @@ export default {
   },
 
   data: () => ({
-    actionURLs: {},
+    actionURLs: [], // Changed from {} to []
     sortBy: [{
       key: 'UpdatedAt',
       order: 'desc'
@@ -176,6 +216,26 @@ export default {
       return icons[info?.provider] || 'mdi-git'
     },
 
+    // New: Get provider color for better visual distinction
+    getProviderColor(url) {
+      const info = extractGitURLInfo(url)
+      const colors = {
+        'github': 'grey-darken-2',
+        'gitlab': 'orange',
+        'bitbucket': 'blue'
+      }
+      return colors[info?.provider] || 'grey'
+    },
+
+    // New: Get provider name for subtitle
+    getProviderName(url) {
+      const info = extractGitURLInfo(url)
+      if (info?.provider) {
+        return info.provider.charAt(0).toUpperCase() + info.provider.slice(1)
+      }
+      return 'External Link'
+    },
+
     getActionTooltipText(action) {
       return `${action.title} - Open ${action.url}`
     },
@@ -183,7 +243,6 @@ export default {
     getActionsURL(pipeline){
       let actionURLs = []
       if (pipeline.Report.Actions) {
-
         for (const [action] of Object.entries(pipeline.Report.Actions)) {
           const actionURL = pipeline.Report.Actions[action].actionUrl
           if (actionURL) {
@@ -193,14 +252,23 @@ export default {
       }
       return actionURLs
     },
+
     getPipelinesActionsURL(){
       let localActionURLs = []
+      // Remove duplicates by tracking unique URL+title combinations
+      const seen = new Set()
+
       this.pipelines.forEach(pipeline => {
         if (pipeline.Report && pipeline.Report.Actions) {
           for (const [action] of Object.entries(pipeline.Report.Actions)) {
             const actionURL = pipeline.Report.Actions[action].actionUrl
-            if (actionURL) {
-              localActionURLs.push({"url": actionURL, title: pipeline.Report.Actions[action].title} )
+            const title = pipeline.Report.Actions[action].title
+            if (actionURL && title) {
+              const key = `${actionURL}-${title}`
+              if (!seen.has(key)) {
+                seen.add(key)
+                localActionURLs.push({"url": actionURL, title: title})
+              }
             }
           }
         }
@@ -244,8 +312,7 @@ export default {
 
         const data = await response.json();
 
-        // Update both pipelines and total count
-        this.pipelines = data.data || data.reports || []; // Handle different response structures
+        this.pipelines = data.data || data.reports || [];
         this.getPipelinesActionsURL()
         this.totalItems = data.total_count || 0;
         this.currentPage = page;
@@ -257,8 +324,8 @@ export default {
       }
 
       this.$emit('loaded', true)
-
     },
+
     onPageChange(page) {
       this.getReportsData(page);
     },
@@ -282,3 +349,20 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.action-summary-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.action-list-item {
+  transition: background-color 0.2s ease;
+  border-radius: 4px;
+  margin: 2px 8px;
+}
+
+.action-list-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+</style>
