@@ -235,6 +235,15 @@ export default {
         loadedPages: new Set(),
     }),
 
+    watch: {
+        scmid: function(newScmId, oldScmId) {
+            if (newScmId !== oldScmId) {
+                this.resetPagination();
+                this.getSummaryData(1, true);
+            }
+        }
+    },
+
     methods: {
         resetPagination() {
             this.currentPage = 1;
