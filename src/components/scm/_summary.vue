@@ -6,8 +6,8 @@
                 v-for="(scmData, url) in data"
                 :key="url"
                 cols="12"
-                md="6"
-                lg="4"
+                :md="defaultMgCol()"
+                :lg="defaultLgCol()"
                 class="mb-4"
             >
                 <v-card
@@ -16,7 +16,10 @@
                     class="h-100"
                 >
                     <!-- SCM Header -->
-                    <v-card-title class="d-flex align-center pa-4">
+                    <v-card-title
+                        class="d-flex align-center pa-4"
+                        v-if="!hideRepositoryTitle"
+                    >
                         <v-icon class="mr-2">{{ getGitIcon(url) }}</v-icon>
                         <span class="text-truncate">{{ sanitizeURL(url) }}</span>
                     </v-card-title>
@@ -208,6 +211,14 @@ export default {
             type: Boolean,
             default: false
         },
+        fullWidth: {
+            type: Boolean,
+            default: false
+        },
+        hideRepositoryTitle: {
+            type: Boolean,
+            default: false
+        }
     },
     data: () => ({
         data: {},
@@ -252,6 +263,18 @@ export default {
             this.loadedPages.clear();
             this.data = {};
             this.doughnutData = {};
+        },
+
+        isFullWidth() {
+            return this.fullWidth;
+        },
+
+        defaultLgCol() {
+            return this.isFullWidth() ? 12 : 4;
+        },
+
+        defaultMgCol() {
+            return this.isFullWidth() ? 12 : 6;
         },
 
         async getSummaryData(page= 1 , reset = false) {
