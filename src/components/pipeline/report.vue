@@ -30,12 +30,13 @@
           Report <v-icon icon="mdi-book-open-variant"></v-icon>
         </h1>
       </v-col>
-      <v-col
-        class="text-left"
-      >
-        <h1>
-          {{ pipeline.Pipeline.Name }}
-        </h1>
+      <v-col class="text-center">
+
+        <v-icon
+          :icon="getStatusIcon(pipeline.Pipeline.Result)"
+          :color="getStatusColor(pipeline.Pipeline.Result)"
+          size="130"
+          ></v-icon>
       </v-col>
     </v-row>
   </v-container>
@@ -49,19 +50,19 @@
           variant="flat"
         >
           <v-card-text>
-            <v-table density>
+            <v-table density class="metadata-table">
               <tbody>
                 <tr>
-                  <td>Result</td>
-                  <td><v-icon
-                      :icon="getStatusIcon(pipeline.Pipeline.Result)"
-                      :color="getStatusColor(pipeline.Pipeline.Result)"
-                      size="large"
-                      ></v-icon></td>
+                  <th>Status</th>
+                  <th>Executed</th>
+                  <th>Pipeline</th>
                 </tr>
                 <tr>
-                  <td>Time</td>
-                  <td>{{ pipeline.Updated_at }}</td>
+                  <td>
+                    {{ getStatusText(pipeline.Pipeline.Result) }}
+                  </td>
+                  <td>{{ formatDate(pipeline.Updated_at) }}</td>
+                  <td>{{ pipeline.Pipeline.Name }}</td>
                 </tr>
               </tbody>
             </v-table>
@@ -237,7 +238,8 @@ import ConditionComponent from './_condition.vue';
 import TargetComponent from './_target.vue';
 import PipelineGraphComponent from './_graph.vue';
 
-import { getStatusColor, getStatusIcon } from '@/composables/status';
+import { getStatusColor, getStatusIcon, getStatusText } from '@/composables/status';
+import { toLocalDate } from '@/composables/date';
 
 export default {
   name: 'PipelineReportView',
@@ -266,6 +268,17 @@ export default {
   },
 
   methods: {
+    formatDate(rawDate) {
+      if (!rawDate) {
+        return 'N/A';
+      }
+      try {
+        return toLocalDate(rawDate);
+      } catch (error) {
+        console.warn('Invalid date format:', rawDate);
+        return rawDate;
+      }
+    },
 
     getDefaultStage(){
       if (this.isActions()) {
@@ -334,6 +347,10 @@ export default {
       return getStatusIcon(status);
     },
 
+    getStatusText: function(status){
+      return getStatusText(status);
+    },
+
     async getPipelineReportData() {
       const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
       if (isAuthEnabled) {
@@ -378,13 +395,6 @@ export default {
   },
 
   async created() {
-    /*
-      One thing to note when using routes with params is that
-      when the user navigates from /users/johnny to /users/jolyne,
-      the same component instance will be reused.
-      Since both routes render the same component,
-      this is more efficient than destroying the old instance and then creating a new one. However, this also means that the lifecycle hooks of the component will not be called.
-    */
     this.$watch(
       () => this.$route.params,
       (toParams, previousParams) => {
@@ -405,3 +415,29 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.metadata-table {
+  font-size: 1.1rem;
+}
+
+.metadata-table th {
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 12px 16px;
+}
+
+.metadata-table td {
+  font-size: 1.1rem;
+  padding: 12px 16px;
+  font-weight: 500;
+}
+
+.metadata-table tbody tr {
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.metadata-table thead tr {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+</style>
