@@ -79,7 +79,7 @@
                                         </div>
 
                                         <!-- Mini Doughnut Chart -->
-                                        <div class="chart-container">
+                                        <div class="chart-container" v-if="hasDoughnutData(url, branch)">
                                             <SCMDoughnut
                                                 :chartData="getDoughnutData(url, branch)"
                                                 :chartOptions="miniDoughnutOptions"
@@ -126,7 +126,7 @@
                                     </div>
 
                                     <!-- Mini Doughnut Chart -->
-                                    <div class="chart-container">
+                                    <div class="chart-container" v-if="hasDoughnutData(url, branch)">
                                         <SCMDoughnut
                                             :chartData="getDoughnutData(url, branch)"
                                             :chartOptions="miniDoughnutOptions"
@@ -238,7 +238,7 @@ export default {
                 }
             }
         },
-        currentPage: 1,
+        currentPage: 0,
         itemsPerPage: 1,
         totalCount: 0,
         isLoading: false,
@@ -247,17 +247,18 @@ export default {
     }),
 
     watch: {
-        scmid: function(newScmId, oldScmId) {
-            if (newScmId !== oldScmId) {
-                this.resetPagination();
-                this.getSummaryData(1, true);
-            }
+      scmid: async function(newScmId, oldScmId) {
+        if (newScmId !== oldScmId) {
+          this.stopSequentialLoad();    // cancel any in-flight sequential loads
+          this.resetPagination();
+          await this.loadSequentialPages(9); // or desired number
         }
+      }
     },
 
     methods: {
         resetPagination() {
-            this.currentPage = 1;
+            this.currentPage = 0;
             this.totalCount = 0;
             this.hasMoreData = true;
             this.loadedPages.clear();
@@ -277,6 +278,36 @@ export default {
             return this.isFullWidth() ? 12 : 6;
         },
 
+        async loadSequentialPages(pagesToLoad = 1) {
+            // create a unique id for this run so we can cancel/stale-check
+            const runId = (this._sequentialRunId = (this._sequentialRunId || 0) + 1);
+            try {
+                for (let i = 0; i < pagesToLoad; i++) {
+                    // if a newer run started, stop this one
+                    if (this._sequentialRunId !== runId) return;
+                    if (!this.hasMoreData) return;
+
+                    // increment page and fetch (getSummaryData will ignore duplicates via loadedPages)
+                    const next = this.currentPage + 1;
+                    await this.getSummaryData(next, false);
+                    this.currentPage = next;
+
+                    if (this.currentPage == this.totalCount)  {
+                        this.hasMoreData = false;
+                    }
+
+                    if (!this.hasMoreData) return;
+                }
+            } catch (err) {
+                console.error('Sequential load error', err);
+            }
+        },
+
+        // Stop any ongoing sequential load
+        stopSequentialLoad() {
+            this._sequentialRunId = (this._sequentialRunId || 0) + 1;
+        },
+
         async getSummaryData(page= 1 , reset = false) {
             // Avoid duplicate requests for the same page
             if (this.loadedPages.has(page) && !reset) {
@@ -294,7 +325,7 @@ export default {
                 const params = new URLSearchParams();
                 params.append('summary', 'true');
                 params.append('limit', this.itemsPerPage);
-                params.append('page', this.currentPage);
+                params.append('page', page);
 
                 // Add SCM ID filter if provided
                 if (restrictedSCM) {
@@ -357,10 +388,10 @@ export default {
         },
 
         async loadMoreData() {
-            if (this.hasMoreData && !this.isLoading) {
-                this.currentPage++;
-                await this.getSummaryData(this.currentPage, false);
-            }
+          if (this.hasMoreData && !this.isLoading) {
+            this.stopSequentialLoad();           // ensure previous run is stopped
+            await this.loadSequentialPages(3);   // start new sequential load
+          }
         },
 
         // Infinite scroll handler
@@ -411,20 +442,14 @@ export default {
         },
 
         getDoughnutData(url, branch) {
+          if (!url || !branch) return { labels: [], datasets: [] };
+          const d = (this.doughnutData && this.doughnutData[url] && this.doughnutData[url][branch]) || { labels: [], datasets: [] };
+          return { labels: Array.isArray(d.labels) ? d.labels : [], datasets: Array.isArray(d.datasets) ? d.datasets : [] };
+        },
 
-            if (url === undefined || branch === undefined) {
-                return {};
-            }
-
-            if (this.doughnutData[url] === undefined) {
-                return {};
-            }
-
-            if (this.doughnutData[url][branch] === undefined) {
-                return {};
-            }
-
-            return this.doughnutData[url][branch];
+        hasDoughnutData(url, branch) {
+          const d = this.getDoughnutData(url, branch);
+          return Array.isArray(d.datasets) && d.datasets.length > 0;
         },
 
         updateDoughnutData: function(){
@@ -502,11 +527,11 @@ export default {
                 case '-': return 'grey';
                 default: return 'purple';
             }
-        }
+        },
     },
     async created() {
         try {
-            this.getSummaryData(1, true);
+            await this.loadSequentialPages(9);
         } catch(error) {
             console.log(error);
         }
@@ -517,6 +542,7 @@ export default {
     },
 
     beforeUnmount() {
+        this.stopSequentialLoad();
         // Clean up scroll listener if using infinite scroll
         window.removeEventListener('scroll', this.handleScroll);
     }
