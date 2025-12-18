@@ -58,6 +58,8 @@
 <script>
 import router from '../../router'
 
+import { getApiBaseURL } from '@/composables/api';
+
 export default {
   name: 'PipelineSCMS',
 
@@ -90,7 +92,7 @@ export default {
       this.$emit('loaded', false)
       const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
-      let query = `/api/pipeline/scms`;
+      let query = `${getApiBaseURL()}/pipeline/scms`;
 
       if (this.restrictedSCM != "") {
         query = query + `?scmid=${this.restrictedSCM}`

@@ -88,6 +88,8 @@
 
 <script>
 
+import { getApiBaseURL } from '@/composables/api';
+
 export default {
   name: 'ConfigsSearchFilter',
 
@@ -118,7 +120,7 @@ export default {
       this.$emit('loaded', false)
       const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
-      let query = `/api/pipeline/config/kinds?type=${this.configType}`;
+      let query = `${getApiBaseURL()}/pipeline/config/kinds?type=${this.configType}`;
 
       if (auth_enabled) {
         const token = await this.$auth0.getAccessTokenSilently();

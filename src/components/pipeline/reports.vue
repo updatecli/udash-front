@@ -162,6 +162,7 @@
 import { getStatusColor, getStatusIcon } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git'
 import { toLocalDate } from '@/composables/date'
+import { getApiBaseURL } from '@/composables/api';
 
 export default {
   name: 'PipelinesTable',
@@ -279,7 +280,7 @@ export default {
 
     async getReportsData(page =1 ) {
       this.$emit('loaded', false)
-      let queryURL = `/api/pipeline/reports`
+      let queryURL = `${getApiBaseURL()}/pipeline/reports`
 
       const params = new URLSearchParams();
       if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
