@@ -333,7 +333,7 @@ export default {
     },
 
     getPipelineReportLink: function(id){
-      return `${getApiBaseURL()}/pipeline/reports/` + id
+      return "/pipeline/reports/" + id
     },
 
     cancelAutoUpdate() {
