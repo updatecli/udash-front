@@ -194,6 +194,7 @@
 <script>
 import { toYAML } from '@/composables/yaml'
 import { toLocalDate } from '@/composables/date'
+import { getApiBaseURL } from '@/composables/api';
 
 export default {
   name: 'ConfigsTable',
@@ -302,7 +303,7 @@ export default {
       this.$emit('loaded', false);
 
       try {
-        let queryURL = `/api/pipeline/config/${this.resourceType}s/search`;
+        let queryURL = `${getApiBaseURL()}/pipeline/config/${this.resourceType}s/search`;
         const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
         // Build request body with pagination
