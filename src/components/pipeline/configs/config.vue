@@ -164,6 +164,8 @@ import { toYAML } from '@/composables/yaml'
 import GitRepositorySection from './GitRepositorySection.vue'
 import ReportCard from './ReportCard.vue'
 
+import { getApiBaseURL } from '@/composables/api';
+
 export default {
   name: 'PipelineConfigView',
   components: {
@@ -383,7 +385,7 @@ export default {
       this.$emit('loaded', false)
 
       try {
-        const queryURL = `/api/pipeline/config/${this.configType}s/search`
+        const queryURL = `${getApiBaseURL()}/pipeline/config/${this.configType}s/search`;
         const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true'
 
         const jsonReqBody = { id: this.configID }
@@ -426,7 +428,7 @@ export default {
 
       try {
         const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true'
-        const queryURL = `/api/pipeline/reports/search`
+        const queryURL = `${getApiBaseURL()}/pipeline/reports/search`
 
         const jsonReqBody = {}
         const fieldMap = {

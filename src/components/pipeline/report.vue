@@ -240,6 +240,7 @@ import PipelineGraphComponent from './_graph.vue';
 
 import { getStatusColor, getStatusIcon, getStatusText } from '@/composables/status';
 import { toLocalDate } from '@/composables/date';
+import { getApiBaseURL } from '@/composables/api';
 
 export default {
   name: 'PipelineReportView',
@@ -355,7 +356,7 @@ export default {
       const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
       if (isAuthEnabled) {
         const token = await this.$auth0.getAccessTokenSilently();
-        const response = await fetch(`/api/pipeline/reports/` + this.$route.params.id, {
+        const response = await fetch(`${getApiBaseURL()}/pipeline/reports/` + this.$route.params.id, {
             headers: {
             Authorization: `Bearer ${token}`
           }
@@ -370,7 +371,7 @@ export default {
           this.isLatestReport()
         }
       } else {
-        const response = await fetch(`/api/pipeline/reports/` + this.$route.params.id);
+        const response = await fetch(`${getApiBaseURL()}/pipeline/reports/` + this.$route.params.id);
         const data = await response.json();
 
         this.pipeline = data.data;

@@ -195,6 +195,8 @@ import router from '../../router'
 
 import SCMDoughnut from './_scmDoughnut.vue'
 
+import { getApiBaseURL } from '@/composables/api';
+
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
 
 export default {
@@ -334,7 +336,7 @@ export default {
                     params.append('scmid', this.scmid);
                 }
 
-                let query = `/api/pipeline/scms?${params.toString()}`;
+                let query = `${getApiBaseURL()}/pipeline/scms?${params.toString()}`;
 
                 let response;
                 if (auth_enabled) {
