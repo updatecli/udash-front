@@ -65,8 +65,8 @@
             </div>
 
             <PipelineSCMFilter
-              :scmid="scmid"
-              @update-scmid="updateSCMID"
+              :filter="filter"
+              @update-filter="updateFilter"
               @loaded="setFilterLoaded"
             />
           </v-col>
@@ -103,11 +103,11 @@
             <PipelineSCMSummary
               v-if="isFilterLoaded"
               :hideButton=true
-              :scmid="scmid"
+              :filter="filter"
               :fullWidth=true
               :disableLinks=true
               :hideRepositoryTitle=true
-              @update-scmid="updateSCMID"
+              @update-filter="updateFilter"
               @loaded="setSummaryLoaded"
               class="align-center justify-center"
             />
@@ -144,8 +144,8 @@
 
             <PipelineReports
               v-if="isFilterLoaded"
-              :scmid="scmid"
-              @update-scmid="updateSCMID"
+              :filter="filter"
+              @update-filter="updateFilter"
               @loaded="setReportsLoaded"
             />
           </v-col>
@@ -194,7 +194,7 @@ export default {
     isSummaryLoaded: false,
     isReportsLoaded: false,
     isLoading: true,
-    scmid: "",
+    filter: {},
   }),
 
   watch: {
@@ -212,8 +212,8 @@ export default {
         this.isLoading = false
       }, 10000)
     },
-    scmid: function() {
-      // IF the scmid is changed, we need to wait for the summary and reports to be updated
+    filter: function() {
+      // IF the filter is changed, we need to wait for the summary and reports to be updated
       this.setSummaryLoaded(false)
       this.setReportsLoaded(false)
     }
@@ -234,8 +234,8 @@ export default {
     setReportsLoaded: function(state) {
       this.isReportsLoaded = state;
     },
-    updateSCMID: function(scmid) {
-      this.scmid = scmid;
+    updateFilter: function(filter) {
+      this.filter = filter;
     },
     isAllComponentsLoaded: function() {
       if (this.isFilterLoaded && this.isSummaryLoaded && this.isReportsLoaded) {
