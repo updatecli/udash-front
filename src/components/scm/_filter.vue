@@ -64,9 +64,11 @@ export default {
   name: 'PipelineSCMS',
 
   props: {
-    scmid: {
-      type: String,
-      default: ""
+    filter: {
+      type: Object,
+      default: () => ({
+        scmid: "",
+      }),
     },
   },
 
@@ -170,8 +172,11 @@ export default {
     },
 
     applyFilter() {
-      var scmid = this.getScmID(this.repository, this.branch)
-      this.$emit('update-scmid', scmid)
+      var newFilter = {
+        scmid: this.getScmID(this.repository, this.branch),
+      }
+
+      this.$emit('update-filter', newFilter)
     },
 
     cancelAutoUpdate() {

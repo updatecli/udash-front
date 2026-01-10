@@ -205,9 +205,9 @@ export default {
     },
     name: "SCMDashboard",
     props: {
-        scmid: {
-            type: String,
-            default: ''
+        filter: {
+            type: Object,
+            default: () => ({})
         },
         hideButton: {
             type: Boolean,
@@ -249,7 +249,9 @@ export default {
     }),
 
     watch: {
-      scmid: async function(newScmId, oldScmId) {
+      filter: async function(newFilter, oldFilter) {
+          const newScmId = newFilter.scmid || "";
+          const oldScmId = oldFilter.scmid || "";
         if (newScmId !== oldScmId) {
           this.stopSequentialLoad();    // cancel any in-flight sequential loads
           this.resetPagination();
@@ -321,7 +323,7 @@ export default {
 
                         try {
                 const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
-                const restrictedSCM = router.currentRoute.value.query.scmid;
+                const restrictedSCM = router.currentRoute.value.query.filter?.scmid;
 
                 // Build query with pagination parameters
                 const params = new URLSearchParams();
@@ -332,8 +334,8 @@ export default {
                 // Add SCM ID filter if provided
                 if (restrictedSCM) {
                     params.append('scmid', restrictedSCM);
-                } else if (this.scmid && this.scmid !== '') {
-                    params.append('scmid', this.scmid);
+                } else if (this.filter?.scmid && this.filter?.scmid !== '') {
+                    params.append('scmid', this.filter.scmid);
                 }
 
                 let query = `${getApiBaseURL()}/pipeline/scms?${params.toString()}`;
@@ -409,7 +411,7 @@ export default {
         },
 
         resetFilter: function() {
-            this.$emit('update-scmid', '');
+            this.$emit('update-filter', '');
         },
 
         sanitizeURL: function(url) {

@@ -168,7 +168,7 @@ export default {
   name: 'PipelinesTable',
 
   props: {
-    scmid: {},
+    filter: {},
   },
 
   data: () => ({
@@ -196,7 +196,7 @@ export default {
   }),
 
   watch: {
-    scmid() {
+    filter() {
         this.currentPage = 1;
         this.getReportsData(1)
     }
@@ -283,8 +283,8 @@ export default {
       let queryURL = `${getApiBaseURL()}/pipeline/reports`
 
       const params = new URLSearchParams();
-      if (this.scmid != undefined && this.scmid != '' && this.scmid != null) {
-        params.append('scmid', this.scmid);
+      if (this.filter?.scmid != undefined && this.filter?.scmid != '' && this.filter?.scmid != null) {
+        params.append('scmid', this.filter.scmid);
       }
 
       params.append('limit', this.itemsPerPage);
