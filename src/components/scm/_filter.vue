@@ -249,7 +249,6 @@ export default {
     },
 
     applyFilter() {
-
       var newFilter = {
         scmid: this.getScmID(this.repository, this.branch),
         startTime: this.formattedStartTime,
