@@ -285,7 +285,6 @@ export default {
       const params = new URLSearchParams();
       if (this.filter?.scmid != undefined && this.filter?.scmid != '' && this.filter?.scmid != null) {
         params.append('scmid', this.filter.scmid);
-      }
 
       if (this.filter?.startTime && this.filter.endTime ) {
           params.append('start_time', this.filter.startTime);
