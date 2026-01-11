@@ -26,6 +26,41 @@
         v-model="branch"
         ></v-select>
 
+       <!-- Date Range Slider -->
+        <v-range-slider
+          v-model="dateRange"
+          :reverse="true"
+          :min="0"
+          :max="30"
+          :step="1"
+          class="py-6"
+          :strict="true"
+        >
+          <template v-slot:prepend>
+            <v-text-field
+              :v-model="dateRange[1]"
+              density="compact"
+              style="width: 150px"
+              variant="flat"
+              hide-details
+              single-line
+              class="text-center"
+          >{{ stepToISO(dateRange[1]) }}</v-text-field>
+          </template>
+
+          <template v-slot:append>
+            <v-text-field
+              :v-model="dateRange[0]"
+              density="compact"
+              style="width: 150px"
+              variant="flat"
+              hide-details
+              single-line
+              class="text-center"
+          >{{ stepToISO(dateRange[0]) }}</v-text-field>
+          </template>
+        </v-range-slider>
+
         <!-- Filter repository-->
         <!--<v-btn type="submit" color="primary" :disabled="!filterForm">Filter</v-btn>-->
 
@@ -49,6 +84,7 @@
         </div>
     </v-form>
 
+
     <div class="text-center">
     </div>
 
@@ -68,6 +104,8 @@ export default {
       type: Object,
       default: () => ({
         scmid: "",
+        startTime: "",
+        endTime: "",
       }),
     },
   },
@@ -79,7 +117,8 @@ export default {
     repositories : [],
     branches: [],
     branch : "",
-    restrictedSCM: ""
+    restrictedSCM: "",
+    dateRange: [0, 24],  // [6 hours ago, now] by default
   }),
 
   beforeUnmount() {
@@ -87,6 +126,42 @@ export default {
   },
 
   computed: {
+    tickLabels() {
+      const labels = []
+      // Hours: 0-23 (1-24 hours ago)
+      for (let i = 0; i < 24; i++) {
+        if (i === 0) {
+          labels.push('now')
+          continue
+        }
+        if (i === 1) {
+          labels.push('1 hour')
+          continue
+        }
+        labels.push(`${i} hours`)
+      }
+      // Days: 24-30 (1-7 days ago)
+      for (let i = 0; i < 7; i++) {
+        if (i === 0) {
+          labels.push('end of today')
+          continue
+        }
+        if (i === 1) {
+          labels.push('1 day')
+          continue
+        }
+        labels.push(`${i} days`)
+      }
+      return labels
+    },
+
+    formattedStartTime() {
+      return this.stepToISO(this.dateRange[0])
+    },
+
+    formattedEndTime() {
+      return this.stepToISO(this.dateRange[1])
+    },
   },
 
   methods: {
@@ -172,8 +247,11 @@ export default {
     },
 
     applyFilter() {
+
       var newFilter = {
         scmid: this.getScmID(this.repository, this.branch),
+        startTime: this.formattedStartTime,
+        endTime: this.formattedEndTime,
       }
 
       this.$emit('update-filter', newFilter)
@@ -182,9 +260,89 @@ export default {
     cancelAutoUpdate() {
       clearInterval(this.timer);
     },
+
+    stepToISO(step) {
+      const now = new Date()
+      let date = new Date(now)
+
+      if (step < 24) {
+        // Hours: step 0 = 1 hour ago, step 23 = 24 hours ago
+        date.setHours(date.getHours() - step)
+      } else {
+        // Days: step 24 = 1 day ago, step 30 = 7 days ago
+        const daysAgo = step - 23
+        date.setDate(date.getDate() - daysAgo)
+      }
+
+      return this.formatToLayout(date)
+    },
+
+    tickLabel(label) {
+
+      if (label < 24 ){
+        // Hours: 0-23 (1-24 hours ago)
+        if (label === 0) {
+          return 'now'
+        }
+        if (label === 1) {
+          return '1 hour'
+        }
+        return `${label} hours`
+      }
+      else {
+        // Days: 24-30 (1-7 days ago)
+        const daysAgo = label - 24
+        if (daysAgo === 0) {
+          return 'end of today'
+        }
+        if (daysAgo === 1) {
+          return '1 day'
+        }
+        return `${daysAgo} days`
+      }
+    },
+
+    formatToLayout(date) {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+      
+      const offset = -date.getTimezoneOffset()
+      const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0')
+      const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, '0')
+      const sign = offset >= 0 ? '+' : '-'
+      const tzOffset = `${sign}${offsetHours}:${offsetMinutes}`
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}${tzOffset}`
+    },
   },
 
   watch: {
+      dateRange(val) {
+        // Ensure start and end are never equal
+        if (val[0] === val[1]) {
+          if (val[0] === 0) {
+            // If at minimum, push end forward
+            this.$nextTick(() => {
+              this.dateRange = [0, 1]
+            })
+          } else {
+            // Otherwise, pull start backward
+            this.$nextTick(() => {
+              this.dateRange = [val[0] - 1, val[1]]
+            })
+          }
+          return
+        }
+
+        // Emit only if valid (not equal)
+        const startTime = this.stepToISO(val[0])
+        const endTime = this.stepToISO(val[1])
+        this.$emit('date-range-changed', { startTime, endTime })
+      },
       repository (val) {
         var newRepositoryBranches = []
         for (var i =0 ; i < this.scms.length; i++) {
@@ -208,7 +366,7 @@ export default {
 
       restrictedSCM () {
         this.getSCMSData()
-      }
+      },
   },
 
   async created() {
