@@ -250,9 +250,7 @@ export default {
 
     watch: {
       filter: async function(newFilter, oldFilter) {
-          const newScmId = newFilter.scmid || "";
-          const oldScmId = oldFilter.scmid || "";
-        if (newScmId !== oldScmId) {
+        if (newFilter !== oldFilter) {
           this.stopSequentialLoad();    // cancel any in-flight sequential loads
           this.resetPagination();
           await this.loadSequentialPages(9); // or desired number
@@ -336,6 +334,12 @@ export default {
                     params.append('scmid', restrictedSCM);
                 } else if (this.filter?.scmid && this.filter?.scmid !== '') {
                     params.append('scmid', this.filter.scmid);
+                }
+
+                 // Add starttime and endtime filters if provided
+                if (this.filter?.startTime && this.filter.endTime ) {
+                    params.append('start_time', this.filter.startTime);
+                    params.append('end_time', this.filter.endTime);
                 }
 
                 let query = `${getApiBaseURL()}/pipeline/scms?${params.toString()}`;
