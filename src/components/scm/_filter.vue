@@ -41,7 +41,8 @@
               :v-model="dateRange[0]"
               density="compact"
               style="width: 150px"
-              variant="flat"
+              variant="solo"
+              :flat=true
               hide-details
               single-line
               class="text-center"
@@ -53,7 +54,8 @@
               :v-model="dateRange[1]"
               density="compact"
               style="width: 150px"
-              variant="flat"
+              variant="solo"
+              :flat=true
               hide-details
               single-line
               class="text-center"
