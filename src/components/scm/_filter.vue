@@ -29,7 +29,7 @@
        <!-- Date Range Slider -->
         <v-range-slider
           v-model="dateRange"
-          :reverse="true"
+          :reverse="false"
           :min="0"
           :max="30"
           :step="1"
@@ -38,18 +38,6 @@
         >
           <template v-slot:prepend>
             <v-text-field
-              :v-model="dateRange[1]"
-              density="compact"
-              style="width: 150px"
-              variant="flat"
-              hide-details
-              single-line
-              class="text-center"
-          >{{ stepToISO(dateRange[1]) }}</v-text-field>
-          </template>
-
-          <template v-slot:append>
-            <v-text-field
               :v-model="dateRange[0]"
               density="compact"
               style="width: 150px"
@@ -57,7 +45,19 @@
               hide-details
               single-line
               class="text-center"
-          >{{ stepToISO(dateRange[0]) }}</v-text-field>
+          >{{ stepToISOWithoutTimezone(dateRange[0]) }}</v-text-field>
+          </template>
+
+          <template v-slot:append>
+            <v-text-field
+              :v-model="dateRange[1]"
+              density="compact"
+              style="width: 150px"
+              variant="flat"
+              hide-details
+              single-line
+              class="text-center"
+          >{{ stepToISOWithoutTimezone(dateRange[1]) }}</v-text-field>
           </template>
         </v-range-slider>
 
@@ -277,6 +277,22 @@ export default {
       return this.formatToLayout(date)
     },
 
+    stepToISOWithoutTimezone(step) {
+      const now = new Date()
+      let date = new Date(now)
+
+      if (step < 24) {
+        // Hours: step 0 = 1 hour ago, step 23 = 24 hours ago
+        date.setHours(date.getHours() - step)
+      } else {
+        // Days: step 24 = 1 day ago, step 30 = 7 days ago
+        const daysAgo = step - 23
+        date.setDate(date.getDate() - daysAgo)
+      }
+
+      return this.formatToLayoutWithoutTimezone(date)
+    },
+
     tickLabel(label) {
 
       if (label < 24 ){
@@ -317,6 +333,16 @@ export default {
       const tzOffset = `${sign}${offsetHours}:${offsetMinutes}`
 
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}${tzOffset}`
+    },
+    formatToLayoutWithoutTimezone(date) {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     },
   },
 
