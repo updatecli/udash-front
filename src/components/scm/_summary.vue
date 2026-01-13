@@ -40,42 +40,48 @@
                             >
                                 <div class="clickable-branch">
                                     <div class="d-flex align-center pa-4">
-                                        <div class="branch-info flex-grow-1">
-                                            <div class="d-flex align-center mb-2">
-                                                <v-icon
-                                                    size="small"
-                                                    class="mr-2"
-                                                    color="grey-darken-1"
-                                                >
-                                                    mdi-source-branch
-                                                </v-icon>
-                                                <div class="flex-grow-1">
-                                                    <div class="font-weight-medium">{{ branch }}</div>
-                                                    <div class="text-caption text-grey-darken-1">
-                                                        {{ branchData.total_result || 0 }} reports
-                                                    </div>
-                                                </div>
-                                                <!-- Visual indicator that it's clickable -->
-                                                <v-icon
-                                                    size="small"
-                                                    color="grey-lighten-1"
-                                                >
-                                                    mdi-chevron-right
-                                                </v-icon>
-                                            </div>
 
-                                            <!-- Status Summary -->
-                                            <div class="status-summary">
-                                                <v-chip
-                                                    v-for="(count, status) in branchData.total_result_by_type"
-                                                    :key="status"
-                                                    :color="getStatusColor(status)"
-                                                    size="x-small"
-                                                    class="mr-1 mb-1"
-                                                >
-                                                    {{ status }} {{ count }}
-                                                </v-chip>
-                                            </div>
+                                        <div class="branch-info flex-grow-1">
+                                            <v-row>
+                                                <v-col>
+                                                    <div class="d-flex align-center mb-2">
+                                                        <v-icon
+                                                            size="small"
+                                                            class="mr-2"
+                                                            color="grey-darken-1"
+                                                        >
+                                                            mdi-source-branch
+                                                        </v-icon>
+                                                        <div class="flex-grow-1">
+                                                            <div class="font-weight-medium">{{ branch }}</div>
+                                                            <div class="text-caption text-grey-darken-1">
+                                                                {{ branchData.total_result || 0 }} reports
+                                                            </div>
+                                                        </div>
+                                                        <!-- Visual indicator that it's clickable -->
+                                                        <v-icon
+                                                            size="small"
+                                                            color="grey-lighten-1"
+                                                        >
+                                                            mdi-chevron-right
+                                                        </v-icon>
+                                                    </div>
+                                                </v-col>
+                                                <v-col>
+                                                    <!-- Status Summary -->
+                                                    <div class="status-summary">
+                                                        <v-chip
+                                                            v-for="(count, status) in branchData.total_result_by_type"
+                                                            :key="status"
+                                                            :color="getStatusColor(status)"
+                                                            size="x-small"
+                                                            class="mr-1 mb-1"
+                                                        >
+                                                            {{ status }} {{ count }}
+                                                        </v-chip>
+                                                    </div>
+                                                </v-col>
+                                            </v-row>
                                         </div>
 
                                         <!-- Mini Doughnut Chart -->
@@ -94,46 +100,50 @@
                             <!-- Non-clickable version for when hideButton is true -->
                             <div v-else class="non-clickable-branch">
                                 <div class="d-flex align-center pa-4">
-                                    <div class="branch-info flex-grow-1">
-                                        <div class="d-flex align-center mb-2">
-                                            <v-icon
-                                                size="small"
-                                                class="mr-2"
-                                                color="grey-darken-1"
-                                            >
-                                                mdi-source-branch
-                                            </v-icon>
-                                            <div class="flex-grow-1">
-                                                <div class="font-weight-medium">{{ branch }}</div>
-                                                <div class="text-caption text-grey-darken-1">
-                                                    {{ branchData.total_result || 0 }} reports
+                                    <v-row>
+                                        <v-col>
+                                            <div class="branch-info flex-grow-1">
+                                                <div class="d-flex align-center mb-2">
+                                                    <v-icon
+                                                        size="small"
+                                                        class="mr-2"
+                                                        color="grey-darken-1"
+                                                    >
+                                                        mdi-source-branch
+                                                    </v-icon>
+                                                    <div class="flex-grow-1">
+                                                        <div class="font-weight-medium">{{ branch }}</div>
+                                                        <div class="text-caption text-grey-darken-1">
+                                                            {{ branchData.total_result || 0 }} reports
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- Status Summary -->
+                                                <div class="status-summary">
+                                                    <v-chip
+                                                        v-for="(count, status) in branchData.total_result_by_type"
+                                                        :key="status"
+                                                        :color="getStatusColor(status)"
+                                                        size="x-small"
+                                                        class="mr-1 mb-1"
+                                                    >
+                                                        {{ status }} {{ count }}
+                                                    </v-chip>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <!-- Status Summary -->
-                                        <div class="status-summary">
-                                            <v-chip
-                                                v-for="(count, status) in branchData.total_result_by_type"
-                                                :key="status"
-                                                :color="getStatusColor(status)"
-                                                size="x-small"
-                                                class="mr-1 mb-1"
-                                            >
-                                                {{ status }} {{ count }}
-                                            </v-chip>
-                                        </div>
-                                    </div>
-
-                                    <!-- Mini Doughnut Chart -->
-                                    <div class="chart-container" v-if="hasDoughnutData(url, branch)">
-                                        <SCMDoughnut
-                                            :chartData="getDoughnutData(url, branch)"
-                                            :chartOptions="miniDoughnutOptions"
-                                            :centerText="branchData.total_result"
-                                            size="small"
-                                        />
-                                    </div>
+                                        </v-col>
+                                        <v-col>
+                                            <!-- Mini Doughnut Chart -->
+                                            <div class="chart-container" v-if="hasDoughnutData(url, branch)">
+                                                <SCMDoughnut
+                                                    :chartData="getDoughnutData(url, branch)"
+                                                    :chartOptions="miniDoughnutOptions"
+                                                    :centerText="branchData.total_result"
+                                                    size="small"
+                                                />
+                                            </div>
+                                        </v-col>
+                                    </v-row>
                                 </div>
                             </div>
 
