@@ -98,6 +98,17 @@
             </p>
           </div>
 
+          <v-pagination
+            v-model="currentPage"
+            :length="Math.ceil(totalItems / itemsPerPage)"
+            :total-visible="7"
+            @update:model-value="onPageChange"
+          ></v-pagination>
+
+          <div class="text-center mt-2">
+            <small>Total: {{ totalItems }} reports</small>
+          </div>
+
           <v-data-table-virtual
             v-model:items-per-page="itemsPerPage"
             :headers="pipelinesHeaders"
@@ -141,17 +152,6 @@
               </div>
             </template>
           </v-data-table-virtual>
-
-          <v-pagination
-            v-model="currentPage"
-            :length="Math.ceil(totalItems / itemsPerPage)"
-            :total-visible="7"
-            @update:model-value="onPageChange"
-          ></v-pagination>
-
-          <div class="text-center mt-2">
-            <small>Total: {{ totalItems }} reports</small>
-          </div>
         </v-col>
       </v-row>
     </v-container>
