@@ -430,7 +430,9 @@ export default {
         const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true'
         const queryURL = `${getApiBaseURL()}/pipeline/reports/search`
 
-        const jsonReqBody = {}
+        const jsonReqBody = {
+          latest: true
+        }
         const fieldMap = {
           source: 'sourceid',
           condition: 'conditionid',
