@@ -35,7 +35,6 @@ export default {
         this.options.plugins.legend = {
             display: false,
         }
-        console.log('Custom Data:', this.options)
     },
 
 
