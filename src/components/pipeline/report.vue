@@ -50,7 +50,7 @@
           variant="flat"
         >
           <v-card-text>
-            <v-table density class="metadata-table">
+            <v-table density="compact" class="metadata-table">
               <tbody>
                 <tr>
                   <th>Status</th>
@@ -116,25 +116,25 @@
               v-if="isSources()"
               variant="text"
               value="source"
-              :class="{ 'v-btn--active': stage === 'source' }"
+              :class="{ 'v-btn--active': resourceStage === 'source' }"
             >Source</v-btn>
             <v-btn
               v-if="isConditions()"
               variant="text"
               value="condition"
-              :class="{ 'v-btn--active': stage === 'condition' }"
+              :class="{ 'v-btn--active': resourceStage === 'condition' }"
             >Condition</v-btn>
             <v-btn
               v-if="isTargets()"
               variant="text"
               value="target"
-              :class="{ 'v-btn--active': stage === 'target' }"
+              :class="{ 'v-btn--active': resourceStage === 'target' }"
             >Target</v-btn>
             <v-btn
               v-if="isActions()"
               variant="text"
               value="action"
-              :class="{ 'v-btn--active': stage === 'target' }"
+              :class="{ 'v-btn--active': resourceStage === 'action' }"
             >Action</v-btn>
           </v-btn-toggle>
         </v-container>
