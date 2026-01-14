@@ -63,7 +63,7 @@
                 <v-window-item value="quickstart">
                   <div class="text-center py-8">
                     <v-icon icon="mdi-rocket-launch" size="64" color="grey-darken-3" class="mb-4"></v-icon>
-                    <h3 class="text-h5 mb-4">Ready to start monitoring?</h3>
+                    <h3 class="text-h5 mb-4">Ready to start?</h3>
                     <p class="mb-6">
                       Connect your Updatecli runner to Udash in just a few steps
                     </p>
@@ -87,10 +87,10 @@
                       :title="`${index + 1}. ${step.title}`"
                     >
                       <v-expansion-panel-text>
-                        <p class="mb-3">{{ step.description }}</p>
+                        <div class="mb-3" v-html="step.description"></div>
                         <pre>
-                          <v-code class="d-block pa-3 bg-grey-lighten-4">
-                            {{ step.code }}
+                          <v-code v-if="step.code" class="d-block pa-3 bg-grey-lighten-4">
+{{ getStepCode(step) }}
                           </v-code>
                         </pre>
                       </v-expansion-panel-text>
@@ -178,37 +178,36 @@ export default {
     
     configSteps: [
       {
-        title: "Authenticate with Udash",
-        description: "Configure Updatecli to send data to Udash",
-        code: `updatecli udash login "${window.location.origin}" --experimental`
+        title: "Install Updatecli",
+        description: "Make sure Updatecli is installed. <a href=\"https://www.updatecli.io/docs/prologue/installation/\" target=\"_blank\" rel=\"noopener noreferrer\">View installation options</a>",
+        code: `brew tap updatecli/updatecli\nbrew install updatecli`
       },
       {
-        title: "Login to GitHub Container Registry",
-        description: `Allow Updatecli to retrieve policies. 
-        Updatecli relies on Docker credential to retrieve its policies from the GitHub Registry.`,
-        code: "docker login ghcr.io"
+        title: "Choose authentication method",
+        description: `
+          <ul>
+            <li>Method A (Config file): Stores token locally, secure for local development</li>
+            <li>Method B (Environment variables): Better for CI/CD pipelines and containers</li>
+          </ul>
+        `
       },
       {
-        title: "Set GitHub Token",
-        description: "Export your GitHub Personal Access Token",
-        code: 'export GITHUB_TOKEN="your_github_personal_access_token"'
+        title: "Authenticate (Method A - Config File)",
+        description: "Configure Updatecli to use a local config file to connect to Udash",
+        codeTemplate: true,
+        code: (apiUrl, dashUrl) => `updatecli udash login --experimental --api-url "${apiUrl}" "${dashUrl}"`
       },
       {
-        title: "Create values.yaml",
-        description: "Configure your repository details",
-        code: `
-scm:
-  enabled: true
-  kind: github
-  owner: "your-github-username"
-  repository: "your-repository-name"
-  branch: main`
+        title: "Authenticate (Method B - Environment Variables)",
+        description: "Set environment variables for Updatecli to connect to Udash",
+        codeTemplate: true,
+        code: (apiUrl, dashUrl) => `export UPDATECLI_UDASH_API_URL="${apiUrl}"\nexport UPDATECLI_UDASH_URL="${dashUrl}"\nexport UPDATECLI_UDASH_ACCESS_TOKEN="your_token_here"  # Only if required by your Udash instance`
       },
       {
         title: "Run Updatecli",
-        description: "Execute with the autodiscovery policy",
-        code: "updatecli diff --experimental --values ./values.yaml ghcr.io/updatecli/policies/policies/autodiscovery/all:latest"
-      }
+        description: "Execute Updatecli with the --experimental flag to send reports to Udash",
+        code: `updatecli diff --experimental`
+      },
     ],
     
     contributeWays: [
@@ -228,7 +227,23 @@ scm:
         link: "https://github.com/updatecli/udash/blob/main/CONTRIBUTING.md"
       }
     ]
-  })
+  }),
+  computed: {
+    apiBaseUrl() {
+      return window.config?.API_BASE_URL || window.location.origin + "/api"
+    },
+    dashboardUrl() {
+      return window.location.origin
+    }
+  },
+  methods: {
+    getStepCode(step) {
+      if (step.codeTemplate && typeof step.code === 'function') {
+        return step.code(this.apiBaseUrl, this.dashboardUrl)
+      }
+      return step.code || ''
+    }
+  }
 }
 </script>
 
