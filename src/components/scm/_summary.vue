@@ -268,13 +268,9 @@ export default {
 
     watch: {
       filter: async function(newFilter, oldFilter) {
-<<<<<<< HEAD
         const newScmId = newFilter.scmid || "";
         const oldScmId = oldFilter.scmid || "";
         if (newScmId !== oldScmId) {
-=======
-        if (newFilter !== oldFilter) {
->>>>>>> c06cc9a (feat: add timerange filter)
           this.stopSequentialLoad();    // cancel any in-flight sequential loads
           this.resetPagination();
           await this.loadSequentialPages(9); // or desired number
@@ -366,15 +362,12 @@ export default {
                     params.append('scmid', restrictedSCM);
                 } else if (this.filter?.scmid && this.filter?.scmid !== '') {
                     params.append('scmid', this.filter.scmid);
-<<<<<<< HEAD
                 }
 
                  // Add starttime and endtime filters if provided
                 if (this.filter?.startTime && this.filter.endTime ) {
                     params.append('start_time', this.filter.startTime);
                     params.append('end_time', this.filter.endTime);
-=======
->>>>>>> 5431721 (chore: rename scmid param to filter)
                 }
 
                  // Add starttime and endtime filters if provided
