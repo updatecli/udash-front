@@ -1,7 +1,15 @@
 <template>
     <v-container>
+        <v-row v-if="isNoData()" class="text-center pa-12">
+          <v-col>
+            <div class="empty-state">
+              <v-icon size="96" color="grey-lighten-2">mdi-alert-decagram-outline</v-icon>
+              <h3 class="text-h5 mt-6 mb-2 font-weight-medium">No Dashboard Found</h3>
+            </div>
+          </v-col>
+        </v-row>
         <!-- SCM Cards Layout -->
-        <v-row>
+        <v-row v-if="!isNoData()">
             <v-col
                 v-for="(scmData, url) in data"
                 :key="url"
@@ -275,6 +283,10 @@ export default {
     },
 
     methods: {
+        isNoData() {
+            return this.totalCount == 0 && !this.isLoading;
+        },
+
         resetPagination() {
             this.currentPage = 0;
             this.totalCount = 0;
@@ -294,6 +306,10 @@ export default {
 
         defaultMgCol() {
             return this.isFullWidth() ? 12 : 6;
+        },
+
+        isEmptyData() {
+            return Object.keys(this.data).length === 0;
         },
 
         async loadSequentialPages(pagesToLoad = 1) {
