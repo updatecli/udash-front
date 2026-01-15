@@ -1,9 +1,25 @@
 <template>
+
   <v-container
       class="py-8 px-6"
       fluid
   >
-    <v-container>
+    <v-container
+      v-if="pipelines.length === 0"
+    >
+      <v-row class="text-center pa-12">
+        <v-col>
+          <div class="empty-state">
+            <v-icon size="96" color="grey-lighten-2">mdi-alert-decagram-outline</v-icon>
+            <h3 class="text-h5 mt-6 mb-2 font-weight-medium">No Reports Found</h3>
+          </div>
+        </v-col>
+      </v-row>
+    </v-container>
+
+    <v-container
+      v-if="pipelines.length > 0"
+    >
       <v-row>
         <v-col
             cols="auto"
