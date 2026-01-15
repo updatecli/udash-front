@@ -32,7 +32,6 @@
         <v-range-slider
           v-model="dateRange"
           :reverse="false"
-          :reverse="false"
           :min="0"
           :max="30"
           :step="1"
