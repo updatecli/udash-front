@@ -189,7 +189,8 @@ export default {
             <li>Method A (Config file): Stores token locally, secure for local development</li>
             <li>Method B (Environment variables): Better for CI/CD pipelines and containers</li>
           </ul>
-        `
+        `,
+        code: ""
       },
       {
         title: "Authenticate (Method A - Config File)",
