@@ -88,8 +88,8 @@
                     >
                       <v-expansion-panel-text>
                         <div class="mb-3" v-html="step.description"></div>
-                        <pre>
-                          <v-code v-if="step.code" class="d-block pa-3 bg-grey-lighten-4">
+                        <pre class="mb-3 overflow-x-auto">
+                          <v-code v-if="step.code" class="bg-grey-lighten-4">
 {{ getStepCode(step) }}
                           </v-code>
                         </pre>
@@ -179,7 +179,7 @@ export default {
     configSteps: [
       {
         title: "Install Updatecli",
-        description: "Make sure Updatecli is installed. <a href=\"https://www.updatecli.io/docs/prologue/installation/\" target=\"_blank\" rel=\"noopener noreferrer\">View installation options</a>",
+        description: "Make sure Updatecli is installed.<br/><a href=\"https://www.updatecli.io/docs/prologue/installation/\" target=\"_blank\" rel=\"noopener noreferrer\">View installation options</a>",
         code: `brew tap updatecli/updatecli\nbrew install updatecli`
       },
       {
