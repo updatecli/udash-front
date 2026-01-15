@@ -29,11 +29,8 @@
        <!-- Date Range Slider -->
         <v-range-slider
           v-model="dateRange"
-<<<<<<< HEAD
           :reverse="false"
-=======
-          :reverse="true"
->>>>>>> c06cc9a (feat: add timerange filter)
+          :reverse="false"
           :min="0"
           :max="30"
           :step="1"
@@ -42,7 +39,6 @@
         >
           <template v-slot:prepend>
             <v-text-field
-<<<<<<< HEAD
               :v-model="dateRange[0]"
               density="compact"
               style="width: 150px"
@@ -52,21 +48,10 @@
               single-line
               class="text-center"
           >{{ stepToISOWithoutTimezone(dateRange[0]) }}</v-text-field>
-=======
-              :v-model="dateRange[1]"
-              density="compact"
-              style="width: 150px"
-              variant="flat"
-              hide-details
-              single-line
-              class="text-center"
-          >{{ stepToISO(dateRange[1]) }}</v-text-field>
->>>>>>> c06cc9a (feat: add timerange filter)
           </template>
 
           <template v-slot:append>
             <v-text-field
-<<<<<<< HEAD
               :v-model="dateRange[1]"
               density="compact"
               style="width: 150px"
@@ -76,16 +61,6 @@
               single-line
               class="text-center"
           >{{ stepToISOWithoutTimezone(dateRange[1]) }}</v-text-field>
-=======
-              :v-model="dateRange[0]"
-              density="compact"
-              style="width: 150px"
-              variant="flat"
-              hide-details
-              single-line
-              class="text-center"
-          >{{ stepToISO(dateRange[0]) }}</v-text-field>
->>>>>>> c06cc9a (feat: add timerange filter)
           </template>
         </v-range-slider>
 
@@ -305,7 +280,6 @@ export default {
       return this.formatToLayout(date)
     },
 
-<<<<<<< HEAD
     stepToISOWithoutTimezone(step) {
       const now = new Date()
       let date = new Date(now)
@@ -322,8 +296,6 @@ export default {
       return this.formatToLayoutWithoutTimezone(date)
     },
 
-=======
->>>>>>> c06cc9a (feat: add timerange filter)
     tickLabel(label) {
 
       if (label < 24 ){
@@ -365,7 +337,7 @@ export default {
 
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}${tzOffset}`
     },
-<<<<<<< HEAD
+
     formatToLayoutWithoutTimezone(date) {
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -376,8 +348,6 @@ export default {
 
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     },
-=======
->>>>>>> c06cc9a (feat: add timerange filter)
   },
 
   watch: {
