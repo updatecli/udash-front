@@ -74,8 +74,8 @@
         <v-row>
           <v-col
             cols="auto"
-            lg="3"
-            md="3"
+            lg="12"
+            md="12"
             sm="12"
           >
             <!-- Add explanatory header -->
@@ -220,6 +220,9 @@ export default {
   },
 
   methods: {
+    isFilterData : function() {
+      return Object.keys(this.filter).length !== 0 && this.isFilterLoaded;
+    },
     cancelAutoUpdate: function() {
       clearInterval(this.timer);
     },
