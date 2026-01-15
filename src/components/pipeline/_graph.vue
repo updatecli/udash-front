@@ -2,7 +2,7 @@
   <div class="graph-container">
     <vue-mermaid-string 
       :value="enhancedData" 
-      :config="mermaidConfig"
+      :options="mermaidConfig"
     />
   </div>
 </template>
@@ -71,15 +71,16 @@ export default {
         lineColor: '#6c757d',
         background: '#ffffff'
       },
+      markdown: false,
+      htmlLabels: false,
       flowchart: {
-        htmlLabels: true,
         curve: 'basis',
         padding: 20,
         nodeSpacing: 50,
         rankSpacing: 60,
         useMaxWidth: true
       },
-      fontSize: 14
+      fontSize: 14,
     }
   })
 }
