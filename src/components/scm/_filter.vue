@@ -16,6 +16,7 @@
         item-title="text"
         prepend-inner-icon="mdi-git"
         v-model="repository"
+        :disabled="!isRepositoriesData()"
         ></v-select>
 
        <v-select
@@ -24,6 +25,7 @@
         :rules="[v => !!v || 'Git branch is required']"
         prepend-inner-icon="mdi-source-branch"
         v-model="branch"
+        :disabled="!isRepositoryBranchesData()"
         ></v-select>
 
        <!-- Date Range Slider -->
@@ -36,6 +38,7 @@
           :step="1"
           class="py-6"
           :strict="true"
+          :disabled="!isRepositoriesData() && !isRepositoryBranchesData()"
         >
           <template v-slot:prepend>
             <v-text-field
@@ -73,6 +76,7 @@
           class="py-4"
         >
           <v-btn
+            :disabled="!isRepositoriesData() && !isRepositoryBranchesData()"
             class="pr-4"
             @click="applyFilter"
           >Search</v-btn>
@@ -86,11 +90,6 @@
           >Reset</v-btn>
         </div>
     </v-form>
-
-
-    <div class="text-center">
-    </div>
-
   </v-container>
 </template>
 
@@ -168,6 +167,14 @@ export default {
   },
 
   methods: {
+    isRepositoriesData() {
+      return this.repositories.length > 0
+    },
+
+    isRepositoryBranchesData() {
+      return this.branches.length > 0
+    },
+
     async getSCMSData() {
       this.$emit('loaded', false)
       const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
@@ -212,9 +219,9 @@ export default {
           this.repository = this.scms[i].URL
           this.branch = this.scms[i].Branch
           this.applyFilter()
-          this.$emit('loaded', true)
         }
       }
+      this.$emit('loaded', true)
 
     },
 
@@ -246,7 +253,7 @@ export default {
 
 
     getScmID(url, branch) {
-      return this.scms.find(scm => scm.URL === url && scm.Branch === branch).ID
+      return this.scms.find(scm => scm.URL === url && scm.Branch === branch)?.ID
     },
 
     applyFilter() {
