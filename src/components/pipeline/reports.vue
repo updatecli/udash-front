@@ -291,6 +291,11 @@ export default {
           params.append('end_time', this.filter.endTime);
       }
 
+      if (this.filter?.startTime && this.filter.endTime ) {
+          params.append('start_time', this.filter.startTime);
+          params.append('end_time', this.filter.endTime);
+      }
+
       params.append('limit', this.itemsPerPage);
       params.append('page',  this.currentPage);
 
