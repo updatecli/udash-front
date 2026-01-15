@@ -169,21 +169,8 @@
       <v-row v-if="!isLoading && configs.length === 0" class="text-center pa-12">
         <v-col>
           <div class="empty-state">
-            <v-icon size="96" color="grey-lighten-2">mdi-folder-open-outline</v-icon>
-            <h3 class="text-h5 mt-6 mb-2 font-weight-medium">No Configurations Found</h3>
-            <p class="text-body-1 text-medium-emphasis mb-4">
-              {{ configsFilters.kind || configsFilters.type
-                ? 'No configurations match your current filters.'
-                : 'No configurations have been created yet.' }}
-            </p>
-            <v-btn
-              v-if="configsFilters.kind || configsFilters.type"
-              variant="outlined"
-              @click="clearAllFilters"
-              prepend-icon="mdi-filter-off"
-            >
-              Clear Filters
-            </v-btn>
+            <v-icon size="96" color="grey-lighten-2">mdi-alert-decagram-outline</v-icon>
+            <h3 class="text-h5 mt-6 mb-2 font-weight-medium text-capitalize">No {{ resourceType }} Configurations Found</h3>
           </div>
         </v-col>
       </v-row>
@@ -211,12 +198,17 @@ export default {
     currentPage: 1,
     totalCount: 0,
     isLoading: false,
-    resourceKind: '',
-    resourceType: '',
     loadedPages: new Set(),
   }),
 
   computed: {
+    resourceType() {
+      return this.configsFilters.type || '';
+    },
+    resourceKind() {
+      return this.configsFilters.kind || '';
+    },
+
     totalPages() {
       return Math.ceil(this.totalCount / this.itemsPerPage);
     },
@@ -295,9 +287,6 @@ export default {
       if (this.loadedPages.has(this.currentPage) && !reset) {
         return;
       }
-
-      this.resourceKind = this.configsFilters.kind;
-      this.resourceType = this.configsFilters.type;
 
       this.isLoading = true;
       this.$emit('loaded', false);
