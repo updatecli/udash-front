@@ -304,10 +304,6 @@ export default {
             return this.isFullWidth() ? 12 : 6;
         },
 
-        isEmptyData() {
-            return Object.keys(this.data).length === 0;
-        },
-
         async loadSequentialPages(pagesToLoad = 1) {
             // create a unique id for this run so we can cancel/stale-check
             const runId = (this._sequentialRunId = (this._sequentialRunId || 0) + 1);
@@ -362,12 +358,6 @@ export default {
                     params.append('scmid', restrictedSCM);
                 } else if (this.filter?.scmid && this.filter?.scmid !== '') {
                     params.append('scmid', this.filter.scmid);
-                }
-
-                 // Add starttime and endtime filters if provided
-                if (this.filter?.startTime && this.filter.endTime ) {
-                    params.append('start_time', this.filter.startTime);
-                    params.append('end_time', this.filter.endTime);
                 }
 
                  // Add starttime and endtime filters if provided

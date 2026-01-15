@@ -37,7 +37,7 @@
           :step="1"
           class="py-6"
           :strict="true"
-          :disabled="!isRepositoriesData() && !isRepositoryBranchesData()"
+          :disabled="!isRepositoriesData() || !isRepositoryBranchesData()"
         >
           <template v-slot:prepend>
             <v-text-field
