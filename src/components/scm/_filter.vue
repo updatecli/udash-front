@@ -28,7 +28,50 @@
         :disabled="!isRepositoryBranchesData()"
         ></v-select>
 
-       <!-- Date Range Slider -->
+        <!-- Label Key and Value Selection -->
+        <div v-for="(label, index) in selectedLabels" :key="index">
+          <v-row class="align-center">
+            <v-col cols="12" sm="5">
+              <v-select
+                label="Label Key (Optional)"
+                :items="labelKeys"
+                prepend-inner-icon="mdi-label"
+                v-model="label.key"
+                clearable
+                @update:model-value="onLabelKeyChange(index)"
+              ></v-select>
+            </v-col>
+            <v-col cols="12" sm="5">
+              <v-select
+                label="Label Value (Optional)"
+                :items="getLabelValuesForIndex(index)"
+                prepend-inner-icon="mdi-label-multiple"
+                v-model="label.value"
+                clearable
+                :disabled="!label.key"
+                @update:model-value="onLabelValueChange(index)"
+              ></v-select>
+            </v-col>
+            <v-col cols="12" sm="2" class="d-flex gap-2">
+              <v-btn
+                icon="mdi-plus"
+                size="small"
+                @click="addLabelRow"
+                v-if="index === selectedLabels.length - 1"
+                :disabled="!canAddNewLabelRow()"
+              ></v-btn>
+              <v-btn
+                icon="mdi-delete"
+                size="small"
+                color="error"
+                @click="removeLabelRow(index)"
+                v-if="selectedLabels.length > 1"
+              ></v-btn>
+            </v-col>
+          </v-row>
+        </div>
+
+        <!-- Date Range Slider -->
         <v-range-slider
           v-model="dateRange"
           :reverse="false"
@@ -120,10 +163,15 @@ export default {
     branch : "",
     restrictedSCM: "",
     dateRange: [0, 24],  // [6 hours ago, now] by default
+    labelKeys: [],
+    labelValuesByKey: {},  // Map to store label values for each key
+    selectedLabels: [{ key: null, value: null }],  // Array of label selections
+    debounceTimer: null,
   }),
 
   beforeUnmount() {
     this.cancelAutoUpdate();
+    clearTimeout(this.debounceTimer);
   },
 
   computed: {
@@ -228,6 +276,71 @@ export default {
       return this.restrictedSCM != ""
     },
 
+    async getLabelKeys() {
+      try {
+        const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+        let query = `${getApiBaseURL()}/pipeline/labels?keyonly=true&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
+
+        if (auth_enabled) {
+          const token = await this.$auth0.getAccessTokenSilently();
+          const response = await fetch(query, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          const data = await response.json();
+          this.labelKeys = data.labels || [];
+        } else {
+          const response = await fetch(query);
+          const data = await response.json();
+          this.labelKeys = data.labels || [];
+        }
+      } catch (error) {
+        console.error('Error fetching label keys:', error);
+        this.labelKeys = [];
+      }
+    },
+
+    async getLabelValues(labelKey) {
+      try {
+        if (!labelKey) {
+          return [];
+        }
+
+        // Return cached values if available
+        if (this.labelValuesByKey[labelKey]) {
+          return this.labelValuesByKey[labelKey];
+        }
+
+        const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+        let query = `${getApiBaseURL()}/pipeline/labels?key=${encodeURIComponent(labelKey)}&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
+
+        if (auth_enabled) {
+          const token = await this.$auth0.getAccessTokenSilently();
+          const response = await fetch(query, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          const data = await response.json();
+          // Extract unique values from the labels array
+          const uniqueValues = [...new Set(data.labels.map(label => label.value))];
+          this.labelValuesByKey[labelKey] = uniqueValues || [];
+          return this.labelValuesByKey[labelKey];
+        } else {
+          const response = await fetch(query);
+          const data = await response.json();
+          // Extract unique values from the labels array
+          const uniqueValues = [...new Set(data.labels.map(label => label.value))];
+          this.labelValuesByKey[labelKey] = uniqueValues || [];
+          return this.labelValuesByKey[labelKey];
+        }
+      } catch (error) {
+        console.error('Error fetching label values:', error);
+        return [];
+      }
+    },
+
     resetRestrictedSCM() {
       const queryParams = { ...router.currentRoute.query }
       delete queryParams.scmid
@@ -261,6 +374,24 @@ export default {
         scmid: this.getScmID(this.repository, this.branch),
         startTime: this.formattedStartTime,
         endTime: this.formattedEndTime,
+      }
+
+      // Build labels as map[string]string as expected by the API.
+      const labels = {};
+      const seen = new Set();
+      for (const label of this.selectedLabels) {
+        if (label.key && label.value) {
+          const pairKey = `${label.key}::${label.value}`;
+          if (seen.has(pairKey)) {
+            continue;
+          }
+
+          seen.add(pairKey);
+          labels[label.key] = label.value;
+        }
+      }
+      if (Object.keys(labels).length > 0) {
+        newFilter.labels = labels;
       }
 
       this.$emit('update-filter', newFilter)
@@ -354,6 +485,65 @@ export default {
 
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     },
+
+    getLabelValuesForIndex(index) {
+      const labelKey = this.selectedLabels[index].key;
+      const values = this.labelValuesByKey[labelKey] || [];
+      
+      // Filter out values that are already selected with this key in other rows
+      return values.filter(value => {
+        return !this.selectedLabels.some((label, i) => {
+          if (i === index) return false; // Don't compare with itself
+          return label.key === labelKey && label.value === value;
+        });
+      });
+    },
+
+    async onLabelKeyChange(index) {
+      const labelKey = this.selectedLabels[index].key;
+      if (labelKey) {
+        await this.getLabelValues(labelKey);
+      }
+      // Clear value when key changes
+      this.selectedLabels[index].value = null;
+    },
+
+    onLabelValueChange(index) {
+      const label = this.selectedLabels[index];
+      if (!label.key || !label.value) {
+        return;
+      }
+
+      const isDuplicatePair = this.selectedLabels.some((selectedLabel, selectedIndex) => {
+        if (selectedIndex === index) {
+          return false;
+        }
+
+        return selectedLabel.key === label.key && selectedLabel.value === label.value;
+      });
+
+      if (isDuplicatePair) {
+        this.selectedLabels[index].value = null;
+      }
+    },
+
+    canAddNewLabelRow() {
+      // Don't allow adding a new row if the last row is incomplete
+      const lastLabel = this.selectedLabels[this.selectedLabels.length - 1];
+      return lastLabel.key && lastLabel.value;
+    },
+
+    addLabelRow() {
+      if (this.canAddNewLabelRow()) {
+        this.selectedLabels.push({ key: null, value: null });
+      }
+    },
+
+    removeLabelRow(index) {
+      if (this.selectedLabels.length > 1) {
+        this.selectedLabels.splice(index, 1);
+      }
+    },
   },
 
   watch: {
@@ -378,6 +568,13 @@ export default {
         const startTime = this.stepToISO(val[0])
         const endTime = this.stepToISO(val[1])
         this.$emit('date-range-changed', { startTime, endTime })
+
+        // Debounce label refresh to avoid an API call on every slider tick
+        clearTimeout(this.debounceTimer)
+        this.debounceTimer = setTimeout(() => {
+          this.labelValuesByKey = {}
+          this.getLabelKeys()
+        }, 500)
       },
       repository (val) {
         var newRepositoryBranches = []
@@ -412,6 +609,8 @@ export default {
         } else {
           this.getSCMSData()
         }
+        // Load label keys on component creation
+        await this.getLabelKeys();
     } catch (error) {
       console.log(error);
     }
