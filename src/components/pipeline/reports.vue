@@ -296,22 +296,53 @@ export default {
 
     async getReportsData(page =1 ) {
       this.$emit('loaded', false)
-      let queryURL = `${getApiBaseURL()}/pipeline/reports`
+      const queryURL = `${getApiBaseURL()}/pipeline/reports/search`
 
-      const params = new URLSearchParams();
-      if (this.filter?.scmid != undefined && this.filter?.scmid != '' && this.filter?.scmid != null) {
-        params.append('scmid', this.filter.scmid);
+      const requestBody = {
+        limit: this.itemsPerPage,
+        page,
       }
 
-      if (this.filter?.startTime && this.filter.endTime ) {
-          params.append('start_time', this.filter.startTime);
-          params.append('end_time', this.filter.endTime);
+      if (this.filter?.scmid) {
+        requestBody.scmid = this.filter.scmid
       }
 
-      params.append('limit', this.itemsPerPage);
-      params.append('page',  this.currentPage);
+      if (this.filter?.sourceid) {
+        requestBody.sourceid = this.filter.sourceid
+      }
 
-      queryURL += `?${params.toString()}`;
+      if (this.filter?.conditionid) {
+        requestBody.conditionid = this.filter.conditionid
+      }
+
+      if (this.filter?.targetid) {
+        requestBody.targetid = this.filter.targetid
+      }
+
+      if (this.filter?.startTime && this.filter?.endTime) {
+        requestBody.start_time = this.filter.startTime
+        requestBody.end_time = this.filter.endTime
+      }
+
+      if (typeof this.filter?.latest === 'boolean') {
+        requestBody.latest = this.filter.latest
+      }
+
+      // The search API expects labels as a key/value map object.
+      if (this.filter?.labels) {
+        if (typeof this.filter.labels === 'object' && !Array.isArray(this.filter.labels)) {
+          const labels = {}
+          Object.entries(this.filter.labels).forEach(([key, value]) => {
+            if (typeof key === 'string' && value !== undefined && value !== null) {
+              labels[key] = String(value)
+            }
+          })
+
+          if (Object.keys(labels).length > 0) {
+            requestBody.labels = labels
+          }
+        }
+      }
 
       const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
@@ -320,12 +351,21 @@ export default {
         if (isAuthEnabled) {
           const token = await this.$auth0.getAccessTokenSilently();
           response = await fetch(queryURL, {
+            method: 'POST',
             headers: {
-              Authorization: `Bearer ${token}`
-            }
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
           });
         } else {
-          response = await fetch(queryURL);
+          response = await fetch(queryURL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+          });
         }
 
         if (!response.ok) {
