@@ -66,6 +66,7 @@
 
             <PipelineSCMFilter
               :filter="filter"
+              :show-repository-branch="true"
               @update-filter="updateFilter"
               @loaded="setFilterLoaded"
             />
