@@ -71,6 +71,45 @@
       </v-col>
     </v-row>
 
+    <!-- Show labels -->
+    <v-row v-if="pipeline.Pipeline.Labels && Object.keys(pipeline.Pipeline.Labels).length > 0">
+      <v-col>
+        <v-card variant="flat">
+          <v-card-text class="labels-card">
+            <div class="labels-header">Labels</div>
+            <div class="labels-list">
+              <div
+                v-for="([key, value]) in sortedLabels"
+                :key="key"
+                class="label-row"
+              >
+                <div class="label-key-wrap">
+                  <v-icon
+                    size="18"
+                    color="grey-darken-1"
+                    class="label-icon"
+                  >
+                    mdi-label-outline
+                  </v-icon>
+                  <span class="label-key">{{ key }}</span>
+                </div>
+                <div class="label-value">{{ value }}</div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row v-else>
+      <v-col>
+        <v-card variant="flat">
+          <v-card-text>
+            <p class="text-grey">No labels</p>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
     <!-- Show link to latest report -->
      <v-row
         v-if="latestReportByID"
@@ -268,6 +307,17 @@ export default {
     this.cancelAutoUpdate();
   },
 
+  computed: {
+    sortedLabels() {
+      const labels = this.pipeline?.Pipeline?.Labels
+      if (!labels) {
+        return []
+      }
+
+      return Object.entries(labels).sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+    },
+  },
+
   methods: {
     formatDate(rawDate) {
       if (!rawDate) {
@@ -440,5 +490,68 @@ export default {
 
 .metadata-table thead tr {
   background-color: rgba(0, 0, 0, 0.02);
+}
+
+.labels-card {
+  padding-top: 20px;
+}
+
+.labels-header {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 12px;
+}
+
+.labels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.01));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.label-key-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label-icon {
+  flex-shrink: 0;
+}
+
+.label-key {
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.78);
+  word-break: break-word;
+}
+
+.label-value {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.64);
+  text-align: right;
+  word-break: break-word;
+}
+
+@media (max-width: 700px) {
+  .label-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .label-value {
+    text-align: left;
+  }
 }
 </style>
