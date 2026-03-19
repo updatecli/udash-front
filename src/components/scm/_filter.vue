@@ -7,107 +7,134 @@
       v-model="filterForm"
       @submit.prevent="applyFilter"
     >
-      <!-- Repository Dropdown -->
-       <v-select
-        label="Git Repository"
-        :items="repositories"
-        :rules="[v => !!v || 'Git repository is required']"
-        item-value="id"
-        item-title="text"
-        prepend-inner-icon="mdi-git"
-        v-model="repository"
-        :disabled="!isRepositoriesData()"
-        ></v-select>
+      <!-- Repository and Branch Dropdowns -->
+      <v-row v-if="showRepositoryBranch">
+        <v-col cols="12" md="6">
+          <v-select
+            variant="outlined"
+            label="Git Repository"
+            :items="repositories"
+            :rules="[v => !!v || 'Git repository is required']"
+            item-value="id"
+            item-title="text"
+            prepend-inner-icon="mdi-git"
+            v-model="repository"
+            :disabled="!isRepositoriesData()"
+          ></v-select>
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-select
+            variant="outlined"
+            label="Git Branch"
+            :items="branches"
+            :rules="[v => !!v || 'Git branch is required']"
+            prepend-inner-icon="mdi-source-branch"
+            v-model="branch"
+            :disabled="!isRepositoryBranchesData()"
+          ></v-select>
+        </v-col>
+      </v-row>
 
-       <v-select
-        label="Git Branch"
-        :items="branches"
-        :rules="[v => !!v || 'Git branch is required']"
-        prepend-inner-icon="mdi-source-branch"
-        v-model="branch"
-        :disabled="!isRepositoryBranchesData()"
-        ></v-select>
-
-        <!-- Label Key and Value Selection -->
-        <div v-for="(label, index) in selectedLabels" :key="index">
-          <v-row class="align-center">
-            <v-col cols="12" sm="5">
-              <v-select
-                label="Label Key (Optional)"
-                :items="labelKeys"
-                prepend-inner-icon="mdi-label"
-                v-model="label.key"
-                clearable
-                @update:model-value="onLabelKeyChange(index)"
-              ></v-select>
-            </v-col>
-            <v-col cols="12" sm="5">
-              <v-select
-                label="Label Value (Optional)"
-                :items="getLabelValuesForIndex(index)"
-                prepend-inner-icon="mdi-label-multiple"
-                v-model="label.value"
-                clearable
-                :disabled="!label.key"
-                @update:model-value="onLabelValueChange(index)"
-              ></v-select>
-            </v-col>
-            <v-col cols="12" sm="2" class="d-flex gap-2">
-              <v-btn
-                icon="mdi-plus"
-                size="small"
-                @click="addLabelRow"
-                v-if="index === selectedLabels.length - 1"
-                :disabled="!canAddNewLabelRow()"
-              ></v-btn>
-              <v-btn
-                icon="mdi-delete"
-                size="small"
-                color="error"
-                @click="removeLabelRow(index)"
-                v-if="selectedLabels.length > 1"
-              ></v-btn>
-            </v-col>
-          </v-row>
-        </div>
-
-        <!-- Date Range Slider -->
-        <v-range-slider
-          v-model="dateRange"
-          :reverse="false"
-          :min="0"
-          :max="30"
-          :step="1"
-          class="py-6"
-          :strict="true"
-          :disabled="!isRepositoriesData() || !isRepositoryBranchesData()"
+        <!-- Advanced Filter Expansion Panel -->
+        <v-expansion-panels
+          class="mt-4"
+          elevation="0"
         >
-          <template v-slot:prepend>
-            <v-text-field
-              :v-model="dateRange[0]"
-              density="compact"
-              style="width: 150px"
-              variant="solo"
-              :flat=true
-              hide-details
-              single-line
-              class="text-center"
-          >{{ stepToISOWithoutTimezone(dateRange[0]) }}</v-text-field>
-          </template>
+          <v-expansion-panel>
+            <v-expansion-panel-title>
+              <v-icon class="mr-2">mdi-filter-outline</v-icon>
+              Advanced Filter
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
+              <!-- Label Key and Value Selection -->
+              <div v-for="(label, index) in selectedLabels" :key="index">
+                <v-row class="align-center">
+                  <v-col cols="12" sm="5">
+                    <v-select
+                      variant="outlined"
+                      label="Label Key (Optional)"
+                      :items="labelKeys"
+                      prepend-inner-icon="mdi-label"
+                      v-model="label.key"
+                      clearable
+                      @update:model-value="onLabelKeyChange(index)"
+                    ></v-select>
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-select
+                      variant="outlined"
+                      label="Label Value (Optional)"
+                      :items="getLabelValuesForIndex(index)"
+                      prepend-inner-icon="mdi-label-multiple"
+                      v-model="label.value"
+                      clearable
+                      :disabled="!label.key"
+                      @update:model-value="onLabelValueChange(index)"
+                    ></v-select>
+                  </v-col>
+                  <v-col cols="12" sm="1" class="mb-5">
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      icon="mdi-delete"
+                      size="small"
+                      color="error"
+                      @click="removeLabelRow(index)"
+                      v-if="selectedLabels.length > 1"
+                    ></v-btn>
+                    <v-btn
+                      icon="mdi-plus"
+                      size="small"
+                      @click="addLabelRow"
+                      v-if="index === selectedLabels.length - 1"
+                      :disabled="!canAddNewLabelRow()"
+                    ></v-btn>
+                  </v-col>
+                </v-row>
+              </div>
+                <v-row>
+                  <v-col cols="12" sm="12">
+                    <!-- Date Range Slider -->
+                    <v-range-slider
+                      v-model="dateRange"
+                      :reverse="false"
+                      :min="0"
+                      :max="30"
+                      :step="1"
+                      class="py-6"
+                      :strict="true"
+                      :disabled="showRepositoryBranch && (!isRepositoriesData() || !isRepositoryBranchesData())"
+                    >
+                      <template v-slot:prepend>
+                        <v-text-field
+                          :v-model="dateRange[0]"
+                          density="compact"
+                          style="width: 150px"
+                          variant="solo"
+                          :flat=true
+                          hide-details
+                          single-line
+                          class="text-center"
+                      >{{ stepToISOWithoutTimezone(dateRange[0]) }}</v-text-field>
+                      </template>
 
-          <template v-slot:append>
-            <v-text-field
-              :v-model="dateRange[1]"
-              density="compact"
-              style="width: 150px"
-              variant="solo"
-              :flat=true
-              hide-details
-              single-line
-              class="text-center"
-          >{{ stepToISOWithoutTimezone(dateRange[1]) }}</v-text-field>
-          </template>
-        </v-range-slider>
+                      <template v-slot:append>
+                        <v-text-field
+                          :v-model="dateRange[1]"
+                          density="compact"
+                          style="width: 150px"
+                          variant="solo"
+                          :flat=true
+                          hide-details
+                          single-line
+                          class="text-center"
+                      >{{ stepToISOWithoutTimezone(dateRange[1]) }}</v-text-field>
+                      </template>
+                    </v-range-slider>
+                  </v-col>
+                </v-row>
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
 
         <!-- Filter repository-->
         <!--<v-btn type="submit" color="primary" :disabled="!filterForm">Filter</v-btn>-->
@@ -118,7 +145,7 @@
           class="py-4"
         >
           <v-btn
-            :disabled="!isRepositoriesData() && !isRepositoryBranchesData()"
+            :disabled="showRepositoryBranch && (!isRepositoriesData() && !isRepositoryBranchesData())"
             class="pr-4"
             @click="applyFilter"
           >Search</v-btn>
@@ -151,6 +178,10 @@ export default {
         startTime: "",
         endTime: "",
       }),
+    },
+    showRepositoryBranch: {
+      type: Boolean,
+      default: true,
     },
   },
 
@@ -371,9 +402,12 @@ export default {
     applyFilter() {
 
       var newFilter = {
-        scmid: this.getScmID(this.repository, this.branch),
         startTime: this.formattedStartTime,
         endTime: this.formattedEndTime,
+      }
+
+      if (this.showRepositoryBranch) {
+        newFilter.scmid = this.getScmID(this.repository, this.branch)
       }
 
       // Build labels as map[string]string as expected by the API.
@@ -604,10 +638,12 @@ export default {
 
   async created() {
     try {
-        if (router.currentRoute.value.query.scmid != undefined) {
-          this.restrictedSCM = router.currentRoute.value.query.scmid
-        } else {
-          this.getSCMSData()
+        if (this.showRepositoryBranch) {
+          if (router.currentRoute.value.query.scmid != undefined) {
+            this.restrictedSCM = router.currentRoute.value.query.scmid
+          } else {
+            this.getSCMSData()
+          }
         }
         // Load label keys on component creation
         await this.getLabelKeys();

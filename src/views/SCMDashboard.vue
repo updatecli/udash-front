@@ -41,7 +41,23 @@
             md="12"
             sm="12"
           >
+            <PipelineSCMFilter
+              :filter="filter"
+              :show-repository-branch="false"
+              @update-filter="updateFilter"
+              @loaded="setFilterLoaded"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col
+            cols="auto"
+            lg="12"
+            md="12"
+            sm="12"
+          >
             <PipelineSCMSSummary
+              :filter="filter"
               @loaded="setSummaryLoaded"
             />
           </v-col>
@@ -59,12 +75,15 @@ import SideNavigation from '../components/SideNavigation.vue';
 import HeadNavigation from '../components/HeadNavigation.vue';
 import SCMSDashboard from '../components/scm/_summary.vue';
 
+import PipelineSCMFilter from '../components/scm/_filter.vue';
+
 export default {
   name: 'QuickStartView',
   components: {
     ReleaseFooter,
     SideNavigation,
     HeadNavigation,
+    PipelineSCMFilter,
     PipelineSCMSSummary: SCMSDashboard,
   },
 
@@ -74,6 +93,7 @@ export default {
 
   data: () => ({
     isLoading: true,
+    filter: {},
     host: window.location.protocol + "//" + window.location.host,
     externalLinks:[
       {
@@ -105,6 +125,12 @@ export default {
   methods: {
     cancelAutoUpdate: function() {
       clearInterval(this.timer);
+    },
+    updateFilter: function(newFilter) {
+      this.filter = newFilter
+    },
+    setFilterLoaded: function(val) {
+      if (!val) this.isLoading = true
     },
     setSummaryLoaded: function(val) {
       this.isLoading = !val
