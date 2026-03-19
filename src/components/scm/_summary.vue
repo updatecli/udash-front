@@ -83,9 +83,10 @@
                                                             :key="status"
                                                             :color="getStatusColor(status)"
                                                             size="x-small"
-                                                            class="mr-1 mb-1"
+                                                            class="status-chip"
                                                         >
-                                                            {{ status }} {{ count }}
+                                                            <span class="status-chip-status">{{ status }}</span>
+                                                            <span class="status-chip-value">{{ getStatusPercentage(count, branchData.total_result) }}</span>
                                                         </v-chip>
                                                     </div>
                                                 </v-col>
@@ -133,9 +134,10 @@
                                                         :key="status"
                                                         :color="getStatusColor(status)"
                                                         size="x-small"
-                                                        class="mr-1 mb-1"
+                                                        class="status-chip"
                                                     >
-                                                        {{ status }} {{ count }}
+                                                        <span class="status-chip-status">{{ status }}</span>
+                                                        <span class="status-chip-value">{{ getStatusPercentage(count, branchData.total_result) }}</span>
                                                     </v-chip>
                                                 </div>
                                             </div>
@@ -266,17 +268,16 @@ export default {
         loadedPages: new Set(),
     }),
 
-    watch: {
-      filter: async function(newFilter, oldFilter) {
-        const newScmId = newFilter.scmid || "";
-        const oldScmId = oldFilter.scmid || "";
-        if (newScmId !== oldScmId) {
-          this.stopSequentialLoad();    // cancel any in-flight sequential loads
-          this.resetPagination();
-          await this.loadSequentialPages(9); // or desired number
-        }
-      }
-    },
+        watch: {
+            filter: {
+                deep: true,
+                async handler() {
+                    this.stopSequentialLoad();
+                    this.resetPagination();
+                    await this.loadSequentialPages(9);
+                },
+            },
+        },
 
     methods: {
         isNoData() {
@@ -343,41 +344,63 @@ export default {
             this.isLoading= true;
             this.$emit('loaded', false)
 
-                        try {
+            try {
                 const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
                 const restrictedSCM = router.currentRoute.value.query.filter?.scmid;
 
-                // Build query with pagination parameters
-                const params = new URLSearchParams();
-                params.append('summary', 'true');
-                params.append('limit', this.itemsPerPage);
-                params.append('page', page);
+                const requestBody = {
+                    summary: true,
+                    limit: this.itemsPerPage,
+                    page,
+                };
 
                 // Add SCM ID filter if provided
                 if (restrictedSCM) {
-                    params.append('scmid', restrictedSCM);
+                    requestBody.scmid = restrictedSCM;
                 } else if (this.filter?.scmid && this.filter?.scmid !== '') {
-                    params.append('scmid', this.filter.scmid);
+                    requestBody.scmid = this.filter.scmid;
                 }
 
                  // Add starttime and endtime filters if provided
                 if (this.filter?.startTime && this.filter.endTime ) {
-                    params.append('start_time', this.filter.startTime);
-                    params.append('end_time', this.filter.endTime);
+                    requestBody.start_time = this.filter.startTime;
+                    requestBody.end_time = this.filter.endTime;
                 }
 
-                let query = `${getApiBaseURL()}/pipeline/scms?${params.toString()}`;
+                if (this.filter?.labels && typeof this.filter.labels === 'object' && !Array.isArray(this.filter.labels)) {
+                    const labels = {};
+                    Object.entries(this.filter.labels).forEach(([key, value]) => {
+                        if (typeof key === 'string' && value !== undefined && value !== null) {
+                            labels[key] = String(value);
+                        }
+                    });
+
+                    if (Object.keys(labels).length > 0) {
+                        requestBody.labels = labels;
+                    }
+                }
+
+                const query = `${getApiBaseURL()}/pipeline/scms/search`;
 
                 let response;
                 if (auth_enabled) {
                     const token = await this.$auth0.getAccessTokenSilently();
                     response = await fetch(query, {
+                        method: 'POST',
                         headers: {
-                            Authorization: `Bearer ${token}`
-                        }
+                            Authorization: `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(requestBody),
                     });
                 } else {
-                    response = await fetch(query);
+                    response = await fetch(query, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(requestBody),
+                    });
                 }
 
                 if (!response.ok) {
@@ -560,6 +583,17 @@ export default {
                 default: return 'purple';
             }
         },
+
+        getStatusPercentage(count, total) {
+            const safeCount = Number(count) || 0;
+            const safeTotal = Number(total) || 0;
+
+            if (safeTotal <= 0) {
+                return '0%';
+            }
+
+            return `${Math.round((safeCount / safeTotal) * 100)}%`;
+        },
     },
     async created() {
         try {
@@ -613,7 +647,34 @@ export default {
 }
 
 .status-summary {
-    max-width: 200px;
+    max-width: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.status-chip {
+    margin: 0;
+    width: 100%;
+    justify-content: stretch;
+}
+
+.status-chip :deep(.v-chip__content) {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.status-chip-status {
+    font-weight: 600;
+}
+
+.status-chip-value {
+    margin-left: auto;
+    min-width: 48px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
 }
 
 .branch-info {
