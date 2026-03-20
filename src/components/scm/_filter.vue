@@ -411,17 +411,17 @@ export default {
       }
 
       // Build labels as map[string]string as expected by the API.
+      // An empty value means: filter by key regardless of value.
       const labels = {};
       const seen = new Set();
       for (const label of this.selectedLabels) {
-        if (label.key && label.value) {
-          const pairKey = `${label.key}::${label.value}`;
-          if (seen.has(pairKey)) {
+        if (label.key) {
+          if (seen.has(label.key)) {
             continue;
           }
 
-          seen.add(pairKey);
-          labels[label.key] = label.value;
+          seen.add(label.key);
+          labels[label.key] = label.value || "";
         }
       }
       if (Object.keys(labels).length > 0) {
@@ -535,6 +535,21 @@ export default {
 
     async onLabelKeyChange(index) {
       const labelKey = this.selectedLabels[index].key;
+
+      const isDuplicateKey = this.selectedLabels.some((selectedLabel, selectedIndex) => {
+        if (selectedIndex === index || !labelKey) {
+          return false;
+        }
+
+        return selectedLabel.key === labelKey;
+      });
+
+      if (isDuplicateKey) {
+        this.selectedLabels[index].key = null;
+        this.selectedLabels[index].value = null;
+        return;
+      }
+
       if (labelKey) {
         await this.getLabelValues(labelKey);
       }
@@ -564,7 +579,7 @@ export default {
     canAddNewLabelRow() {
       // Don't allow adding a new row if the last row is incomplete
       const lastLabel = this.selectedLabels[this.selectedLabels.length - 1];
-      return lastLabel.key && lastLabel.value;
+      return !!lastLabel.key;
     },
 
     addLabelRow() {
