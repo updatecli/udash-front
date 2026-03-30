@@ -16,7 +16,7 @@
     "highlight.js": "^11.11.1",
     "js-yaml": "^4.1.1",
     "roboto-fontface": "^0.10.0",
-    "vue": "^3.5.16",
+    "vue": "^3.5.31",
     "vue-chartjs": "^5.3.2",
     "vue-mermaid-string": "^7.0.0",
     "vue-router": "^4.5.1",
