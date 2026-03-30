@@ -31,7 +31,7 @@ jobs:
           push: true
           tags: updatecli/udash-front:${{ github.event.release.tag_name }}
       - name: Build and push on ghcr.io
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
           platforms: linux/amd64,linux/arm64
