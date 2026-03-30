@@ -11,7 +11,7 @@
     "@auth0/auth0-vue": "^2.4.0",
     "@mdi/font": "^7.4.47",
     "axios": "^1.13.5",
-    "chart.js": "^4.4.9",
+    "chart.js": "^4.5.1",
     "core-js": "^3.42.0",
     "highlight.js": "^11.11.1",
     "js-yaml": "^4.1.1",
