@@ -1,6 +1,5 @@
 ---
 name: build
-
 on:
   workflow_dispatch:
   push:
@@ -9,24 +8,18 @@ on:
   pull_request:
     branches:
       - main
-    
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
-
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Use Node.js
         uses: actions/setup-node@v3.3.0
         with:
           node-version: 17
-
       - name: Install dependencies
         run: npm install
-
       - name: Check for linting errors
         run: npm run lint
-
       - name: Build production website
         run: npm run build
