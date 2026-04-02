@@ -167,6 +167,8 @@ import router from '../../router'
 
 import { getApiBaseURL } from '@/composables/api';
 
+const FILTER_STORAGE_KEY = 'udash.scm.filter.v1';
+
 export default {
   name: 'PipelineSCMS',
 
@@ -292,13 +294,23 @@ export default {
           id: this.scms[i].URL,
           text: this.prettifyURL(this.scms[i].URL)
         })
-
-        if ( i == 0) {
-          this.repository = this.scms[i].URL
-          this.branch = this.scms[i].Branch
-          this.applyFilter()
-        }
       }
+
+      if (this.repositories.length > 0) {
+        const hasStoredRepository = this.repositories.some((item) => item.id === this.repository)
+        if (!hasStoredRepository) {
+          this.repository = this.repositories[0].id
+        }
+
+        const repositoryBranches = this.getRepositoryBranches(this.repository)
+        this.branches = repositoryBranches
+        if (!repositoryBranches.includes(this.branch)) {
+          this.branch = repositoryBranches[0] || ''
+        }
+
+        this.applyFilter()
+      }
+
       this.$emit('loaded', true)
 
     },
@@ -399,6 +411,81 @@ export default {
       return this.scms.find(scm => scm.URL === url && scm.Branch === branch)?.ID
     },
 
+    getRepositoryBranches(repositoryUrl) {
+      const repositoryBranches = []
+
+      for (let i = 0; i < this.scms.length; i++) {
+        const scm = this.scms[i]
+        if (scm.URL !== repositoryUrl) {
+          continue
+        }
+
+        if (!repositoryBranches.includes(scm.Branch)) {
+          repositoryBranches.push(scm.Branch)
+        }
+      }
+
+      return repositoryBranches
+    },
+
+    loadPersistedFilterState() {
+      try {
+        const rawValue = localStorage.getItem(FILTER_STORAGE_KEY)
+        if (!rawValue) {
+          return
+        }
+
+        const savedState = JSON.parse(rawValue)
+
+        if (Array.isArray(savedState.dateRange) && savedState.dateRange.length === 2) {
+          const start = Number(savedState.dateRange[0])
+          const end = Number(savedState.dateRange[1])
+          if (Number.isFinite(start) && Number.isFinite(end)) {
+            this.dateRange = [start, end]
+          }
+        }
+
+        if (Array.isArray(savedState.selectedLabels)) {
+          const restoredLabels = savedState.selectedLabels
+            .filter((item) => item && typeof item === 'object')
+            .map((item) => ({
+              key: item.key || null,
+              value: item.value || null,
+            }))
+
+          this.selectedLabels = restoredLabels.length > 0 ? restoredLabels : [{ key: null, value: null }]
+        }
+
+        if (this.showRepositoryBranch) {
+          if (typeof savedState.repository === 'string') {
+            this.repository = savedState.repository
+          }
+
+          if (typeof savedState.branch === 'string') {
+            this.branch = savedState.branch
+          }
+        }
+      } catch (error) {
+        console.warn('Unable to restore persisted SCM filter state', error)
+      }
+    },
+
+    persistFilterState() {
+      try {
+        const stateToPersist = {
+          dateRange: this.dateRange,
+          selectedLabels: this.selectedLabels,
+          repository: this.showRepositoryBranch ? this.repository : '',
+          branch: this.showRepositoryBranch ? this.branch : '',
+          updatedAt: new Date().toISOString(),
+        }
+
+        localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(stateToPersist))
+      } catch (error) {
+        console.warn('Unable to persist SCM filter state', error)
+      }
+    },
+
     applyFilter() {
 
       var newFilter = {
@@ -427,6 +514,8 @@ export default {
       if (Object.keys(labels).length > 0) {
         newFilter.labels = labels;
       }
+
+      this.persistFilterState();
 
       this.$emit('update-filter', newFilter)
     },
@@ -653,6 +742,8 @@ export default {
 
   async created() {
     try {
+        this.loadPersistedFilterState()
+
         if (this.showRepositoryBranch) {
           if (router.currentRoute.value.query.scmid != undefined) {
             this.restrictedSCM = router.currentRoute.value.query.scmid
