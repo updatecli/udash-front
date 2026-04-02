@@ -168,6 +168,7 @@
 import router from '../../router'
 
 import { getApiBaseURL } from '@/composables/api';
+import { isAuthEnabled } from '@/composables/runtime';
 
 const FILTER_STORAGE_KEY = 'udash.scm.filter.v1';
 const DEFAULT_DATE_RANGE = [0, 24];
@@ -262,7 +263,7 @@ export default {
 
     async getSCMSData() {
       this.$emit('loaded', false)
-      const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+      const auth_enabled = isAuthEnabled;
 
       let query = `${getApiBaseURL()}/pipeline/scms`;
 
@@ -326,7 +327,7 @@ export default {
 
     async getLabelKeys() {
       try {
-        const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+        const auth_enabled = isAuthEnabled;
         let query = `${getApiBaseURL()}/pipeline/labels?keyonly=true&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
 
         if (auth_enabled) {
@@ -360,7 +361,7 @@ export default {
           return this.labelValuesByKey[labelKey];
         }
 
-        const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+        const auth_enabled = isAuthEnabled;
         let query = `${getApiBaseURL()}/pipeline/labels?key=${encodeURIComponent(labelKey)}&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
 
         if (auth_enabled) {
