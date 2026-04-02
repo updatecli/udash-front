@@ -9,13 +9,25 @@
           </v-col>
         </v-row>
         <!-- SCM Cards Layout -->
+        <v-row v-if="!isNoData() && !hideRepositoryTitle" class="mb-2">
+            <v-col cols="12" class="text-right">
+                <v-btn
+                    size="small"
+                    variant="outlined"
+                    @click="toggleAllRepos"
+                >
+                    {{ areAllReposCollapsed() ? 'Show all SCMs' : 'Hide all SCMs' }}
+                </v-btn>
+            </v-col>
+        </v-row>
+
         <v-row v-if="!isNoData()">
             <v-col
                 v-for="(scmData, url) in data"
                 :key="url"
                 cols="12"
-                :md="defaultMgCol()"
-                :lg="defaultLgCol()"
+                md="12"
+                lg="12"
                 class="mb-4"
             >
                 <v-card
@@ -23,144 +35,184 @@
                     variant="flat"
                     class="h-100"
                 >
-                    <!-- SCM Header -->
-                    <v-card-title
-                        class="d-flex align-center pa-4"
-                        v-if="!hideRepositoryTitle"
-                    >
-                        <v-icon class="mr-2">{{ getGitIcon(url) }}</v-icon>
-                        <span class="text-truncate">{{ sanitizeURL(url) }}</span>
-                    </v-card-title>
-
-                    <v-divider></v-divider>
-
-                    <!-- Branches List -->
                     <v-card-text class="pa-0">
-                        <div
-                            v-for="(branchData, branch) in scmData"
-                            :key="branch"
-                            class="branch-item"
-                        >
-                            <router-link
-                                v-if="!hideButton"
-                                :to="`/pipeline/reports?scmid=${branchData.id}`"
-                                style="text-decoration: none; color: inherit;"
+                        <v-row no-gutters class="repo-split-row">
+                            <v-col
+                                v-if="!hideRepositoryTitle"
+                                cols="12"
+                                md="3"
+                                class="repo-side"
                             >
-                                <div class="clickable-branch">
-                                    <div class="d-flex align-center pa-4">
+                                <div class="d-flex align-center pa-4">
+                                    <v-icon class="mr-2">{{ getGitIcon(url) }}</v-icon>
+                                    <span class="text-truncate repo-title">{{ sanitizeURL(url) }}</span>
+                                </div>
+                                <div class="px-4 pb-4 d-flex align-center">
+                                    <v-chip
+                                        variant="outlined"
+                                        size="x-small"
+                                        class="mr-2"
+                                    >
+                                        {{ getBranchEntries(scmData).length }} branches
+                                    </v-chip>
+                                    <v-btn
+                                        variant="text"
+                                        size="small"
+                                        @click="toggleRepo(url)"
+                                    >
+                                        {{ isRepoCollapsed(url) ? 'Show' : 'Hide' }}
+                                    </v-btn>
+                                </div>
+                            </v-col>
 
-                                        <div class="branch-info flex-grow-1">
-                                            <v-row>
-                                                <v-col>
-                                                    <div class="d-flex align-center mb-2">
-                                                        <v-icon
+                            <v-col
+                                cols="12"
+                                :md="hideRepositoryTitle ? 12 : 9"
+                                class="branch-side"
+                            >
+                                <div
+                                    v-if="isRepoCollapsed(url)"
+                                    class="pa-4 text-caption text-grey-darken-1"
+                                >
+                                    Branches are hidden. Click Show to expand on the right.
+                                </div>
+
+                                <template v-else>
+                                    <div
+                                        v-for="([branch, branchData], index) in getVisibleBranchEntries(url, scmData)"
+                                        :key="branch"
+                                        class="branch-item"
+                                    >
+                                        <router-link
+                                            v-if="!hideButton"
+                                            :to="`/pipeline/reports?scmid=${branchData.id}`"
+                                            style="text-decoration: none; color: inherit;"
+                                        >
+                                            <div class="clickable-branch">
+                                                <div class="d-flex align-center pa-4">
+
+                                                    <div class="branch-info flex-grow-1">
+                                                        <v-row>
+                                                            <v-col>
+                                                                <div class="d-flex align-center mb-2">
+                                                                    <v-icon
+                                                                        size="small"
+                                                                        class="mr-2"
+                                                                        color="grey-darken-1"
+                                                                    >
+                                                                        mdi-source-branch
+                                                                    </v-icon>
+                                                                    <div class="flex-grow-1">
+                                                                        <div class="font-weight-medium">{{ branch }}</div>
+                                                                        <div class="text-caption text-grey-darken-1">
+                                                                            {{ branchData.total_result || 0 }} reports
+                                                                        </div>
+                                                                    </div>
+                                                                    <v-icon
+                                                                        size="small"
+                                                                        color="grey-lighten-1"
+                                                                    >
+                                                                        mdi-chevron-right
+                                                                    </v-icon>
+                                                                </div>
+                                                            </v-col>
+                                                            <v-col>
+                                                                <div class="status-summary">
+                                                                    <v-chip
+                                                                        v-for="(count, status) in branchData.total_result_by_type"
+                                                                        :key="status"
+                                                                        :color="getStatusColor(status)"
+                                                                        size="x-small"
+                                                                        class="status-chip"
+                                                                    >
+                                                                        <span class="status-chip-status">{{ status }}</span>
+                                                                        <span class="status-chip-value">{{ getStatusPercentage(count, branchData.total_result) }}</span>
+                                                                    </v-chip>
+                                                                </div>
+                                                            </v-col>
+                                                        </v-row>
+                                                    </div>
+
+                                                    <div class="chart-container" v-if="hasDoughnutData(url, branch)">
+                                                        <SCMDoughnut
+                                                            :chartData="getDoughnutData(url, branch)"
+                                                            :chartOptions="miniDoughnutOptions"
+                                                            :centerText="branchData.total_result"
                                                             size="small"
-                                                            class="mr-2"
-                                                            color="grey-darken-1"
-                                                        >
-                                                            mdi-source-branch
-                                                        </v-icon>
-                                                        <div class="flex-grow-1">
-                                                            <div class="font-weight-medium">{{ branch }}</div>
-                                                            <div class="text-caption text-grey-darken-1">
-                                                                {{ branchData.total_result || 0 }} reports
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </router-link>
+
+                                        <div v-else class="non-clickable-branch">
+                                            <div class="d-flex align-center pa-4">
+                                                <v-row>
+                                                    <v-col>
+                                                        <div class="branch-info flex-grow-1">
+                                                            <div class="d-flex align-center mb-2">
+                                                                <v-icon
+                                                                    size="small"
+                                                                    class="mr-2"
+                                                                    color="grey-darken-1"
+                                                                >
+                                                                    mdi-source-branch
+                                                                </v-icon>
+                                                                <div class="flex-grow-1">
+                                                                    <div class="font-weight-medium">{{ branch }}</div>
+                                                                    <div class="text-caption text-grey-darken-1">
+                                                                        {{ branchData.total_result || 0 }} reports
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="status-summary">
+                                                                <v-chip
+                                                                    v-for="(count, status) in branchData.total_result_by_type"
+                                                                    :key="status"
+                                                                    :color="getStatusColor(status)"
+                                                                    size="x-small"
+                                                                    class="status-chip"
+                                                                >
+                                                                    <span class="status-chip-status">{{ status }}</span>
+                                                                    <span class="status-chip-value">{{ getStatusPercentage(count, branchData.total_result) }}</span>
+                                                                </v-chip>
                                                             </div>
                                                         </div>
-                                                        <!-- Visual indicator that it's clickable -->
-                                                        <v-icon
-                                                            size="small"
-                                                            color="grey-lighten-1"
-                                                        >
-                                                            mdi-chevron-right
-                                                        </v-icon>
-                                                    </div>
-                                                </v-col>
-                                                <v-col>
-                                                    <!-- Status Summary -->
-                                                    <div class="status-summary">
-                                                        <v-chip
-                                                            v-for="(count, status) in branchData.total_result_by_type"
-                                                            :key="status"
-                                                            :color="getStatusColor(status)"
-                                                            size="x-small"
-                                                            class="status-chip"
-                                                        >
-                                                            <span class="status-chip-status">{{ status }}</span>
-                                                            <span class="status-chip-value">{{ getStatusPercentage(count, branchData.total_result) }}</span>
-                                                        </v-chip>
-                                                    </div>
-                                                </v-col>
-                                            </v-row>
-                                        </div>
-
-                                        <!-- Mini Doughnut Chart -->
-                                        <div class="chart-container" v-if="hasDoughnutData(url, branch)">
-                                            <SCMDoughnut
-                                                :chartData="getDoughnutData(url, branch)"
-                                                :chartOptions="miniDoughnutOptions"
-                                                :centerText="branchData.total_result"
-                                                size="small"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </router-link>
-
-                            <!-- Non-clickable version for when hideButton is true -->
-                            <div v-else class="non-clickable-branch">
-                                <div class="d-flex align-center pa-4">
-                                    <v-row>
-                                        <v-col>
-                                            <div class="branch-info flex-grow-1">
-                                                <div class="d-flex align-center mb-2">
-                                                    <v-icon
-                                                        size="small"
-                                                        class="mr-2"
-                                                        color="grey-darken-1"
-                                                    >
-                                                        mdi-source-branch
-                                                    </v-icon>
-                                                    <div class="flex-grow-1">
-                                                        <div class="font-weight-medium">{{ branch }}</div>
-                                                        <div class="text-caption text-grey-darken-1">
-                                                            {{ branchData.total_result || 0 }} reports
+                                                    </v-col>
+                                                    <v-col>
+                                                        <div class="chart-container" v-if="hasDoughnutData(url, branch)">
+                                                            <SCMDoughnut
+                                                                :chartData="getDoughnutData(url, branch)"
+                                                                :chartOptions="miniDoughnutOptions"
+                                                                :centerText="branchData.total_result"
+                                                                size="small"
+                                                            />
                                                         </div>
-                                                    </div>
-                                                </div>
-                                                <!-- Status Summary -->
-                                                <div class="status-summary">
-                                                    <v-chip
-                                                        v-for="(count, status) in branchData.total_result_by_type"
-                                                        :key="status"
-                                                        :color="getStatusColor(status)"
-                                                        size="x-small"
-                                                        class="status-chip"
-                                                    >
-                                                        <span class="status-chip-status">{{ status }}</span>
-                                                        <span class="status-chip-value">{{ getStatusPercentage(count, branchData.total_result) }}</span>
-                                                    </v-chip>
-                                                </div>
+                                                    </v-col>
+                                                </v-row>
                                             </div>
-                                        </v-col>
-                                        <v-col>
-                                            <!-- Mini Doughnut Chart -->
-                                            <div class="chart-container" v-if="hasDoughnutData(url, branch)">
-                                                <SCMDoughnut
-                                                    :chartData="getDoughnutData(url, branch)"
-                                                    :chartOptions="miniDoughnutOptions"
-                                                    :centerText="branchData.total_result"
-                                                    size="small"
-                                                />
-                                            </div>
-                                        </v-col>
-                                    </v-row>
-                                </div>
-                            </div>
+                                        </div>
 
-                            <v-divider
-                                v-if="Object.keys(scmData).indexOf(branch) < Object.keys(scmData).length - 1"
-                            ></v-divider>
-                        </div>
+                                        <v-divider
+                                            v-if="index < getVisibleBranchEntries(url, scmData).length - 1"
+                                        ></v-divider>
+                                    </div>
+
+                                    <div
+                                        v-if="hasMoreRepoBranches(url, scmData)"
+                                        class="pa-3 text-center"
+                                    >
+                                        <v-btn
+                                            size="small"
+                                            variant="outlined"
+                                            @click="loadMoreBranches(url)"
+                                        >
+                                            Load More Branches
+                                        </v-btn>
+                                    </div>
+                                </template>
+                            </v-col>
+                        </v-row>
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -270,17 +322,14 @@ export default {
         loadedPages: new Set(),
         isFetching: false,
         hasSearched: false,
+        collapsedRepositories: {},
+        visibleBranchesByRepo: {},
+        initialBranchPageSize: 10,
     }),
 
     computed: {
         loadedScmBranchCount() {
-            return Object.values(this.data || {}).reduce((total, scmData) => {
-                if (!scmData || typeof scmData !== 'object') {
-                    return total;
-                }
-
-                return total + Object.keys(scmData).length;
-            }, 0);
+            return this.countLoadedScmBranches(this.data);
         },
 
         totalScmCount() {
@@ -323,6 +372,89 @@ export default {
             this.data = {};
             this.doughnutData = {};
             this.hasSearched = true;
+            this.collapsedRepositories = {};
+            this.visibleBranchesByRepo = {};
+        },
+
+        countLoadedScmBranches(allScmData) {
+            return Object.values(allScmData || {}).reduce((total, scmData) => {
+                if (!scmData || typeof scmData !== 'object') {
+                    return total;
+                }
+
+                return total + Object.keys(scmData).length;
+            }, 0);
+        },
+
+        getBranchEntries(scmData) {
+            if (!scmData || typeof scmData !== 'object') {
+                return [];
+            }
+
+            return Object.entries(scmData).sort((a, b) => {
+                const totalA = Number(a?.[1]?.total_result) || 0;
+                const totalB = Number(b?.[1]?.total_result) || 0;
+                return totalB - totalA;
+            });
+        },
+
+        isRepoCollapsed(url) {
+            if (this.hideRepositoryTitle) {
+                return false;
+            }
+
+            return this.collapsedRepositories[url] !== false;
+        },
+
+        toggleRepo(url) {
+            this.collapsedRepositories[url] = !this.isRepoCollapsed(url);
+
+            if (!this.visibleBranchesByRepo[url]) {
+                this.visibleBranchesByRepo[url] = this.initialBranchPageSize;
+            }
+        },
+
+        areAllReposCollapsed() {
+            const urls = Object.keys(this.data || {});
+            if (urls.length === 0) {
+                return true;
+            }
+
+            return urls.every((url) => this.isRepoCollapsed(url));
+        },
+
+        toggleAllRepos() {
+            const collapseAll = !this.areAllReposCollapsed();
+
+            Object.keys(this.data || {}).forEach((url) => {
+                this.collapsedRepositories[url] = collapseAll;
+
+                if (!this.visibleBranchesByRepo[url]) {
+                    this.visibleBranchesByRepo[url] = this.initialBranchPageSize;
+                }
+            });
+        },
+
+        visibleBranchCount(url) {
+            return this.visibleBranchesByRepo[url] || this.initialBranchPageSize;
+        },
+
+        getVisibleBranchEntries(url, scmData) {
+            const entries = this.getBranchEntries(scmData);
+
+            if (this.isRepoCollapsed(url)) {
+                return [];
+            }
+
+            return entries.slice(0, this.visibleBranchCount(url));
+        },
+
+        hasMoreRepoBranches(url, scmData) {
+            return this.getBranchEntries(scmData).length > this.visibleBranchCount(url);
+        },
+
+        loadMoreBranches(url) {
+            this.visibleBranchesByRepo[url] = this.visibleBranchCount(url) + this.initialBranchPageSize;
         },
 
         isFullWidth() {
@@ -446,7 +578,7 @@ export default {
                 this.loadedPages.add(page);
 
                 // Check if there's more data to load
-                this.hasMoreData = Object.keys(this.data).length < this.totalCount;
+                this.hasMoreData = this.countLoadedScmBranches(this.data) < this.totalCount;
 
                                 // Update doughnut chart data only for the newly loaded items
                                 this.updateDoughnutDataForScmData(scmData);
@@ -620,6 +752,23 @@ export default {
 </script>
 
 <style scoped>
+.repo-split-row {
+    min-height: 100%;
+}
+
+.repo-side {
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.01);
+}
+
+.branch-side {
+    min-height: 100%;
+}
+
+.repo-title {
+    max-width: 100%;
+}
+
 .branch-item {
     transition: background-color 0.2s ease;
 }
@@ -652,9 +801,10 @@ export default {
 
 .status-summary {
     max-width: 220px;
+    margin-left: auto;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: flex-end;
     gap: 6px;
 }
 
@@ -683,5 +833,12 @@ export default {
 
 .branch-info {
     min-width: 0; /* Allows text-truncate to work in flex */
+}
+
+@media (max-width: 959px) {
+    .repo-side {
+        border-right: 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
 }
 </style>
