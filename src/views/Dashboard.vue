@@ -1,36 +1,141 @@
 <template>
-    <v-app>
-      <HeadNavigation/>
-      <SideNavigation/>
-  
-      <v-main>
-        <ReleaseDashboard/>
-      </v-main>
+  <v-app>
+    <HeadNavigation/>
+    <SideNavigation/>
 
-      <ReleaseFooter/>
-    </v-app>
-  
-    <nav>
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </nav>
-    <router-view/>
-  </template>
-  
-  <script>
-  import ReleaseDashboard from '../components/ReleaseDashboard.vue';
-  import ReleaseFooter from '../components/ReleaseFooter.vue';
-  import SideNavigation from '../components/SideNavigation.vue';
-  import HeadNavigation from '../components/HeadNavigation.vue';
+    <v-main>
+      <v-container
+        class="py-8 px-6"
+        fluid
+      >
+        <v-overlay
+          :model-value="isLoading"
+          class="align-center justify-center"
+          :disabled=false
+          :eager=true
+          :no-click-animation=false
+          :persistent=false
+          :opacity="0"
+          >
+          <v-progress-circular
+            color="black"
+            indeterminate
+            size="64"
+          ></v-progress-circular>
+        </v-overlay>
+        <v-row>
+          <v-col
+            class="text-right"
+            cols="auto"
+            lg="8"
+            md="8"
+            sm="12"
+          >
+            <h1>Git Dashboard<v-icon icon="mdi-view-dashboard"> </v-icon></h1>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col
+            cols="auto"
+            lg="12"
+            md="12"
+            sm="12"
+          >
+            <PipelineSCMFilter
+              :filter="filter"
+              :show-repository-branch="false"
+              @update-filter="updateFilter"
+              @loaded="setFilterLoaded"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col
+            cols="auto"
+            lg="12"
+            md="12"
+            sm="12"
+          >
+            <PipelineSCMSSummary
+              :filter="filter"
+              @loaded="setSummaryLoaded"
+            />
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
 
-  export default {
-    name: 'DashboardView',
-    components: {
-      ReleaseDashboard,
-      ReleaseFooter,
-      SideNavigation,
-      HeadNavigation,
+    <ReleaseFooter/>
+  </v-app>
+</template>
+
+<script>
+import ReleaseFooter from '../components/ReleaseFooter.vue';
+import SideNavigation from '../components/SideNavigation.vue';
+import HeadNavigation from '../components/HeadNavigation.vue';
+import SCMSDashboard from '../components/scm/_summary.vue';
+
+import PipelineSCMFilter from '../components/scm/_filter.vue';
+
+export default {
+  name: 'QuickStartView',
+  components: {
+    ReleaseFooter,
+    SideNavigation,
+    HeadNavigation,
+    PipelineSCMFilter,
+    PipelineSCMSSummary: SCMSDashboard,
+  },
+
+  beforeUnmount() {
+    this.cancelAutoUpdate();
+  },
+
+  data: () => ({
+    isLoading: true,
+    filter: {},
+    host: window.location.protocol + "//" + window.location.host,
+    externalLinks:[
+      {
+        name: "Updatecli",
+        to: "https://www.updatecli.io",
+        icon: "mdi-web",
+      },
+      {
+        name: "GitHub",
+        to: "https://github.com/updatecli/updatecli",
+        icon: "mdi-github",
+      },
+    ],
+    links:[
+      {
+        name: "Reports",
+        to: "/pipeline/reports",
+        icon: "mdi-view-dashboard",
+      },
+    ]
+  }),
+  watch: {
+    isLoading: function (val) {
+      val && setTimeout(() => {
+        this.isLoading = false
+      }, 10000)
+    }
+  },
+  methods: {
+    cancelAutoUpdate: function() {
+      clearInterval(this.timer);
+    },
+    updateFilter: function(newFilter) {
+      this.filter = newFilter
+    },
+    setFilterLoaded: function(val) {
+      if (!val) this.isLoading = true
+    },
+    setSummaryLoaded: function(val) {
+      this.isLoading = !val
     },
   }
-  </script>
-  
+}
+</script>
+
