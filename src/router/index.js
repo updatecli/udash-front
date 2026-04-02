@@ -5,7 +5,7 @@ import PipelineReportView from '../views/pipeline/ReportView.vue'
 import PipelineConfigsView from '../views/config/ConfigsView.vue';
 import PipelineConfigView from '../views/config/ConfigView.vue';
 import ProfileView from "../views/ProfileView.vue";
-import SCMDashboard from "../views/SCMDashboard.vue";
+import Dashboard from "../views/Dashboard.vue";
 import { createAuthGuard } from "@auth0/auth0-vue";
 
 const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
@@ -73,7 +73,7 @@ if (isAuthEnabled) {
       beforeEnter: createAuthGuard(),
       path: "/scm/summary",
       name: "scmSummary",
-      component: SCMDashboard
+      component: Dashboard
     }
   ]
 } else {
@@ -124,7 +124,7 @@ if (isAuthEnabled) {
     {
       path: "/scm/dashboard",
       name: "scmDashboard",
-      component: SCMDashboard
+      component: Dashboard
     }
   ]
 
