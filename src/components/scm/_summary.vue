@@ -173,12 +173,12 @@
                     <v-card-text>
                         <div class="mb-3">
                             <v-chip variant="outlined" size="small">
-                                {{ Object.keys(data).length }} of {{ totalCount }} SCMs
+                                {{ loadedScmBranchCount }} of {{ totalScmCount }} {{ scmLabel }}
                             </v-chip>
                         </div>
 
                         <v-progress-linear
-                            :model-value="(Object.keys(data).length / totalCount) * 100"
+                            :model-value="progressPercentage"
                             color="grey-darken-3"
                             height="6"
                             rounded
@@ -218,6 +218,8 @@ import SCMDoughnut from './_scmDoughnut.vue'
 import { getApiBaseURL } from '@/composables/api';
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
+
+const EMPTY_DONUT_DATA = Object.freeze({ labels: [], datasets: [] });
 
 export default {
     components: {
@@ -261,27 +263,56 @@ export default {
             }
         },
         currentPage: 0,
-        itemsPerPage: 1,
+        itemsPerPage: 25,
         totalCount: 0,
         isLoading: false,
         hasMoreData: true,
         loadedPages: new Set(),
+        isFetching: false,
+        hasSearched: false,
     }),
 
-        watch: {
-            filter: {
-                deep: true,
-                async handler() {
-                    this.stopSequentialLoad();
-                    this.resetPagination();
-                    await this.loadSequentialPages(9);
-                },
+    computed: {
+        loadedScmBranchCount() {
+            return Object.values(this.data || {}).reduce((total, scmData) => {
+                if (!scmData || typeof scmData !== 'object') {
+                    return total;
+                }
+
+                return total + Object.keys(scmData).length;
+            }, 0);
+        },
+
+        totalScmCount() {
+            return Number(this.totalCount) || 0;
+        },
+
+        scmLabel() {
+            return this.totalScmCount === 1 ? 'SCM branch' : 'SCM branches';
+        },
+
+        progressPercentage() {
+            if (this.totalScmCount <= 0) {
+                return 0;
+            }
+
+            return Math.min(100, Math.round((this.loadedScmBranchCount / this.totalScmCount) * 100));
+        },
+    },
+
+    watch: {
+        filter: {
+            deep: true,
+            async handler() {
+                this.resetPagination();
+                await this.loadNextPage();
             },
         },
+    },
 
     methods: {
         isNoData() {
-            return this.totalCount == 0 && !this.isLoading;
+            return this.hasSearched && this.totalCount == 0 && !this.isLoading;
         },
 
         resetPagination() {
@@ -291,6 +322,7 @@ export default {
             this.loadedPages.clear();
             this.data = {};
             this.doughnutData = {};
+            this.hasSearched = true;
         },
 
         isFullWidth() {
@@ -305,42 +337,27 @@ export default {
             return this.isFullWidth() ? 12 : 6;
         },
 
-        async loadSequentialPages(pagesToLoad = 1) {
-            // create a unique id for this run so we can cancel/stale-check
-            const runId = (this._sequentialRunId = (this._sequentialRunId || 0) + 1);
-            try {
-                for (let i = 0; i < pagesToLoad; i++) {
-                    // if a newer run started, stop this one
-                    if (this._sequentialRunId !== runId) return;
-                    if (!this.hasMoreData) return;
-
-                    // increment page and fetch (getSummaryData will ignore duplicates via loadedPages)
-                    const next = this.currentPage + 1;
-                    await this.getSummaryData(next, false);
-                    this.currentPage = next;
-
-                    if (this.currentPage == this.totalCount)  {
-                        this.hasMoreData = false;
-                    }
-
-                    if (!this.hasMoreData) return;
-                }
-            } catch (err) {
-                console.error('Sequential load error', err);
+        async loadNextPage() {
+            if (!this.hasMoreData || this.isFetching) {
+                return;
             }
-        },
 
-        // Stop any ongoing sequential load
-        stopSequentialLoad() {
-            this._sequentialRunId = (this._sequentialRunId || 0) + 1;
+            const next = this.currentPage + 1;
+            await this.getSummaryData(next, false);
+            this.currentPage = next;
+
+            if (this.currentPage >= this.totalCount) {
+                this.hasMoreData = false;
+            }
         },
 
         async getSummaryData(page= 1 , reset = false) {
             // Avoid duplicate requests for the same page
-            if (this.loadedPages.has(page) && !reset) {
+            if ((this.loadedPages.has(page) && !reset) || this.isFetching) {
                 return;
             }
 
+            this.isFetching = true;
             this.isLoading= true;
             this.$emit('loaded', false)
 
@@ -412,13 +429,14 @@ export default {
                 // Handle different response structures
                 const scmData = responseData.data || responseData.scms || responseData;
                 const totalCount = responseData.total_count || 0;
-
+                
                 // Update total count
                 this.totalCount = totalCount;
 
                 if (reset) {
                     // Reset data for new search
                     this.data = scmData;
+                    this.doughnutData = {};
                 } else {
                     // Merge new data with existing data
                     this.data = { ...this.data, ...scmData };
@@ -430,36 +448,26 @@ export default {
                 // Check if there's more data to load
                 this.hasMoreData = Object.keys(this.data).length < this.totalCount;
 
-                // Update doughnut chart data
-                this.updateDoughnutData();
+                                // Update doughnut chart data only for the newly loaded items
+                                this.updateDoughnutDataForScmData(scmData);
 
             } catch (error) {
                 console.error('Error fetching summary data:', error);
                 // Handle error appropriately
             } finally {
+                                this.isFetching = false;
                 this.isLoading = false;
                 this.$emit('loaded', true);
             }
         },
 
         async loadMoreData() {
-          if (this.hasMoreData && !this.isLoading) {
-            this.stopSequentialLoad();           // ensure previous run is stopped
-            await this.loadSequentialPages(3);   // start new sequential load
-          }
-        },
-
-        // Infinite scroll handler
-        handleScroll() {
-            const scrollHeight = document.documentElement.scrollHeight;
-            const scrollTop = document.documentElement.scrollTop;
-            const clientHeight = document.documentElement.clientHeight;
-
-            // Load more data when user is near the bottom (100px threshold)
-            if (scrollTop + clientHeight >= scrollHeight - 100) {
-                this.loadMoreData();
+            if (this.hasMoreData && !this.isLoading && !this.isFetching) {
+                await this.loadNextPage();
             }
         },
+
+
 
         resetFilter: function() {
             this.$emit('update-filter', '');
@@ -497,9 +505,14 @@ export default {
         },
 
         getDoughnutData(url, branch) {
-          if (!url || !branch) return { labels: [], datasets: [] };
-          const d = (this.doughnutData && this.doughnutData[url] && this.doughnutData[url][branch]) || { labels: [], datasets: [] };
-          return { labels: Array.isArray(d.labels) ? d.labels : [], datasets: Array.isArray(d.datasets) ? d.datasets : [] };
+                    if (!url || !branch) return EMPTY_DONUT_DATA;
+                    const d = this.doughnutData?.[url]?.[branch];
+
+                    if (!d || !Array.isArray(d.labels) || !Array.isArray(d.datasets)) {
+                        return EMPTY_DONUT_DATA;
+                    }
+
+                    return d;
         },
 
         hasDoughnutData(url, branch) {
@@ -507,7 +520,7 @@ export default {
           return Array.isArray(d.datasets) && d.datasets.length > 0;
         },
 
-        updateDoughnutData: function(){
+        buildDoughnutData(branchData) {
             const labels = [
                 '✔ Success',
                 '⚠ Warning',
@@ -523,53 +536,56 @@ export default {
                'rgba(139, 92, 246, 0.7)',  // Purple
             ];
 
-            if (this.data === undefined) {
+            if (!branchData || branchData.total_result === undefined) {
+                return EMPTY_DONUT_DATA;
+            }
+
+            const resultsByType = branchData.total_result_by_type || {};
+
+            let successResults = 0;
+            let warningResults = 0;
+            let errorResults = 0;
+            let skippedResults = 0;
+            let otherResults = 0;
+
+            for (let result in resultsByType) {
+                if (result === '✔') {
+                    successResults = resultsByType[result];
+                } else if (result === '✗') {
+                    errorResults = resultsByType[result];
+                } else if (result === '⚠') {
+                    warningResults = resultsByType[result];
+                } else if (result === '-') {
+                    skippedResults = resultsByType[result];
+                } else {
+                    otherResults += resultsByType[result];
+                }
+            }
+
+            return {
+                labels,
+                datasets: [
+                    {
+                        data: [successResults, warningResults, errorResults, skippedResults, otherResults],
+                        backgroundColor: labelColors,
+                    }
+                ]
+            };
+        },
+
+        updateDoughnutDataForScmData(scmData) {
+            if (!scmData || typeof scmData !== 'object') {
                 return;
             }
 
-            for (let url in this.data) {
-                for ( let branch in this.data[url] ) {
-                    if (this.data[url][branch].total_result === undefined) {
-                        continue;
-                    }
+            for (let url in scmData) {
+                if (!this.doughnutData[url]) {
+                    this.doughnutData[url] = {};
+                }
 
-                    let successResults = 0;
-                    let warningResults = 0;
-                    let errorResults = 0;
-                    let skippedResults = 0;
-                    let otherResults = 0;
-
-                    for ( let result in this.data[url][branch].total_result_by_type ) {
-                        if (result === '✔') {
-                            successResults = this.data[url][branch].total_result_by_type[result];
-                        } else if (result === '✗') {
-                            errorResults = this.data[url][branch].total_result_by_type[result];
-                        } else if (result === '⚠') {
-                            warningResults = this.data[url][branch].total_result_by_type[result];
-                        } else if (result === '-') {
-                            skippedResults = this.data[url][branch].total_result_by_type[result];
-                        } else {
-                            otherResults += this.data[url][branch].total_result_by_type[result];
-                        }
-                    }
-
-                    if (this.doughnutData[url] === undefined) {
-                        this.doughnutData[url] = {};
-                    }
-
-                    if (this.doughnutData[url][branch] === undefined) {
-                        this.doughnutData[url][branch] = {};
-                    }
-
-                    this.doughnutData[url][branch] = {
-                        labels: labels,
-                        datasets: [
-                            {
-                                data: [successResults,warningResults, errorResults, skippedResults, otherResults],
-                                backgroundColor: labelColors
-                            }
-                        ]
-                    }
+                const branches = scmData[url] || {};
+                for (let branch in branches) {
+                    this.doughnutData[url][branch] = this.buildDoughnutData(branches[branch]);
                 }
             }
         },
@@ -596,22 +612,10 @@ export default {
         },
     },
     async created() {
-        try {
-            await this.loadSequentialPages(9);
-        } catch(error) {
-            console.log(error);
-        }
-    },
-    mounted() {
-        // Add infinite scroll listener
-        window.addEventListener('scroll', this.handleScroll);
+        this.resetPagination();
+        await this.loadNextPage();
     },
 
-    beforeUnmount() {
-        this.stopSequentialLoad();
-        // Clean up scroll listener if using infinite scroll
-        window.removeEventListener('scroll', this.handleScroll);
-    }
 }
 </script>
 
