@@ -22,22 +22,6 @@ export default {
         Doughnut,
     },
 
-    data() {
-        return {
-            options: {}
-        }
-    },
-
-    created() {
-        this.options = this.chartOptions
-        this.options.plugins = {}
-        // Set default legend position
-        this.options.plugins.legend = {
-            display: false,
-        }
-    },
-
-
     props: {
         chartData: {
             type: Object,
