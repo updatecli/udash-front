@@ -325,7 +325,7 @@ export default {
       }
       try {
         return toLocalDate(rawDate);
-      } catch (error) {
+      } catch {
         console.warn('Invalid date format:', rawDate);
         return rawDate;
       }
