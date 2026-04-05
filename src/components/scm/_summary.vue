@@ -116,6 +116,8 @@
                                                                     </v-icon>
                                                                 </div>
                                                             </v-col>
+                                                        </v-row>
+                                                        <v-row>
                                                             <v-col>
                                                                 <div class="status-summary">
                                                                     <v-chip
@@ -272,6 +274,7 @@ import { getApiBaseURL } from '@/composables/api';
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
 
 const EMPTY_DONUT_DATA = Object.freeze({ labels: [], datasets: [] });
+const COLLAPSE_STORAGE_KEY = 'udash:scm-summary-collapse-state';
 
 export default {
     components: {
@@ -322,6 +325,7 @@ export default {
         loadedPages: new Set(),
         isFetching: false,
         hasSearched: false,
+        collapseAllByDefault: true,
         collapsedRepositories: {},
         visibleBranchesByRepo: {},
         initialBranchPageSize: 10,
@@ -372,8 +376,44 @@ export default {
             this.data = {};
             this.doughnutData = {};
             this.hasSearched = true;
-            this.collapsedRepositories = {};
             this.visibleBranchesByRepo = {};
+        },
+
+        loadPersistedCollapseState() {
+            try {
+                const rawValue = localStorage.getItem(COLLAPSE_STORAGE_KEY);
+                if (!rawValue) {
+                    return;
+                }
+
+                const savedState = JSON.parse(rawValue);
+
+                if (typeof savedState.collapseAllByDefault === 'boolean') {
+                    this.collapseAllByDefault = savedState.collapseAllByDefault;
+                }
+
+                if (savedState.collapsedRepositories && typeof savedState.collapsedRepositories === 'object' && !Array.isArray(savedState.collapsedRepositories)) {
+                    this.collapsedRepositories = Object.fromEntries(
+                        Object.entries(savedState.collapsedRepositories).filter(([url, isCollapsed]) => typeof url === 'string' && typeof isCollapsed === 'boolean')
+                    );
+                }
+            } catch (error) {
+                console.warn('Unable to restore persisted SCM collapse state', error);
+            }
+        },
+
+        persistCollapseState() {
+            try {
+                const stateToPersist = {
+                    collapseAllByDefault: this.collapseAllByDefault,
+                    collapsedRepositories: this.collapsedRepositories,
+                    updatedAt: new Date().toISOString(),
+                };
+
+                localStorage.setItem(COLLAPSE_STORAGE_KEY, JSON.stringify(stateToPersist));
+            } catch (error) {
+                console.warn('Unable to persist SCM collapse state', error);
+            }
         },
 
         countLoadedScmBranches(allScmData) {
@@ -403,15 +443,24 @@ export default {
                 return false;
             }
 
-            return this.collapsedRepositories[url] !== false;
+            if (Object.prototype.hasOwnProperty.call(this.collapsedRepositories, url)) {
+                return this.collapsedRepositories[url];
+            }
+
+            return this.collapseAllByDefault;
         },
 
         toggleRepo(url) {
-            this.collapsedRepositories[url] = !this.isRepoCollapsed(url);
+            this.collapsedRepositories = {
+                ...this.collapsedRepositories,
+                [url]: !this.isRepoCollapsed(url),
+            };
 
             if (!this.visibleBranchesByRepo[url]) {
                 this.visibleBranchesByRepo[url] = this.initialBranchPageSize;
             }
+
+            this.persistCollapseState();
         },
 
         areAllReposCollapsed() {
@@ -425,14 +474,20 @@ export default {
 
         toggleAllRepos() {
             const collapseAll = !this.areAllReposCollapsed();
+            const collapsedRepositories = { ...this.collapsedRepositories };
+
+            this.collapseAllByDefault = collapseAll;
 
             Object.keys(this.data || {}).forEach((url) => {
-                this.collapsedRepositories[url] = collapseAll;
+                collapsedRepositories[url] = collapseAll;
 
                 if (!this.visibleBranchesByRepo[url]) {
                     this.visibleBranchesByRepo[url] = this.initialBranchPageSize;
                 }
             });
+
+            this.collapsedRepositories = collapsedRepositories;
+            this.persistCollapseState();
         },
 
         visibleBranchCount(url) {
@@ -744,6 +799,7 @@ export default {
         },
     },
     async created() {
+        this.loadPersistedCollapseState();
         this.resetPagination();
         await this.loadNextPage();
     },
@@ -801,7 +857,7 @@ export default {
 
 .status-summary {
     max-width: 220px;
-    margin-left: auto;
+    margin-right: auto;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
