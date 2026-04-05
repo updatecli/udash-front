@@ -106,28 +106,30 @@
                     >
                       <template v-slot:prepend>
                         <v-text-field
-                          :v-model="dateRange[0]"
+                          :model-value="stepToHumanDate(dateRange[0])"
+                          :hint="describeRelativeStep(dateRange[0])"
+                          persistent-hint
+                          readonly
                           density="compact"
-                          style="width: 150px"
                           variant="solo"
-                          :flat=true
-                          hide-details
-                          single-line
-                          class="text-center"
-                      >{{ stepToISOWithoutTimezone(dateRange[0]) }}</v-text-field>
+                          :flat="true"
+                          hide-details="auto"
+                          class="date-range-field text-center"
+                        />
                       </template>
 
                       <template v-slot:append>
                         <v-text-field
-                          :v-model="dateRange[1]"
+                          :model-value="stepToHumanDate(dateRange[1])"
+                          :hint="describeRelativeStep(dateRange[1])"
+                          persistent-hint
+                          readonly
                           density="compact"
-                          style="width: 150px"
                           variant="solo"
-                          :flat=true
-                          hide-details
-                          single-line
-                          class="text-center"
-                      >{{ stepToISOWithoutTimezone(dateRange[1]) }}</v-text-field>
+                          :flat="true"
+                          hide-details="auto"
+                          class="date-range-field text-center"
+                        />
                       </template>
                     </v-range-slider>
                   </v-col>
@@ -168,6 +170,7 @@ import router from '../../router'
 import { getApiBaseURL } from '@/composables/api';
 
 const FILTER_STORAGE_KEY = 'udash.scm.filter.v1';
+const DEFAULT_DATE_RANGE = [0, 24];
 
 export default {
   name: 'PipelineSCMS',
@@ -195,11 +198,13 @@ export default {
     branches: [],
     branch : "",
     restrictedSCM: "",
-    dateRange: [0, 24],  // [6 hours ago, now] by default
+    dateRange: [...DEFAULT_DATE_RANGE],  // [6 hours ago, now] by default
     labelKeys: [],
     labelValuesByKey: {},  // Map to store label values for each key
     selectedLabels: [{ key: null, value: null }],  // Array of label selections
     debounceTimer: null,
+    nowTicker: null,
+    nowRefreshKey: 0,
   }),
 
   beforeUnmount() {
@@ -389,8 +394,15 @@ export default {
       delete queryParams.scmid
       router.replace({ query: queryParams })
 
+      this.clearPersistedFilterState()
+      this.repository = ""
+      this.branch = ""
       this.restrictedSCM = ""
+      this.dateRange = [...DEFAULT_DATE_RANGE]
+      this.selectedLabels = [{ key: null, value: null }]
+      this.labelValuesByKey = {}
       this.getSCMSData()
+      this.getLabelKeys()
     },
 
     prettifyURL: function(url) {
@@ -486,6 +498,14 @@ export default {
       }
     },
 
+    clearPersistedFilterState() {
+      try {
+        localStorage.removeItem(FILTER_STORAGE_KEY)
+      } catch (error) {
+        console.warn('Unable to clear persisted SCM filter state', error)
+      }
+    },
+
     applyFilter() {
 
       var newFilter = {
@@ -521,39 +541,79 @@ export default {
     },
 
     cancelAutoUpdate() {
-      clearInterval(this.timer);
+      if (this.nowTicker) {
+        clearInterval(this.nowTicker);
+        this.nowTicker = null;
+      }
+    },
+
+    rangeIncludesNow() {
+      return Array.isArray(this.dateRange) && this.dateRange.includes(0)
+    },
+
+    syncNowAutoUpdate() {
+      if (!this.rangeIncludesNow()) {
+        this.cancelAutoUpdate();
+        return;
+      }
+
+      if (this.nowTicker) {
+        return;
+      }
+
+      this.nowTicker = setInterval(() => {
+        this.nowRefreshKey += 1;
+      }, 30000);
+    },
+
+    stepToDate(step) {
+      const now = new Date(Date.now() + this.nowRefreshKey * 0)
+      const date = new Date(now)
+
+      if (step < 24) {
+        date.setHours(date.getHours() - step)
+      } else {
+        const daysAgo = step - 23
+        date.setDate(date.getDate() - daysAgo)
+      }
+
+      return date
     },
 
     stepToISO(step) {
-      const now = new Date()
-      let date = new Date(now)
-
-      if (step < 24) {
-        // Hours: step 0 = 1 hour ago, step 23 = 24 hours ago
-        date.setHours(date.getHours() - step)
-      } else {
-        // Days: step 24 = 1 day ago, step 30 = 7 days ago
-        const daysAgo = step - 23
-        date.setDate(date.getDate() - daysAgo)
-      }
-
-      return this.formatToLayout(date)
+      return this.formatToLayout(this.stepToDate(step))
     },
 
     stepToISOWithoutTimezone(step) {
-      const now = new Date()
-      let date = new Date(now)
+      return this.formatToLayoutWithoutTimezone(this.stepToDate(step))
+    },
 
-      if (step < 24) {
-        // Hours: step 0 = 1 hour ago, step 23 = 24 hours ago
-        date.setHours(date.getHours() - step)
-      } else {
-        // Days: step 24 = 1 day ago, step 30 = 7 days ago
-        const daysAgo = step - 23
-        date.setDate(date.getDate() - daysAgo)
+    formatHumanDate(date) {
+      return new Intl.DateTimeFormat(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(date)
+    },
+
+    describeRelativeStep(step) {
+      if (step === 0) {
+        return 'Now'
       }
 
-      return this.formatToLayoutWithoutTimezone(date)
+      if (step < 24) {
+        return step === 1 ? '1 hour ago' : `${step} hours ago`
+      }
+
+      const daysAgo = step - 23
+      return daysAgo === 1 ? '1 day ago' : `${daysAgo} days ago`
+    },
+
+    stepToHumanDate(step) {
+      const date = this.stepToDate(step)
+      return this.formatHumanDate(date)
     },
 
     tickLabel(label) {
@@ -686,6 +746,8 @@ export default {
 
   watch: {
       dateRange(val) {
+        this.syncNowAutoUpdate()
+
         // Ensure start and end are never equal
         if (val[0] === val[1]) {
           if (val[0] === 0) {
@@ -743,6 +805,7 @@ export default {
   async created() {
     try {
         this.loadPersistedFilterState()
+        this.syncNowAutoUpdate()
 
         if (this.showRepositoryBranch) {
           if (router.currentRoute.value.query.scmid != undefined) {
@@ -759,3 +822,15 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.date-range-field {
+  width: 240px;
+}
+
+.date-range-field :deep(input) {
+  text-align: center;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.78);
+}
+</style>
