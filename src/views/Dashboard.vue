@@ -78,17 +78,13 @@ import SCMSDashboard from '../components/scm/_summary.vue';
 import PipelineSCMFilter from '../components/scm/_filter.vue';
 
 export default {
-  name: 'QuickStartView',
+  name: 'DashboardView',
   components: {
     ReleaseFooter,
     SideNavigation,
     HeadNavigation,
     PipelineSCMFilter,
     PipelineSCMSSummary: SCMSDashboard,
-  },
-
-  beforeUnmount() {
-    this.cancelAutoUpdate();
   },
 
   data: () => ({
@@ -123,9 +119,6 @@ export default {
     }
   },
   methods: {
-    cancelAutoUpdate: function() {
-      clearInterval(this.timer);
-    },
     updateFilter: function(newFilter) {
       this.filter = newFilter
     },
