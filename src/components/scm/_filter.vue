@@ -567,7 +567,8 @@ export default {
     },
 
     stepToDate(step) {
-      const now = new Date(Date.now() + this.nowRefreshKey * 0)
+      this.nowRefreshKey;
+      const now = new Date(Date.now())
       const date = new Date(now)
 
       if (step < 24) {
