@@ -1,14 +1,11 @@
 ---
 name: Updatecli
-
 on:
   workflow_dispatch:
   schedule:
     # Run at 12:00 every 14 days
     - cron: "0 12 */14 * *"
-
 permissions: {}
-
 jobs:
   updatecli:
     runs-on: ubuntu-latest
@@ -17,12 +14,10 @@ jobs:
         uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6.0.2
         with:
           persist-credentials: false
-
       - name: "Setup updatecli"
         uses: "updatecli/updatecli-action@2cc8e6d8e356d76b0280cdd03766c36596a0614e" # v3.0.0
         with:
-          version: "v0.115.0"
-
+          version: "v0.116.1"
       - name: "Run updatecli"
         run: updatecli compose apply --clean-git-branches=true --experimental
         env:
