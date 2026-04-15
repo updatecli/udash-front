@@ -10,7 +10,7 @@
   "dependencies": {
     "@auth0/auth0-vue": "^2.5.0",
     "@mdi/font": "^7.4.47",
-    "axios": "^1.14.0",
+    "axios": "^1.15.0",
     "chart.js": "^4.5.1",
     "core-js": "^3.49.0",
     "highlight.js": "^11.11.1",
