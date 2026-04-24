@@ -16,10 +16,10 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '^/api': {
-          target: env.VITE_DEV_PROXY_TARGET || 'https://api.uda.sh/updatecli',
+          target: env.VITE_DEV_PROXY_TARGET || 'http://localhost:8080/api',
           changeOrigin: true,
           ws: true,
-          rewrite: (path) => path.replace(/^\/api/, '/'),
+          //rewrite: (path) => path.replace(/^\/api/, '/'),
         },
       },
     },
