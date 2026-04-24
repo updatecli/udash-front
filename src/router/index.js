@@ -7,8 +7,7 @@ import PipelineConfigView from '../views/config/ConfigView.vue';
 import ProfileView from "../views/ProfileView.vue";
 import Dashboard from "../views/Dashboard.vue";
 import { createAuthGuard } from "@auth0/auth0-vue";
-
-const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+import { getAppBasePath, isAuthEnabled } from '@/composables/runtime'
 
 let routes = []
 
@@ -22,10 +21,7 @@ if (isAuthEnabled) {
     {
       path: '/about',
       name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (about.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
+      component: () => import('../views/AboutView.vue')
     },
     {
       beforeEnter: createAuthGuard(),
@@ -86,10 +82,7 @@ if (isAuthEnabled) {
     {
       path: '/about',
       name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (about.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
+      component: () => import('../views/AboutView.vue')
     },
     {
       path: '/pipeline/configs',
@@ -131,7 +124,7 @@ if (isAuthEnabled) {
 }
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(getAppBasePath()),
   routes
 })
 

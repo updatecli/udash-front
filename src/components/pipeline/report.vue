@@ -280,6 +280,7 @@ import PipelineGraphComponent from './_graph.vue';
 import { getStatusColor, getStatusIcon, getStatusText } from '@/composables/status';
 import { toLocalDate } from '@/composables/date';
 import { getApiBaseURL } from '@/composables/api';
+import { isAuthEnabled } from '@/composables/runtime';
 
 export default {
   name: 'PipelineReportView',
@@ -403,7 +404,6 @@ export default {
     },
 
     async getPipelineReportData() {
-      const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
       if (isAuthEnabled) {
         const token = await this.$auth0.getAccessTokenSilently();
         const response = await fetch(`${getApiBaseURL()}/pipeline/reports/` + this.$route.params.id, {

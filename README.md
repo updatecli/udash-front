@@ -1,5 +1,7 @@
 # udash
 
+This project contains the frontend of Udash, a dashboard to monitor and manage Updatecli instances.
+
 ## Project setup
 ```
 npm install
@@ -7,7 +9,7 @@ npm install
 
 ### Compiles and hot-reloads for development
 ```
-npm run serve
+npm run dev
 ```
 
 ### Compiles and minifies for production
@@ -22,22 +24,10 @@ npm run lint
 
 ### Deploy to production
 
-This application relies files `/usr/share/nginx/html/config.js` and `/usr/share/nginx/html/config.json` to provide runtime configuration.
+This application relies file and `/usr/share/nginx/html/config.json` to provide runtime configuration.
 
-**config.js**
-
-.public/config.js
-```
-const config = (() => {
-  return {
-    "OAUTH_DOMAIN": "oauth domain",
-    "OAUTH_CLIENTID": "xxx",
-    "OAUTH_AUDIENCE": "http://localhost:8080/api"
-  };
-})();
-```
-
-A similar config file can be generate to simplify the updatecli login parameter
+The frontend base path is defined at runtime with `APP_BASE_PATH`.
+Set it in the runtime config files to mount the SPA below a subpath such as `/udash/`.
 
 **config.json**
 
@@ -46,13 +36,26 @@ A similar config file can be generate to simplify the updatecli login parameter
 {
    "OAUTH_DOMAIN": "oauth domain",
    "OAUTH_CLIENTID": "xxx",
-   "OAUTH_AUDIENCE": "http://localhost:8080/api"
+   "OAUTH_AUDIENCE": "http://localhost:8080/api",
+   "API_BASE_URL": "/api",
+   "APP_BASE_PATH": "/udash/"
 }
-})();
 ```
+
+The app bootstraps from `config.json` before loading the Vue bundle, then exposes the same values on `window.config`.
 
 For the local development environment, those two files must be located in the directory `public`.
 A gitignore rule ensure those two files are not committed to the git repository.
 
+#### Docker
+
+The docker image configuration can be overridden by mounting a custom `config.json` file at runtime.
+
+```
+docker run -d -p 80:80 \
+  -v /path/to/config.json:/usr/share/nginx/html/config.json \
+  --name udash-front udash-front:latest
+```
+
 ### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+See [Vite Configuration Reference](https://vite.dev/config/).
