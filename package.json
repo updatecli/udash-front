@@ -3,15 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-<<<<<<< HEAD
     "dev": "vite",
     "serve": "vite",
     "build": "vite build && node scripts/patch-runtime-assets.mjs",
     "preview": "vite preview",
-=======
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
->>>>>>> 7c16f9a (fix: npm run lint command)
     "lint": "eslint --fix src/"
   },
   "dependencies": {

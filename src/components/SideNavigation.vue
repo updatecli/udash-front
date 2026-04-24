@@ -54,12 +54,10 @@
 
 <script>
     import { useAuth0 } from '@auth0/auth0-vue';
+    import { isAuthEnabled } from '@/composables/runtime';
     export default {
         name: 'SideNavigation',
         setup() {
-
-          const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
-
           if (isAuthEnabled) {
             const auth0 = useAuth0();
             return {
@@ -79,4 +77,3 @@
         }),
     }
 </script>
-

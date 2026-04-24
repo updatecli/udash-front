@@ -10,19 +10,12 @@ RUN npm run build
 FROM nginx:stable-alpine
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
-COPY docker/config.js /usr/share/nginx/html/config.js
 COPY docker/config.json /usr/share/nginx/html/config.json
 
-# Copy and set up the entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
-
-# Dynamic labels are defined from the goreleaser configuration ".goreleaser.yaml"
 LABEL org.opencontainers.image.authors="Olivier Vernin<me@olblak.com>"
 LABEL org.opencontainers.image.title="Udash-front"
 LABEL org.opencontainers.image.description="The Udash Frontend"
 LABEL org.opencontainers.image.source=https://github.com/updatecli/udash-front
 
 EXPOSE 80
-ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]

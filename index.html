@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>udash</title>
+    <script>
+      (function () {
+        function normalizeBasePath(value) {
+          if (!value || value === '/') {
+            return '/'
+          }
+
+          return '/' + String(value).replace(/^\/+|\/+$/g, '') + '/'
+        }
+
+        function getCandidatePrefixes(pathname) {
+          const segments = pathname.split('/').filter(Boolean)
+          const prefixes = []
+
+          for (let depth = segments.length; depth >= 0; depth -= 1) {
+            const prefix = ('/' + segments.slice(0, depth).join('/')).replace(/\/+$/, '')
+            prefixes.push(prefix || '/')
+          }
+
+          return [...new Set(prefixes)]
+        }
+
+        function loadRuntimeConfig() {
+          const prefixes = getCandidatePrefixes(window.location.pathname)
+
+          for (const prefix of prefixes) {
+            const request = new XMLHttpRequest()
+            request.open('GET', (prefix === '/' ? '' : prefix) + '/config.json', false)
+            request.send(null)
+
+            if (request.status < 200 || request.status >= 300) {
+              continue
+            }
+
+            try {
+              return JSON.parse(request.responseText)
+            } catch (_) {
+              // Some candidate prefixes may resolve to the SPA fallback instead of config.json.
+            }
+          }
+
+          throw new Error('Unable to load runtime configuration from config.json')
+        }
+
+        const runtimeConfig = loadRuntimeConfig()
+        const baseElement = document.createElement('base')
+
+        window.config = runtimeConfig
+        baseElement.href = normalizeBasePath(runtimeConfig.APP_BASE_PATH || '/')
+        document.head.appendChild(baseElement)
+      })()
+    </script>
+    <link rel="icon" href="./favicon.ico">
+  </head>
+  <body>
+    <noscript>
+      <strong>We're sorry but udash doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
