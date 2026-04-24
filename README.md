@@ -24,7 +24,7 @@ npm run lint
 
 ### Deploy to production
 
-This application relies file and `/usr/share/nginx/html/config.json` to provide runtime configuration.
+This application relies on the `config.json` file at `/usr/share/nginx/html/config.json` for runtime configuration.
 
 The frontend base path is defined at runtime with `APP_BASE_PATH`.
 Set it in the runtime config files to mount the SPA below a subpath such as `/udash/`.
@@ -44,8 +44,8 @@ Set it in the runtime config files to mount the SPA below a subpath such as `/ud
 
 The app bootstraps from `config.json` before loading the Vue bundle, then exposes the same values on `window.config`.
 
-For the local development environment, those two files must be located in the directory `public`.
-A gitignore rule ensure those two files are not committed to the git repository.
+For the local development environment, the runtime config file must be located at `public/config.json`.
+A `.gitignore` rule ensures this file is not committed to the git repository.
 
 #### Docker
 
