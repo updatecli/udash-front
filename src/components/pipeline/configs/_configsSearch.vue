@@ -89,6 +89,7 @@
 <script>
 
 import { getApiBaseURL } from '@/composables/api';
+import { isAuthEnabled } from '@/composables/runtime';
 
 export default {
   name: 'ConfigsSearchFilter',
@@ -118,7 +119,7 @@ export default {
   methods: {
     async getConfigsKindData() {
       this.$emit('loaded', false)
-      const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+      const auth_enabled = isAuthEnabled;
 
       let query = `${getApiBaseURL()}/pipeline/config/kinds?type=${this.configType}`;
 

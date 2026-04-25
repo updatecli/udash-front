@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>udash</title>
+    <script type="module">
+      function normalizeBasePath(value) {
+        if (!value || value === "/") return "/";
+        return "/" + String(value).replace(/^\/+|\/+$/g, "") + "/";
+      }
+
+      function getCandidatePrefixes(pathname) {
+        const segments = pathname.split("/").filter(Boolean);
+        const prefixes = [];
+        for (let depth = segments.length; depth >= 0; depth -= 1) {
+          const prefix = ("/" + segments.slice(0, depth).join("/")).replace(/\/+$/, "");
+          prefixes.push(prefix || "/");
+        }
+        return [...new Set(prefixes)];
+      }
+
+      async function loadRuntimeConfig() {
+        const prefixes = getCandidatePrefixes(window.location.pathname);
+
+        for (const prefix of prefixes) {
+          try {
+            const url = (prefix === "/" ? "" : prefix) + "/config.json";
+            const res = await fetch(url, { cache: "no-store" });
+            if (!res.ok) continue;
+            return await res.json();
+          } catch (_) {
+            // Ignore bad candidate prefix and keep trying.
+          }
+        }
+
+        throw new Error("Unable to load runtime configuration from config.json");
+      }
+
+      const runtimeConfig = await loadRuntimeConfig();
+      const baseElement = document.createElement("base");
+      baseElement.href = normalizeBasePath(runtimeConfig.APP_BASE_PATH || "/");
+      document.head.appendChild(baseElement);
+      window.config = runtimeConfig;
+
+      await import("/src/main.js");
+    </script>
+    <link rel="icon" href="./favicon.ico">
+  </head>
+  <body>
+    <noscript>
+      <strong>We're sorry but udash doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+    <div id="app"></div>
+  </body>
+</html>

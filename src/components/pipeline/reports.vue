@@ -179,6 +179,7 @@ import { getStatusColor, getStatusIcon } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git'
 import { toLocalDate } from '@/composables/date'
 import { getApiBaseURL } from '@/composables/api';
+import { isAuthEnabled } from '@/composables/runtime';
 
 export default {
   name: 'PipelinesTable',
@@ -343,8 +344,6 @@ export default {
           }
         }
       }
-
-      const isAuthEnabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
 
       try {
         let response;

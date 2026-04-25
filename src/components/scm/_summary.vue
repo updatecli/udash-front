@@ -270,6 +270,7 @@ import router from '../../router'
 import SCMDoughnut from './_scmDoughnut.vue'
 
 import { getApiBaseURL } from '@/composables/api';
+import { isAuthEnabled } from '@/composables/runtime';
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
 
@@ -549,7 +550,7 @@ export default {
             this.$emit('loaded', false)
 
             try {
-                const auth_enabled = process.env.VUE_APP_AUTH_ENABLED === 'true';
+                const auth_enabled = isAuthEnabled;
                 const restrictedSCM = router.currentRoute.value.query.filter?.scmid;
 
                 const requestBody = {

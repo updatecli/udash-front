@@ -3,7 +3,8 @@ import App from './App.vue'
 import vuetify from './plugins/vuetify'
 import { loadFonts } from './plugins/webfontloader'
 import router from './router'
-import { createAuth0 } from "@auth0/auth0-vue";
+import { createAuth0 } from '@auth0/auth0-vue'
+import { getAppBaseUrl, getRuntimeConfig, isAuthEnabled } from '@/composables/runtime'
 
 import hljs from 'highlight.js'
 //import 'highlight.js/styles/atom-one-dark.css'
@@ -21,17 +22,25 @@ const highlightDirective = {
   }
 }
 
-createApp(App).use(router)
+const runtimeConfig = getRuntimeConfig()
+
+const app = createApp(App)
+  .use(router)
   .use(vuetify)
-  .use(
+
+if (isAuthEnabled) {
+  app.use(
     createAuth0({
-      domain: config.OAUTH_DOMAIN,
-      clientId: config.OAUTH_CLIENTID,
+      domain: runtimeConfig.OAUTH_DOMAIN,
+      clientId: runtimeConfig.OAUTH_CLIENTID,
       authorizationParams: {
-        redirect_uri: window.location.origin,
-        audience: config.OAUTH_AUDIENCE,
+        redirect_uri: getAppBaseUrl(),
+        audience: runtimeConfig.OAUTH_AUDIENCE,
       }
     })
   )
-  .directive('highlight', highlightDirective) // Register the directive globally
+}
+
+app
+  .directive('highlight', highlightDirective)
   .mount('#app')
