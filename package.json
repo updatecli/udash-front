@@ -10,7 +10,7 @@
     "lint": "eslint --fix src/"
   },
   "dependencies": {
-    "@auth0/auth0-vue": "^2.5.0",
+    "@auth0/auth0-vue": "^2.6.0",
     "@mdi/font": "^7.4.47",
     "axios": "^1.15.0",
     "chart.js": "^4.5.1",
