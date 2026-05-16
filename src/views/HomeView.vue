@@ -12,7 +12,7 @@
               Udash <v-icon size="large" icon="mdi-home-city" color="grey-darken-3"></v-icon>
             </h1>
             <p class="text-h6 mb-8 text-medium-emphasis">
-              An innovative monitoring platform for your project's dependencies
+              A monitoring platform for your project's dependencies
             </p>
           </v-col>
         </v-row>
@@ -50,7 +50,7 @@
           <v-col cols="12" lg="8" md="10">
             <v-card flat class="pa-6">
               <v-card-title class="text-h4 text-center mb-6">Get Started</v-card-title>
-              
+
               <!-- Tabs for different sections -->
               <v-tabs v-model="activeTab" centered>
                 <v-tab value="quickstart">Quick Start</v-tab>
@@ -134,7 +134,7 @@
         </v-row>
       </v-container>
     </v-main>
-    
+
     <ReleaseFooter/>
   </v-app>
 </template>
@@ -155,12 +155,12 @@ export default {
   data: () => ({
     activeTab: 'quickstart',
     host: window.location.origin,
-    
+
     features: [
       {
         title: "Dashboard",
         icon: "mdi-view-dashboard",
-        description: "Visualize update status by Git repository with clear visual overviews.",
+        description: "Visualize update status by Git repository with visual overviews.",
         to: "/scm/dashboard"
       },
       {
@@ -171,12 +171,12 @@ export default {
       },
       {
         title: "Configs",
-        icon: "mdi-transit-connection-variant", 
+        icon: "mdi-transit-connection-variant",
         description: "Filter pipelines based on Updatecli manifests or policies used to trigger them.",
         to: "/pipeline/configs"
       }
     ],
-    
+
     configSteps: [
       {
         title: "Install Updatecli",
@@ -211,7 +211,7 @@ export default {
         code: `updatecli diff --experimental`
       },
     ],
-    
+
     contributeWays: [
       {
         title: "Star on GitHub",
