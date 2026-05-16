@@ -13,7 +13,7 @@
               <v-icon size="large" color="grey-darken-3" class="ml-2">mdi-information</v-icon>
             </h1>
             <p class="text-h6 text-medium-emphasis">
-              An innovative monitoring platform for your project's dependencies
+              A monitoring platform for your project's dependencies
             </p>
           </v-col>
         </v-row>
@@ -28,10 +28,10 @@
               </v-card-title>
               <v-card-text>
                 <p class="text-body-1 mb-4">
-                  Udash is a powerful web dashboard designed to work seamlessly with 
-                  <a href="https://updatecli.io" target="_blank" class="text-decoration-none">Updatecli</a>, 
-                  providing comprehensive visibility into your dependency update workflows. 
-                  It transforms raw pipeline data into actionable insights through intuitive visualizations.
+                  Udash is a web dashboard designed to work seamlessly with
+                  <a href="https://updatecli.io" target="_blank" class="text-decoration-none">Updatecli</a>,
+                  providing visibility into your dependency update workflows.
+                  It transforms raw pipeline data into actionable insights through visualizations.
                 </p>
                 <v-row>
                   <v-col cols="12" md="4" class="text-center">
@@ -101,7 +101,7 @@
                   AGPL v3
                 </v-chip>
               </v-card-title>
-              
+
               <v-card-text>
                 <v-expansion-panels flat variant="accordion">
                   <v-expansion-panel>
@@ -118,10 +118,10 @@
                     </v-expansion-panel-text>
                   </v-expansion-panel>
                 </v-expansion-panels>
-                
+
                 <div class="mt-4">
                   <p class="text-body-1 mb-3">
-                    Udash is free and open-source software licensed under the 
+                    Udash is free and open-source software licensed under the
                     <strong>GNU Affero General Public License v3.0</strong>.
                   </p>
                   <v-alert
@@ -138,7 +138,7 @@
                       <li>⚠️ Any derivative works must also be licensed under AGPL v3</li>
                     </ul>
                   </v-alert>
-                  
+
                   <div class="d-flex gap-2">
                     <v-btn
                       href="https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -183,7 +183,7 @@ export default {
     SideNavigation,
     HeadNavigation,
   },
-  
+
   data: () => ({
     communityLinks: [
       {
@@ -207,7 +207,7 @@ export default {
         url: 'https://github.com/updatecli/updatecli/issues'
       }
     ],
-    
+
     license: `                    GNU AFFERO GENERAL PUBLIC LICENSE
                       Version 3, 19 November 2007
 
