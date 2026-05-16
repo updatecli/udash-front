@@ -56,6 +56,7 @@
                   <th>Status</th>
                   <th>Executed</th>
                   <th>Pipeline</th>
+                  <th>CI</th>
                 </tr>
                 <tr>
                   <td>
@@ -63,6 +64,32 @@
                   </td>
                   <td>{{ formatDate(pipeline.Updated_at) }}</td>
                   <td>{{ pipeline.Pipeline.Name }}</td>
+                  <td>
+                    <template v-if="pipelinePrimaryURL">
+                      <v-btn
+                        :href="pipelinePrimaryURL"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="small"
+                        variant="outlined"
+                        prepend-icon="mdi-open-in-new"
+                      >
+                        View Job
+                      </v-btn>
+                    </template>
+                    <span
+                      v-else
+                      class="text-grey"
+                    >
+                      N/A
+                    </span>
+                    <span
+                      v-if="hasMultiplePipelineURLs"
+                      class="text-warning text-caption ci-warning"
+                    >
+                      Multiple CI URLs detected. Using the first one.
+                    </span>
+                  </td>
                 </tr>
               </tbody>
             </v-table>
@@ -309,6 +336,37 @@ export default {
   },
 
   computed: {
+    pipelineURLs() {
+
+      if (this.pipeline?.Pipeline?.ci != undefined) {
+        return [this.pipeline.Pipeline.ci.url]
+      }
+
+      const actions = this.pipeline?.Pipeline?.Actions
+      if (!actions) {
+        return []
+      }
+
+      const urls = new Set()
+
+      for (const action of Object.values(actions)) {
+        const pipelineURL = action?.pipelineURL?.URL
+        if (typeof pipelineURL === 'string' && pipelineURL.trim()) {
+          urls.add(pipelineURL)
+        }
+      }
+
+      return Array.from(urls)
+    },
+
+    pipelinePrimaryURL() {
+      return this.pipelineURLs[0]
+    },
+
+    hasMultiplePipelineURLs() {
+      return this.pipelineURLs.length > 1
+    },
+
     sortedLabels() {
       const labels = this.pipeline?.Pipeline?.Labels
       if (!labels) {
@@ -482,6 +540,11 @@ export default {
   font-size: 1.1rem;
   padding: 12px 16px;
   font-weight: 500;
+}
+
+.ci-warning {
+  display: block;
+  margin-top: 6px;
 }
 
 .metadata-table tbody tr {
