@@ -37,8 +37,10 @@
 
         <!-- Advanced Filter Expansion Panel -->
         <v-expansion-panels
+          v-model="expandedPanels"
           class="mt-4"
           elevation="0"
+          multiple
         >
           <v-expansion-panel>
             <v-expansion-panel-title>
@@ -206,6 +208,7 @@ export default {
     debounceTimer: null,
     nowTicker: null,
     nowRefreshKey: 0,
+    expandedPanels: [],
   }),
 
   beforeUnmount() {
@@ -214,6 +217,10 @@ export default {
   },
 
   computed: {
+    hasActiveAdvancedFilters() {
+      return this.selectedLabels.some(label => label.key !== null)
+    },
+
     tickLabels() {
       const labels = []
       // Hours: 0-23 (1-24 hours ago)
@@ -807,6 +814,9 @@ export default {
   async created() {
     try {
         this.loadPersistedFilterState()
+        if (this.hasActiveAdvancedFilters) {
+          this.expandedPanels = [0]
+        }
         this.syncNowAutoUpdate()
 
         if (this.showRepositoryBranch) {
