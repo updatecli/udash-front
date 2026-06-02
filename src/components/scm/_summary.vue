@@ -9,21 +9,31 @@
           </v-col>
         </v-row>
         <!-- SCM Cards Layout -->
-        <v-row v-if="!isNoData() && !hideRepositoryTitle" class="mb-2">
+        <v-row v-if="!isNoData()" class="mb-2">
             <v-col cols="12" class="text-right">
                 <v-btn
+                    v-if="!hideRepositoryTitle"
                     size="small"
                     variant="outlined"
+                    class="mr-2"
                     @click="toggleAllRepos"
                 >
                     {{ areAllReposCollapsed() ? 'Show all SCMs' : 'Hide all SCMs' }}
+                </v-btn>
+                <v-btn
+                    v-if="hasEmptyEntries"
+                    size="small"
+                    variant="outlined"
+                    @click="toggleHideEmpty"
+                >
+                    {{ hideEmpty ? 'Show empty' : 'Hide empty' }}
                 </v-btn>
             </v-col>
         </v-row>
 
         <v-row v-if="!isNoData()">
             <v-col
-                v-for="(scmData, url) in data"
+                v-for="(scmData, url) in displayedData"
                 :key="url"
                 cols="12"
                 md="12"
@@ -270,12 +280,12 @@ import router from '../../router'
 import SCMDoughnut from './_scmDoughnut.vue'
 
 import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled } from '@/composables/runtime';
+import { isAuthEnabled, getStorageKey } from '@/composables/runtime';
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
 
 const EMPTY_DONUT_DATA = Object.freeze({ labels: [], datasets: [] });
-const COLLAPSE_STORAGE_KEY = 'udash:scm-summary-collapse-state';
+const COLLAPSE_STORAGE_KEY = getStorageKey('scm.summary.collapse.v1');
 
 export default {
     components: {
@@ -330,6 +340,7 @@ export default {
         collapsedRepositories: {},
         visibleBranchesByRepo: {},
         initialBranchPageSize: 10,
+        hideEmpty: false,
     }),
 
     computed: {
@@ -351,6 +362,21 @@ export default {
             }
 
             return Math.min(100, Math.round((this.loadedScmBranchCount / this.totalScmCount) * 100));
+        },
+
+        displayedData() {
+            if (!this.hideEmpty) return this.data;
+            return Object.fromEntries(
+                Object.entries(this.data).filter(([, scmData]) =>
+                    Object.values(scmData).some(branch => (Number(branch?.total_result) || 0) > 0)
+                )
+            );
+        },
+
+        hasEmptyEntries() {
+            return Object.values(this.data).some(scmData =>
+                Object.values(scmData).some(branch => (Number(branch?.total_result) || 0) === 0)
+            );
         },
     },
 
@@ -393,6 +419,10 @@ export default {
                     this.collapseAllByDefault = savedState.collapseAllByDefault;
                 }
 
+                if (typeof savedState.hideEmpty === 'boolean') {
+                    this.hideEmpty = savedState.hideEmpty;
+                }
+
                 if (savedState.collapsedRepositories && typeof savedState.collapsedRepositories === 'object' && !Array.isArray(savedState.collapsedRepositories)) {
                     this.collapsedRepositories = Object.fromEntries(
                         Object.entries(savedState.collapsedRepositories).filter(([url, isCollapsed]) => typeof url === 'string' && typeof isCollapsed === 'boolean')
@@ -408,6 +438,7 @@ export default {
                 const stateToPersist = {
                     collapseAllByDefault: this.collapseAllByDefault,
                     collapsedRepositories: this.collapsedRepositories,
+                    hideEmpty: this.hideEmpty,
                     updatedAt: new Date().toISOString(),
                 };
 
@@ -432,11 +463,14 @@ export default {
                 return [];
             }
 
-            return Object.entries(scmData).sort((a, b) => {
+            const entries = Object.entries(scmData).sort((a, b) => {
                 const totalA = Number(a?.[1]?.total_result) || 0;
                 const totalB = Number(b?.[1]?.total_result) || 0;
                 return totalB - totalA;
             });
+
+            if (!this.hideEmpty) return entries;
+            return entries.filter(([, branchData]) => (Number(branchData?.total_result) || 0) > 0);
         },
 
         isRepoCollapsed(url) {
@@ -488,6 +522,11 @@ export default {
             });
 
             this.collapsedRepositories = collapsedRepositories;
+            this.persistCollapseState();
+        },
+
+        toggleHideEmpty() {
+            this.hideEmpty = !this.hideEmpty;
             this.persistCollapseState();
         },
 
