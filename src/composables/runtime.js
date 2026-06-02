@@ -23,3 +23,7 @@ export function getAppBaseUrl() {
 export function getDashboardUrl() {
   return getAppBaseUrl().replace(/\/$/, '')
 }
+
+export function getStorageKey(id) {
+  return `udash.${id}:${getAppBasePath()}`
+}
