@@ -144,6 +144,7 @@ import ReleaseFooter from '../components/ReleaseFooter.vue';
 import SideNavigation from '../components/SideNavigation.vue';
 import HeadNavigation from '../components/HeadNavigation.vue';
 import { getDashboardUrl } from '@/composables/runtime';
+import { getApiBaseUrl } from '@/composables/api';
 
 export default {
   name: 'HomeView',
@@ -232,7 +233,7 @@ export default {
   }),
   computed: {
     apiBaseUrl() {
-      return window.config?.API_BASE_URL || window.location.origin + "/api"
+      return getApiBaseUrl()
     },
     dashboardUrl() {
       return getDashboardUrl()
