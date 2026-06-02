@@ -170,9 +170,9 @@
 import router from '../../router'
 
 import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled } from '@/composables/runtime';
+import { isAuthEnabled, getStorageKey } from '@/composables/runtime';
 
-const FILTER_STORAGE_KEY = 'udash.scm.filter.v1';
+const FILTER_STORAGE_KEY = getStorageKey('scm.filter.v1');
 const DEFAULT_DATE_RANGE = [0, 24];
 
 export default {
