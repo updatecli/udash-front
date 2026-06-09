@@ -1,6 +1,6 @@
 <!-- GitRepositorySection.vue -->
 <template>
-  <v-expansion-panels flat variant="accordion" class="mb-4">
+  <v-expansion-panels flat variant="accordion">
     <v-expansion-panel>
       <v-expansion-panel-title>
         <div class="d-flex align-center">
@@ -18,9 +18,10 @@
 
       <v-expansion-panel-text>
         <div v-for="(branchData, branchName) in scmData" :key="branchName">
-          <div class="d-flex align-center mb-3">
-            <v-icon class="mr-2" size="small">mdi-source-branch</v-icon>
+          <div class="d-flex align-center">
+            <v-icon class="mr-4 ml-6" size="small">mdi-source-branch</v-icon>
             <span class="font-weight-medium">{{ branchName }}</span>
+            <v-spacer></v-spacer>
             <v-chip class="ml-2" size="x-small" variant="outlined">
               {{ branchData.length }} reports
             </v-chip>
@@ -31,8 +32,8 @@
               v-for="report in branchData"
               :key="report.ID"
               cols="12"
-              md="6"
-              lg="4"
+              md="12"
+              lg="12"
             >
               <ReportCard
                 :report="report"
