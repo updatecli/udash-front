@@ -219,6 +219,11 @@
                   :id="key"
                   :data="data"
                 ></SourceComponent>
+                <LinkedReports
+                  :configID="getResourceUUID('source', key)"
+                  configType="source"
+                  :pipelineUUID="pipelineUUID"
+                ></LinkedReports>
               </v-card>
           </v-card-text>
         </v-card>
@@ -237,6 +242,11 @@
                   :id="key"
                   :data="data"
                 ></ConditionComponent>
+                <LinkedReports
+                  :configID="getResourceUUID('condition', key)"
+                  configType="condition"
+                  :pipelineUUID="pipelineUUID"
+                ></LinkedReports>
               </v-card>
           </v-card-text>
         </v-card>
@@ -255,6 +265,11 @@
                   :id="key"
                   :data="data"
                 ></TargetComponent>
+                <LinkedReports
+                  :configID="getResourceUUID('target', key)"
+                  configType="target"
+                  :pipelineUUID="pipelineUUID"
+                ></LinkedReports>
               </v-card>
           </v-card-text>
         </v-card>
@@ -304,6 +319,8 @@ import ConditionComponent from './_condition.vue';
 import TargetComponent from './_target.vue';
 import PipelineGraphComponent from './_graph.vue';
 
+import LinkedReports from './configs/_linkedReports.vue';
+
 import { getStatusColor, getStatusIcon, getStatusText } from '@/composables/status';
 import { toLocalDate } from '@/composables/date';
 import { getApiBaseURL } from '@/composables/api';
@@ -318,11 +335,13 @@ export default {
     ConditionComponent,
     TargetComponent,
     PipelineGraphComponent,
+    LinkedReports,
   },
 
   data: () => ({
     isLoading: true,
     resourceStage: "source",
+    pipelineUUID: "",
     pipeline: {
       "Pipeline": {}
     },
@@ -378,6 +397,46 @@ export default {
   },
 
   methods: {
+    getResourceUUID(type, id) {
+      if (type === "source") {
+        if (this.pipeline.SourceConfigIDs === undefined) {
+          return ""
+        }
+
+        for (const [uuid, name] of Object.entries(this.pipeline.SourceConfigIDs)) {
+          if (name === id) {
+            return uuid
+          }
+        }
+      }
+
+      if (type === "condition") {
+        if (this.pipeline.ConditionConfigIDs === undefined) {
+          return ""
+        }
+
+        for (const [uuid, name] of Object.entries(this.pipeline.ConditionConfigIDs)) {
+          if (name === id) {
+            return uuid
+          }
+        }
+      }
+
+      if (type === "target") {
+        if (this.pipeline.TargetConfigIDs === undefined) {
+          return ""
+        }
+
+        for (const [uuid, name] of Object.entries(this.pipeline.TargetConfigIDs)) {
+          if (name === id) {
+            return uuid
+          }
+        }
+      }
+
+      return ``
+    },
+
     formatDate(rawDate) {
       if (!rawDate) {
         return 'N/A';
@@ -504,6 +563,8 @@ export default {
   },
 
   async created() {
+    this.pipelineUUID = this.$route.params.id
+
     this.$watch(
       () => this.$route.params,
       (toParams, previousParams) => {

@@ -1,101 +1,42 @@
 <template>
-  <v-container class="config-detail-container" fluid>
+  <v-container fluid>
     <!-- Loading Overlay -->
     <v-overlay v-model="isLoading" class="align-center justify-center">
       <v-progress-circular color="grey-darken-3" indeterminate size="64"></v-progress-circular>
       <div class="mt-4 text-h6">Loading configuration...</div>
     </v-overlay>
 
-    <div v-if="reportsData && !isLoading">
-      <!-- Header Section -->
-      <v-row class="mb-6">
-        <v-col cols="12">
-          <div class="d-flex align-center justify-space-between">
-            <div>
-              <v-breadcrumbs
-                :items="breadcrumbItems"
-                class="pa-0"
-                density="compact"
-              >
-                <template v-slot:prepend>
-                  <v-icon size="small">mdi-home</v-icon>
-                </template>
-              </v-breadcrumbs>
-              <h1 class="text-h4 font-weight-bold d-flex align-center mt-6">
-                <v-icon class="mr-3" size="large" :color="getKindColor(configData.Config?.Kind)">
-                  {{ getKindIcon(configType) }}
-                </v-icon>
-                {{ configData.Config?.Name || 'Configuration' }}
-              </h1>
-            </div>
-            <div class="d-flex gap-2">
-              <v-chip :color="getKindColor(configData.Config?.Kind)" variant="tonal">
-                {{ configData.Config?.Kind }}
-              </v-chip>
-              <v-chip color="grey" variant="outlined">
-                {{ configType }}
-              </v-chip>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-
-      <!-- Configuration Details -->
-      <v-row class="mb-6">
-        <v-col cols="12" lg="8">
-          <v-card flat class="config-spec-card">
-            <v-card-title class="d-flex align-center">
-              <v-icon class="mr-2">mdi-code-braces</v-icon>
-              Configuration Specification
-            </v-card-title>
-            <v-card-text>
-              <div class="yaml-container">
-                <pre><code v-highlight class="language-yaml">{{ toYAML(configData.Config?.Spec) }}</code></pre>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- Metadata Sidebar -->
-        <v-col cols="12" lg="4">
-          <v-card flat>
-            <v-card-title>
-              <v-icon class="mr-2">mdi-information-outline</v-icon>
-              Metadata
-            </v-card-title>
-            <v-card-text>
-              <v-list density="compact">
-                <v-list-item>
-                  <v-list-item-title class="text-body-2 text-medium-emphasis">Kind</v-list-item-title>
-                  <v-list-item-subtitle>{{ configData.Config?.Kind }}</v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title class="text-body-2 text-medium-emphasis">Type</v-list-item-title>
-                  <v-list-item-subtitle>{{ configType }}</v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title class="text-body-2 text-medium-emphasis">ID</v-list-item-title>
-                  <v-list-item-subtitle class="font-mono">{{ configID }}</v-list-item-subtitle>
-                </v-list-item>
-              </v-list>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-
+    <div v-if="isLinkedReports && !isLoading">
       <!-- Linked Reports Section -->
       <v-row>
         <v-col cols="12">
-          <v-card variant="outlined">
+          <v-card variant="flat">
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon class="mr-2">mdi-link-variant</v-icon>
-                Linked Reports
+                Similar Reports
               </div>
               <v-chip variant="outlined" size="small">
                 {{ getTotalReportsCount() }} reports
               </v-chip>
             </v-card-title>
+
+            <v-card-subtitle
+              v-if="isTypeSource"
+            >
+              Reports using this source configuration.
+            </v-card-subtitle>
+            <v-card-subtitle
+              v-if="isTypeCondition"
+            >
+              Reports depending on this condition configuration.
+            </v-card-subtitle>
+
+            <v-card-subtitle
+              v-if="isTypeTarget"
+            >
+              Reports with similar target configuration.
+            </v-card-subtitle>
 
             <v-card-text>
               <!-- Git-based Reports -->
@@ -130,8 +71,8 @@
                     v-for="report in localReportsData"
                     :key="report.ID"
                     cols="12"
-                    md="6"
-                    lg="4"
+                    md="12"
+                    lg="12"
                   >
                     <ReportCard
                       :report="report"
@@ -140,15 +81,6 @@
                     />
                   </v-col>
                 </v-row>
-              </div>
-
-              <!-- No Reports State -->
-              <div v-if="Object.keys(gitReportsData).length === 0 && localReportsData.length === 0" class="text-center py-12">
-                <v-icon size="64" color="grey-lighten-2">mdi-file-document-outline</v-icon>
-                <h3 class="text-h6 mt-4 mb-2">No Linked Reports</h3>
-                <p class="text-body-2 text-medium-emphasis">
-                  This configuration is not currently linked to any pipeline reports.
-                </p>
               </div>
             </v-card-text>
           </v-card>
@@ -168,10 +100,27 @@ import { getApiBaseURL } from '@/composables/api';
 import { isAuthEnabled } from '@/composables/runtime';
 
 export default {
-  name: 'PipelineConfigView',
+  name: 'LinkedReports',
   components: {
     GitRepositorySection,
     ReportCard
+  },
+
+  props: {
+    // uuid is the unique resource identifier for the config, used to fetch associated reports
+    "configID": {
+      type: String,
+      required: true
+    },
+    // type is the type of the config (source, condition, target), used to determine report parsing logic
+    "configType": {
+      type: String,
+      required: true
+    },
+    "pipelineUUID": {
+      type: String,
+      required: false
+    }
   },
 
   data: () => ({
@@ -180,19 +129,21 @@ export default {
     gitReportsData: {},
     localReportsData: [],
     configData: { data: {} },
-    configID: "",
-    configType: "",
   }),
 
   computed: {
-    breadcrumbItems() {
-      return [
-        { title: 'Dashboard', to: '/' },
-        { title: 'Configurations', to: '/pipeline/configs' },
-        { title: this.configType, to: `/pipeline/configs?type=${this.configType}` },
-        { title: this.configData.Config?.Name || 'Loading...', disabled: true }
-      ]
-    }
+    isLinkedReports() {
+      return this.localReportsData.length > 0 || Object.keys(this.gitReportsData).length > 0
+    },
+    isTypeSource() {
+      return this.configType === 'source'
+    },
+    isTypeCondition() {
+      return this.configType === 'condition'
+    },
+    isTypeTarget() {
+      return this.configType === 'target'
+    },
   },
 
   methods: {
@@ -422,7 +373,7 @@ export default {
 
     async getPipelineConfigReportsData() {
       if (!this.configID) {
-        console.error('Resource ID is not defined in the route parameters.')
+        console.error('Resource ID is not defined.')
         return
       }
 
@@ -464,6 +415,12 @@ export default {
 
         const data = await response.json()
         this.reportsData = data.data || []
+
+        // Remove current pipeline ID from reportsData if pipelineUUID prop is provided
+        if (this.pipelineUUID) {
+          this.reportsData = this.reportsData.filter(report => report.ID !== this.pipelineUUID)
+        }
+
         this.parseReports()
       } catch (error) {
         console.error('Error fetching reports data:', error)
@@ -481,36 +438,13 @@ export default {
     }
   },
 
-  watch: {
-    '$route.params': {
-      handler(newParams, oldParams) {
-        if (newParams.id !== oldParams?.id) {
-          this.configID = newParams.id
-          this.configType = this.$route.path.split('/')[3]
-          this.loadData()
-        }
-      },
-      immediate: true
-    }
-  },
-
   async created() {
-    this.configID = this.$route.params.id
-    this.configType = this.$route.path.split('/')[3]
     await this.loadData()
   }
 }
 </script>
 
 <style scoped>
-.config-detail-container {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.config-spec-card {
-  border-radius: 12px;
-}
 
 .yaml-container {
   max-height: 500px;

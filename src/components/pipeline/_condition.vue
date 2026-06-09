@@ -152,12 +152,15 @@
                 </v-card>
             </v-col>
         </v-row>
+        <v-row>
+            <v-col cols="12">
+                <ConsoleOutputComponent
+                    v-if="data.ConsoleOutput"
+                    :data="data.ConsoleOutput"
+                ></ConsoleOutputComponent>
+            </v-col>
+        </v-row>
     </v-container>
-
-    <ConsoleOutputComponent
-        v-if="data.ConsoleOutput"
-        :data="data.ConsoleOutput"
-    ></ConsoleOutputComponent>
 </template>
 
 <script>

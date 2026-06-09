@@ -25,7 +25,7 @@
             v-for="feature in features"
             :key="feature.title"
             cols="12"
-            md="4"
+            md="6"
             class="mb-6"
           >
             <router-link :to="feature.to" style="text-decoration: none; color: inherit;">
@@ -45,7 +45,7 @@
       </v-container>
 
       <!-- Quick Start Section -->
-      <v-container class="py-12 bg-grey-lighten-5">
+      <v-container class="py-12">
         <v-row justify="center">
           <v-col cols="12" lg="8" md="10">
             <v-card flat class="pa-6">
@@ -170,18 +170,12 @@ export default {
         description: "Search pipelines by Git repository and branch for audit or debugging purposes.",
         to: "/pipeline/reports"
       },
-      {
-        title: "Configs",
-        icon: "mdi-transit-connection-variant",
-        description: "Filter pipelines based on Updatecli manifests or policies used to trigger them.",
-        to: "/pipeline/configs"
-      }
     ],
 
     configSteps: [
       {
         title: "Install Updatecli",
-        description: "Make sure Updatecli is installed.<br/><a href=\"https://www.updatecli.io/docs/prologue/installation/\" target=\"_blank\" rel=\"noopener noreferrer\">View installation options</a>",
+        description: "Make sure Updatecli is installed.<br/><a href=\"https://www.updatecli.io/docs/prologue/installation/\" target=\"_blank\" rel=\"noopener noreferrer\">View more installation options</a>",
         code: `brew tap updatecli/updatecli\nbrew install updatecli`
       },
       {

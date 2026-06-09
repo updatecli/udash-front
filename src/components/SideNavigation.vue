@@ -36,12 +36,6 @@
             to="/scm/dashboard"
             value="scmSummary"></v-list-item>
           <v-list-item
-            prepend-icon="mdi-transit-connection-variant"
-            v-if="isAuthenticated"
-            title="Configs"
-            to="/pipeline/configs"
-            value="configs"></v-list-item>
-          <v-list-item
             prepend-icon="mdi-information"
             v-if="isAuthenticated"
             title="About"
