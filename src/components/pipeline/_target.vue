@@ -190,18 +190,20 @@
                 </v-card>
             </v-col>
         </v-row>
-        <v-row>
+        <v-row
+            v-if="data.ConsoleOutput"
+        >
             <v-col cols="12">
                 <ConsoleOutputComponent
-                    v-if="data.ConsoleOutput"
                     :data="data.ConsoleOutput"
                 ></ConsoleOutputComponent>
             </v-col>
         </v-row>
-        <v-row>
+        <v-row
+            v-if="data.Changelogs"
+        >
             <v-col cols="12">
                 <ChangelogComponent
-                    v-if="data.Changelogs"
                     :data="data.Changelogs"
                 ></ChangelogComponent>
             </v-col>
