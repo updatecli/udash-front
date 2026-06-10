@@ -50,14 +50,16 @@
           variant="flat"
         >
           <v-card-text>
-            <v-table density="compact" class="metadata-table">
-              <tbody>
+            <v-table density="compact">
+              <thead>
                 <tr>
                   <th>Status</th>
                   <th>Executed</th>
                   <th>Pipeline</th>
                   <th>CI</th>
                 </tr>
+              </thead>
+              <tbody>
                 <tr>
                   <td>
                     {{ getStatusText(pipeline.Pipeline.Result) }}
@@ -587,34 +589,11 @@ export default {
 </script>
 
 <style scoped>
-.metadata-table {
-  font-size: 1.1rem;
-}
-
-.metadata-table th {
-  font-size: 1.2rem;
-  font-weight: 600;
-  padding: 12px 16px;
-}
-
-.metadata-table td {
-  font-size: 1.1rem;
-  padding: 12px 16px;
-  font-weight: 500;
-}
-
 .ci-warning {
   display: block;
   margin-top: 6px;
 }
 
-.metadata-table tbody tr {
-  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-}
-
-.metadata-table thead tr {
-  background-color: rgba(0, 0, 0, 0.02);
-}
 
 .labels-card {
   padding-top: 20px;
