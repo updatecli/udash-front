@@ -6,7 +6,7 @@
     <v-expansion-panel>
       <v-expansion-panel-title>
         <div class="d-flex align-center text-title-small justify-space-between">
-          <v-chip size="small" :color="getResultColor(report.Result)" variant="tonal">
+          <v-chip size="small" :color="getStatusColor(report.Result)" variant="tonal">
             {{ report.Result }}
           </v-chip>
           <v-spacer></v-spacer>
@@ -77,6 +77,9 @@
 </template>
 
 <script>
+
+import { getStatusColor } from '@/composables/status'
+
 export default {
   name: 'ReportCard',
   props: {
@@ -100,17 +103,8 @@ export default {
     navigateToReport(reportId) {
       this.$router.push(`/pipeline/reports/${reportId}`)
     },
-    getResultColor(result) {
-      const colors = {
-        'success': 'success',
-        'skipped': 'grey',
-        'changed': 'warning',
-        'failure': 'error',
-        'attention': 'orange',
-        'failed': 'error',
-        'passed': 'success'
-      }
-      return colors[result?.toLowerCase()] || 'grey'
+    getStatusColor(result) {
+      return getStatusColor(result)
     }
   }
 }
