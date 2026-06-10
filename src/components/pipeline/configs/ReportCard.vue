@@ -2,14 +2,14 @@
   <v-expansion-panels
     flat
     variant="accordion"
-    width="100%"
   >
     <v-expansion-panel>
       <v-expansion-panel-title>
-        <div class="d-flex align-center text-title-small">
-          <v-chip size="large" :color="getResultColor(report.Result)" variant="tonal">
+        <div class="d-flex align-center text-title-small justify-space-between">
+          <v-chip size="small" :color="getResultColor(report.Result)" variant="tonal">
             {{ report.Result }}
           </v-chip>
+          <v-spacer></v-spacer>
           <span>{{ report.Name || 'Unnamed Report' }}</span>
           <v-spacer></v-spacer>
         </div>
@@ -26,11 +26,13 @@
         <!-- Source-specific info -->
         <div v-if="configType === 'source'">
         <v-table density="compact">
-          <tbody>
+          <thead>
             <tr>
               <th>Current</th>
               <th>New</th>
             </tr>
+          </thead>
+          <tbody>
             <tr>
               <td>{{ report.Information }}</td>
               <td>{{ report.NewInformation }}</td>
@@ -42,11 +44,13 @@
         <!-- Target-specific info -->
         <div v-if="configType === 'target'">
           <v-table density="compact">
-            <tbody>
+            <vhead>
               <tr>
                 <th>Current</th>
                 <th>New</th>
               </tr>
+            </vhead>
+            <tbody>
               <tr>
                 <td>{{ report.Information }}</td>
                 <td>{{ report.NewInformation }}</td>
