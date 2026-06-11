@@ -9,7 +9,7 @@
         <v-row class="mb-8">
           <v-col cols="12" class="text-center">
             <h1 class="text-h3 font-weight-bold mb-4">
-              About Udash
+              About
               <v-icon size="large" class="ml-2">mdi-information</v-icon>
             </h1>
             <p class="text-h6 text-medium-emphasis">
@@ -28,28 +28,10 @@
               </v-card-title>
               <v-card-text>
                 <p class="text-body-1 mb-4">
-                  Udash is a web dashboard designed to work seamlessly with
+                  Udash is a web dashboard designed to work with
                   <a href="https://updatecli.io" target="_blank" class="text-decoration-none">Updatecli</a>,
                   providing visibility into your dependency update workflows.
-                  It transforms raw pipeline data into actionable insights through visualizations.
                 </p>
-                <v-row>
-                  <v-col cols="12" md="4" class="text-center">
-                    <v-icon size="48" class="mb-2">mdi-book-open-variant</v-icon>
-                    <h4 class="text-h6">Monitor</h4>
-                    <p class="text-body-2">Track pipeline executions and results</p>
-                  </v-col>
-                  <v-col cols="12" md="4" class="text-center">
-                    <v-icon size="48" class="mb-2">mdi-view-dashboard</v-icon>
-                    <h4 class="text-h6">Visualize</h4>
-                    <p class="text-body-2">See dependency updates at a glance</p>
-                  </v-col>
-                  <v-col cols="12" md="4" class="text-center">
-                    <v-icon size="48" class="mb-2">mdi-transit-connection-variant</v-icon>
-                    <h4 class="text-h6">Manage</h4>
-                    <p class="text-body-2">Control and audit your update processes</p>
-                  </v-col>
-                </v-row>
               </v-card-text>
             </v-card>
           </v-col>
@@ -888,7 +870,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
   padding: 16px;
   font-size: 0.75rem;
   line-height: 1.4;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
 .gap-2 {
