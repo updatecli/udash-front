@@ -24,17 +24,17 @@
             to="/"
             value="home"></v-list-item>
           <v-list-item
-            prepend-icon="mdi-book-open-variant"
-            v-if="isAuthenticated"
-            title="Reports"
-            to="/pipeline/reports"
-            value="reports"></v-list-item>
-          <v-list-item
             v-if="isAuthenticated"
             prepend-icon="mdi-view-dashboard"
             title="Dashboard"
             to="/scm/dashboard"
             value="scmSummary"></v-list-item>
+          <v-list-item
+            prepend-icon="mdi-book-open-variant"
+            v-if="isAuthenticated"
+            title="Reports"
+            to="/pipeline/reports"
+            value="reports"></v-list-item>
           <v-list-item
             prepend-icon="mdi-information"
             v-if="isAuthenticated"

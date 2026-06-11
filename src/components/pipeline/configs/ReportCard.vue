@@ -16,7 +16,7 @@
       </v-expansion-panel-title>
 
       <v-expansion-panel-text>
-        <!-- Condition-specific info -->
+        <!-- Condition-
         <div v-if="configType === 'condition' && report.Pass !== undefined" class="mt-2">
           <v-chip size="x-small" :color="report.Pass ? 'success' : 'error'" variant="tonal">
             {{ report.Pass ? 'Passed' : 'Failed' }}
@@ -66,7 +66,6 @@
             prepend-icon="mdi-eye"
             @click="navigateToReport(report.ID)"
             block
-            color="grey-darken-3"
           >
             View Details
           </v-btn>

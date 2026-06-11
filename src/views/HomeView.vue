@@ -5,11 +5,11 @@
 
     <v-main>
       <!-- Hero Section -->
-      <v-container class="hero-section">
+      <v-container>
         <v-row align="center" justify="center">
           <v-col cols="12" lg="8" md="10" class="text-center">
             <h1 class="display-2 font-weight-bold mb-4">
-              Udash <v-icon size="large" icon="mdi-home-city" color="grey-darken-3"></v-icon>
+              Udash <v-icon size="large" icon="mdi-home-city"></v-icon>
             </h1>
             <p class="text-h6 mb-8 text-medium-emphasis">
               A monitoring platform for your project's dependencies
@@ -18,8 +18,12 @@
         </v-row>
       </v-container>
 
+      <v-img :src="logo" width="250" cover class="mx-auto"></v-img>
+
       <!-- Features Section -->
-      <v-container class="py-12">
+      <v-container
+        class="py-12"
+      >
         <v-row>
           <v-col
             v-for="feature in features"
@@ -29,11 +33,10 @@
             class="mb-6"
           >
             <router-link :to="feature.to" style="text-decoration: none; color: inherit;">
-              <v-card height="100%" flat class="pa-4 text-center" hover>
+              <v-card height="100%" color="background" flat class="pa-4 text-center" hover>
                 <v-icon
                   :icon="feature.icon"
                   size="48"
-                  color="grey-darken-3"
                   class="mb-4"
                 ></v-icon>
                 <v-card-title class="text-h6 mb-2">{{ feature.title }}</v-card-title>
@@ -48,27 +51,26 @@
       <v-container class="py-12">
         <v-row justify="center">
           <v-col cols="12" lg="8" md="10">
-            <v-card flat class="pa-6">
+            <v-card flat class="pa-6" color="background">
               <v-card-title class="text-h4 text-center mb-6">Get Started</v-card-title>
 
               <!-- Tabs for different sections -->
               <v-tabs v-model="activeTab" centered>
                 <v-tab value="quickstart">Quick Start</v-tab>
                 <v-tab value="configure">Configure</v-tab>
-                <v-tab value="contribute">Contribute</v-tab>
+                <v-tab value="feedback">Feedback</v-tab>
               </v-tabs>
 
               <v-window v-model="activeTab" class="mt-6">
                 <!-- Quick Start Tab -->
                 <v-window-item value="quickstart">
                   <div class="text-center py-8">
-                    <v-icon icon="mdi-rocket-launch" size="64" color="grey-darken-3" class="mb-4"></v-icon>
+                    <v-icon icon="mdi-rocket-launch" size="64" class="mb-4"></v-icon>
                     <h3 class="text-h5 mb-4">Ready to start?</h3>
                     <p class="mb-6">
                       Connect your Updatecli runner to Udash in just a few steps
                     </p>
                     <v-btn
-                      color="grey-darken-3"
                       size="large"
                       @click="activeTab = 'configure'"
                       append-icon="mdi-arrow-right"
@@ -88,18 +90,18 @@
                     >
                       <v-expansion-panel-text>
                         <div class="mb-3" v-html="step.description"></div>
-                        <pre class="mb-3 overflow-x-auto">
-                          <v-code v-if="step.code" class="bg-grey-lighten-4">
-{{ getStepCode(step) }}
-                          </v-code>
+                        <pre class="mb-3 overflow-x-auto"
+                          v-if="step.code"
+                        >
+                          <code v-highlight class="language-bash">{{ getStepCode(step) }}</code>
                         </pre>
                       </v-expansion-panel-text>
                     </v-expansion-panel>
                   </v-expansion-panels>
                 </v-window-item>
 
-                <!-- Contribute Tab -->
-                <v-window-item value="contribute">
+                <!-- Feedback Tab -->
+                <v-window-item value="feedback">
                   <div class="text-center py-4">
                     <v-icon icon="mdi-heart" size="48" color="red" class="mb-4"></v-icon>
                     <h3 class="text-h5 mb-4">Join Our Community</h3>
@@ -146,6 +148,8 @@ import HeadNavigation from '../components/HeadNavigation.vue';
 import { getDashboardUrl } from '@/composables/runtime';
 import { getApiBaseUrl } from '@/composables/api';
 
+import logo from '@/assets/logo.svg';
+
 export default {
   name: 'HomeView',
   components: {
@@ -154,6 +158,7 @@ export default {
     HeadNavigation,
   },
   data: () => ({
+    logo,
     activeTab: 'quickstart',
     host: window.location.origin,
 
@@ -219,7 +224,7 @@ export default {
         link: "https://github.com/updatecli/udash/issues"
       },
       {
-        title: "Contribute Code",
+        title: "Feedback Code",
         icon: "mdi-code-tags",
         link: "https://github.com/updatecli/udash/blob/main/CONTRIBUTING.md"
       }
@@ -243,13 +248,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.hero-section {
-  background: linear-gradient(135deg, rgba(var(--v-theme-grey-darken-3), 0.1) 0%, rgba(var(--v-theme-secondary), 0.1) 100%);
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-</style>

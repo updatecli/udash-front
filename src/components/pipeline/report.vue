@@ -35,7 +35,7 @@
         <v-icon
           :icon="getStatusIcon(pipeline.Pipeline.Result)"
           :color="getStatusColor(pipeline.Pipeline.Result)"
-          size="130"
+          size="80"
           ></v-icon>
       </v-col>
     </v-row>

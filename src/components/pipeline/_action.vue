@@ -1,7 +1,8 @@
 <template>
     <v-toolbar
         density="compact"
-        class="text-white"
+        flat
+        color="surface"
     >
         <v-toolbar-title>
             <v-icon
@@ -19,13 +20,13 @@
         <v-row class="mb-4">
             <v-col cols="12">
                 <v-card flat class="pa-3">
-                    <v-table class="metadata-table">
+                    <v-table>
                         <thead>
-                            <tr class="bg-grey-lighten-4">
-                                <th class="font-weight-bold" style="width:25%;">ID</th>
-                                <th class="font-weight-bold" style="width:25%;">Type</th>
-                                <th class="font-weight-bold" style="width:25%;">Platform</th>
-                                <th class="font-weight-bold" style="width:25%;">Action</th>
+                            <tr>
+                                <th style="width: 25%">ID</th>
+                                <th style="width: 25%">Type</th>
+                                <th style="width: 25%">Platform</th>
+                                <th style="width: 25%">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -35,7 +36,6 @@
                                     <v-chip
                                         size="small"
                                         variant="flat"
-                                        class="text-white"
                                     >
                                         <v-icon size="x-small" class="mr-1">
                                             {{ getActionIcon() }}
@@ -44,7 +44,11 @@
                                     </v-chip>
                                 </td>
                                 <td>
-                                    <v-chip variant="outlined" size="small" :color="getPlatformColor()">
+                                    <v-chip 
+                                        size="small"
+                                        :color="getPlatformColor()"
+                                        variant="flat"
+                                        >
                                         <v-icon size="x-small" class="mr-1">
                                             {{ getPlatformIcon() }}
                                         </v-icon>
@@ -122,7 +126,7 @@ export default {
             if (!this.gitInfo) return 'grey';
 
             const platformColors = {
-                'github': 'grey-darken-2',
+                'github': 'grey-darken-4',
                 'gitlab': 'orange',
                 'bitbucket': 'blue',
                 'gitea': 'green'
@@ -173,22 +177,3 @@ export default {
     }
 }
 </script>
-
-<style scoped>
-.metadata-table {
-    font-size: 1rem;
-}
-
-.metadata-table th {
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 12px 16px;
-    background-color: rgba(0, 0, 0, 0.02);
-}
-
-.metadata-table td {
-    font-size: 1rem;
-    padding: 12px 16px;
-    font-weight: 500;
-}
-</style>

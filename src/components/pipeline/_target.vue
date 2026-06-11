@@ -2,6 +2,7 @@
     <v-toolbar
         density="compact"
         class="text-white"
+        color="surface"
     >
         <v-toolbar-title>
             <v-icon
@@ -22,13 +23,13 @@
         <v-row class="mb-4">
             <v-col cols="12">
                 <v-card flat class="pa-3">
-                    <v-table class="metadata-table">
+                    <v-table>
                         <thead>
-                            <tr class="bg-grey-lighten-4">
-                                <th class="font-weight-bold" style="width: 25%">ID</th>
-                                <th class="font-weight-bold" style="width: 25%">Status</th>
-                                <th class="font-weight-bold" style="width: 25%">Kind</th>
-                                <th class="font-weight-bold" style="width: 25%">Mode</th>
+                            <tr>
+                                <th style="width: 25%">ID</th>
+                                <th style="width: 25%">Status</th>
+                                <th style="width: 25%">Kind</th>
+                                <th style="width: 25%">Mode</th>
                             </tr>
                         </thead>
                         <tbody>
