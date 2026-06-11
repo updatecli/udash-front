@@ -2,6 +2,7 @@
     <v-toolbar
         density="compact"
         class="text-white"
+        color="surface"
     >
         <v-toolbar-title>
             <v-icon
@@ -19,13 +20,13 @@
         <v-row class="mb-4">
             <v-col cols="12">
                 <v-card flat class="pa-3">
-                    <v-table class="metadata-table">
+                    <v-table>
                         <thead>
-                            <tr class="bg-grey-lighten-4">
-                                <th class="font-weight-bold" style="width: 25%;">ID</th>
-                                <th class="font-weight-bold" style="width: 25%;">Status</th>
-                                <th class="font-weight-bold" style="width: 25%;">Kind</th>
-                                <th class="font-weight-bold" style="width: 25%;">Information</th>
+                            <tr >
+                                <th style="width: 25%;">ID</th>
+                                <th style="width: 25%;">Status</th>
+                                <th style="width: 25%;">Kind</th>
+                                <th style="width: 25%;">Information</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -53,7 +54,7 @@
                                     <span v-if="data.Information" class="text-truncate">
                                         {{ sanitizedInformation }}
                                     </span>
-                                    <span v-else class="text-grey-darken-1">No information</span>
+                                    <span v-else>No information</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -217,23 +218,6 @@ export default {
 </script>
 
 <style scoped>
-.metadata-table {
-    font-size: 1rem;
-}
-
-.metadata-table th {
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 12px 16px;
-    background-color: rgba(0, 0, 0, 0.02);
-}
-
-.metadata-table td {
-    font-size: 1rem;
-    padding: 12px 16px;
-    font-weight: 500;
-}
-
 .information-cell {
     max-width: 200px;
 }

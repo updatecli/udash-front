@@ -157,7 +157,6 @@
           <v-btn
             v-if="isRestrictedSCM()"
             @click="resetRestrictedSCM"
-            color="darken-grey-3"
             justify-center
             class="pl-4"
           >Reset</v-btn>
@@ -843,6 +842,5 @@ export default {
 .date-range-field :deep(input) {
   text-align: center;
   font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.78);
 }
 </style>

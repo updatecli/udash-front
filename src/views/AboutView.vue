@@ -10,7 +10,7 @@
           <v-col cols="12" class="text-center">
             <h1 class="text-h3 font-weight-bold mb-4">
               About Udash
-              <v-icon size="large" color="grey-darken-3" class="ml-2">mdi-information</v-icon>
+              <v-icon size="large" class="ml-2">mdi-information</v-icon>
             </h1>
             <p class="text-h6 text-medium-emphasis">
               A monitoring platform for your project's dependencies
@@ -21,7 +21,7 @@
         <!-- Project Overview -->
         <v-row class="mb-8">
           <v-col cols="12" lg="8" class="mx-auto">
-            <v-card flat class="pa-6">
+            <v-card flat class="pa-6" color="background">
               <v-card-title class="text-h5 mb-4">
                 <v-icon class="mr-2">mdi-rocket-launch</v-icon>
                 What is Udash?
@@ -35,17 +35,17 @@
                 </p>
                 <v-row>
                   <v-col cols="12" md="4" class="text-center">
-                    <v-icon size="48" color="grey-darken-3" class="mb-2">mdi-book-open-variant</v-icon>
+                    <v-icon size="48" class="mb-2">mdi-book-open-variant</v-icon>
                     <h4 class="text-h6">Monitor</h4>
                     <p class="text-body-2">Track pipeline executions and results</p>
                   </v-col>
                   <v-col cols="12" md="4" class="text-center">
-                    <v-icon size="48" color="grey-darken-3" class="mb-2">mdi-view-dashboard</v-icon>
+                    <v-icon size="48" class="mb-2">mdi-view-dashboard</v-icon>
                     <h4 class="text-h6">Visualize</h4>
                     <p class="text-body-2">See dependency updates at a glance</p>
                   </v-col>
                   <v-col cols="12" md="4" class="text-center">
-                    <v-icon size="48" color="grey-darken-3" class="mb-2">mdi-transit-connection-variant</v-icon>
+                    <v-icon size="48" class="mb-2">mdi-transit-connection-variant</v-icon>
                     <h4 class="text-h6">Manage</h4>
                     <p class="text-body-2">Control and audit your update processes</p>
                   </v-col>
@@ -58,7 +58,7 @@
         <!-- Community Links -->
         <v-row class="mb-8">
           <v-col cols="12">
-            <v-card flat class="pa-6">
+            <v-card flat class="pa-6" color="background">
               <v-card-title class="text-center mb-4">
                 <v-icon class="mr-2" color="red">mdi-heart</v-icon>
                 Join Our Community
@@ -91,7 +91,7 @@
         <!-- License Section -->
         <v-row>
           <v-col cols="12">
-            <v-card flat>
+            <v-card flat color="background">
               <v-card-title class="d-flex align-center justify-space-between">
                 <div class="d-flex align-center">
                   <v-icon class="mr-2">mdi-scale-balance</v-icon>

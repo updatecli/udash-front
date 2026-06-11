@@ -5,6 +5,7 @@
         bottom
         fixed
         padless
+        color="background"
     >
         <div>
             <v-btn class="mx-4" icon="mdi-github"  variant="text" href="https://github.com/updatecli"></v-btn>

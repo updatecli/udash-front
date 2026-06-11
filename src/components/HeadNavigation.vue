@@ -1,5 +1,5 @@
 <template>
-    <v-system-bar window app>
+    <v-system-bar color="background" window app>
 
       <v-spacer></v-spacer>
       <v-btn

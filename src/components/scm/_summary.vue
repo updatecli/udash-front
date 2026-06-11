@@ -118,12 +118,6 @@
                                                                             {{ branchData.total_result || 0 }} reports
                                                                         </div>
                                                                     </div>
-                                                                    <v-icon
-                                                                        size="small"
-                                                                        color="grey-lighten-1"
-                                                                    >
-                                                                        mdi-chevron-right
-                                                                    </v-icon>
                                                                 </div>
                                                             </v-col>
                                                         </v-row>
@@ -166,7 +160,6 @@
                                                                 <v-icon
                                                                     size="small"
                                                                     class="mr-2"
-                                                                    color="grey-darken-1"
                                                                 >
                                                                     mdi-source-branch
                                                                 </v-icon>
@@ -233,7 +226,7 @@
         <!-- Loading and Pagination Controls -->
         <v-row v-if="totalCount > 1" justify="center">
             <v-col cols="12" md="6">
-                <v-card variant="flat" class="text-center">
+                <v-card variant="flat" class="text-center" color="background">
                     <v-card-text>
                         <div class="mb-3">
                             <v-chip variant="outlined" size="small">
@@ -243,7 +236,6 @@
 
                         <v-progress-linear
                             :model-value="progressPercentage"
-                            color="grey-darken-3"
                             height="6"
                             rounded
                             class="mb-3"
@@ -251,7 +243,6 @@
 
                         <v-btn
                             v-if="hasMoreData && !isLoading"
-                            color="grey-darken-3"
                             variant="outlined"
                             @click="loadMoreData"
                             :loading="isLoading"
