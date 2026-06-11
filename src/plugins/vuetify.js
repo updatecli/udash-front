@@ -91,9 +91,7 @@ export default createVuetify({
   components,
   directives,
   theme: {
-    //defaultTheme: "dark",
-    //defaultTheme: "light",
-    // Valid values: updatecliTheme | updatecliLightTheme | deepSpaceNavyTheme | nebulaGlowTheme
+    // Valid values: updatecliTheme | spaceTheme | spaceLightTheme | deepSpaceNavyTheme | nebulaGlowTheme
     defaultTheme: "spaceTheme",
     //defaultTheme: "updatecliTheme",
     //defaultTheme: "deepSpaceNavyTheme",
