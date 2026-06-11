@@ -6,7 +6,7 @@
     <v-expansion-panel>
       <v-expansion-panel-title>
         <div class="d-flex align-center text-title-small justify-space-between">
-          <v-chip size="small" :color="getStatusColor(report.Result)" variant="tonal">
+          <v-chip size="small" class="mr-4 ml-4" :color="getStatusColor(report.Result)" variant="tonal">
             {{ report.Result }}
           </v-chip>
           <v-spacer></v-spacer>
