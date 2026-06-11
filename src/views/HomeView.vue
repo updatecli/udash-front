@@ -224,7 +224,7 @@ export default {
         link: "https://github.com/updatecli/udash/issues"
       },
       {
-        title: "Feedback Code",
+        title: "Contribute",
         icon: "mdi-code-tags",
         link: "https://github.com/updatecli/udash/blob/main/CONTRIBUTING.md"
       }
