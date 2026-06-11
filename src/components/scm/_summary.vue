@@ -128,12 +128,39 @@
                                                                         v-for="(count, status) in branchData.total_result_by_type"
                                                                         :key="status"
                                                                         :color="getStatusColor(status)"
-                                                                        size="x-small"
+                                                                        size="small"
                                                                         class="status-chip"
                                                                     >
                                                                         <span class="status-chip-status">{{ status }}</span>
                                                                         <span class="status-chip-value">{{ getStatusPercentage(count, branchData.total_result) }}</span>
                                                                     </v-chip>
+                                                                </div>
+
+                                                                <div
+                                                                    v-if="getTotalActionURL(url, branch) > 0"
+                                                                    class="status-summary mt-1"
+                                                                >
+                                                                    <v-tooltip
+                                                                        v-if="(branchData.total_result || 0) > 0"
+                                                                        location="top"
+                                                                    >
+                                                                        <template #activator="{ props }">
+                                                                            <v-chip
+                                                                                v-bind="props"
+                                                                                :color="getOpenActionCount(url, branch) > 0 ? 'warning' : 'success'"
+                                                                                :variant="getOpenActionCount(url, branch) > 0 ? 'tonal' : 'outlined'"
+                                                                                size="small"
+                                                                                class="status-chip attention-chip"
+                                                                            >
+                                                                                <v-icon size="x-small" class="mr-1">
+                                                                                    {{ getOpenActionCount(url, branch) > 0 ? getActionIcon(url) : 'mdi-check-circle-outline' }}
+                                                                                </v-icon>
+                                                                                <span class="status-chip-status">{{ getOpenActionCount(url, branch) > 0 ? `Open ${getActionShortLabel(url)}` : `No open ${getActionShortLabel(url)}` }}</span>
+                                                                                <span v-if="getOpenActionCount(url,branch) !== 0" class="status-chip-value">{{ getOpenActionCount(url, branch) }}</span>
+                                                                            </v-chip>
+                                                                        </template>
+                                                                        <span>{{ getActionTooltip(url, branch) }}</span>
+                                                                    </v-tooltip>
                                                                 </div>
                                                             </v-col>
                                                         </v-row>
@@ -175,12 +202,38 @@
                                                                     v-for="(count, status) in branchData.total_result_by_type"
                                                                     :key="status"
                                                                     :color="getStatusColor(status)"
-                                                                    size="x-small"
+                                                                    size="small"
                                                                     class="status-chip"
                                                                 >
                                                                     <span class="status-chip-status">{{ status }}</span>
                                                                     <span class="status-chip-value">{{ getStatusPercentage(count, branchData.total_result) }}</span>
                                                                 </v-chip>
+                                                            </div>
+                                                            <div
+                                                                v-if="getTotalActionURL(url, branch) > 0"
+                                                                class="status-summary mt-1"
+                                                            >
+
+                                                                <v-tooltip
+                                                                    location="top"
+                                                                >
+                                                                    <template #activator="{ props }">
+                                                                        <v-chip
+                                                                            v-bind="props"
+                                                                            :color="getOpenActionCount(url, branch) > 0 ? 'warning' : 'success'"
+                                                                            :variant="getOpenActionCount(url, branch) > 0 ? 'tonal' : 'outlined'"
+                                                                            size="small"
+                                                                            class="status-chip attention-chip"
+                                                                        >
+                                                                            <v-icon size="x-small" class="mr-1">
+                                                                                {{ getOpenActionCount(url, branch) > 0 ? getActionIcon(url) : 'mdi-check-circle-outline' }}
+                                                                            </v-icon>
+                                                                            <span class="status-chip-status">{{ getOpenActionCount(url, branch) > 0 ? `Open ${getActionShortLabel(url)}` : `No open ${getActionShortLabel(url)}` }}</span>
+                                                                            <span class="status-chip-value">{{ getOpenActionCount(url, branch) }}</span>
+                                                                        </v-chip>
+                                                                    </template>
+                                                                    <span>{{ getActionTooltip(url, branch) }}</span>
+                                                                </v-tooltip>
                                                             </div>
                                                         </div>
                                                     </v-col>
@@ -271,6 +324,7 @@ import router from '../../router'
 import SCMDoughnut from './_scmDoughnut.vue'
 
 import { getApiBaseURL } from '@/composables/api';
+import { extractGitURLInfo } from '@/composables/git';
 import { isAuthEnabled, getStorageKey } from '@/composables/runtime';
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
@@ -738,6 +792,40 @@ export default {
           return Array.isArray(d.datasets) && d.datasets.length > 0;
         },
 
+        getTotalActionURL(url,branch) {
+            if (!url || !branch) return 0;
+            const d = this.data?.[url]?.[branch];
+            return Number(d?.total_action_urls) || 0;
+        },
+
+        getActionProvider(url) {
+            const gitInfo = extractGitURLInfo(url || '');
+            return gitInfo?.provider || 'unknown';
+        },
+
+        getActionShortLabel(url) {
+            return this.getActionProvider(url) === 'gitlab' ? 'MR' : 'PR';
+        },
+
+        getActionIcon(url) {
+            return this.getActionProvider(url) === 'gitlab' ? 'mdi-source-merge' : 'mdi-source-pull';
+        },
+
+        getOpenActionCount(url, branch) {
+            return this.getTotalActionURL(url, branch);
+        },
+
+        getActionTooltip(url, branch) {
+            const count = this.getOpenActionCount(url, branch);
+            const shortLabel = this.getActionShortLabel(url);
+
+            if (count > 0) {
+                return `${count} open ${shortLabel} requires attention`;
+            }
+
+            return `No open ${shortLabel} requires attention`;
+        },
+
         buildDoughnutData(branchData) {
             const labels = [
                 '✔ Success',
@@ -916,6 +1004,10 @@ export default {
     min-width: 48px;
     text-align: right;
     font-variant-numeric: tabular-nums;
+}
+
+.attention-chip :deep(.v-icon) {
+    opacity: 0.9;
 }
 
 .branch-info {
