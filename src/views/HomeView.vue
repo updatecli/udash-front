@@ -18,7 +18,7 @@
         </v-row>
       </v-container>
 
-      <v-img :src="logo" width="250" cover class="mx-auto"></v-img>
+      <v-img :src="logo" width="250" cover class="mx-auto" alt="Udash logo"></v-img>
 
       <!-- Features Section -->
       <v-container
