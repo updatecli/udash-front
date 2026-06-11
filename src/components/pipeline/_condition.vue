@@ -36,7 +36,6 @@
                                         :color="getStatusColor(data.Result)"
                                         size="small"
                                         variant="flat"
-                                        class="text-white"
                                     >
                                         <v-icon size="x-small" class="mr-1">
                                             {{ getStatusIcon(data.Result) }}

@@ -1,7 +1,6 @@
 <template>
     <v-toolbar
         density="compact"
-        class="text-white"
         color="surface"
     >
         <v-toolbar-title>
@@ -40,7 +39,6 @@
                                         :color="getStatusColor(data.Result)"
                                         size="small"
                                         variant="flat"
-                                        class="text-white"
                                     >
                                         <v-icon size="x-small" class="mr-1">
                                             {{ getStatusIcon(data.Result) }}
