@@ -24,7 +24,7 @@
         <v-col
             cols="auto"
             lg="6"
-            md="6"
+            md="12"
             sm="12"
             v-if="actionURLs && actionURLs.length > 0"
           >
