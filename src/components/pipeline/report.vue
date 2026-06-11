@@ -619,7 +619,6 @@ export default {
   gap: 16px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.01));
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
@@ -636,13 +635,11 @@ export default {
 
 .label-key {
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.78);
   word-break: break-word;
 }
 
 .label-value {
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.64);
   text-align: right;
   word-break: break-word;
 }
