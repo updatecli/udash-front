@@ -267,23 +267,6 @@ export default {
 
 <style scoped>
 
-.metadata-table {
-    font-size: 1rem;
-}
-
-.metadata-table th {
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 12px 16px;
-    background-color: rgba(0, 0, 0, 0.02);
-}
-
-.metadata-table td {
-    font-size: 1rem;
-    padding: 12px 16px;
-    font-weight: 500;
-}
-
 .yaml-container {
     max-height: 300px;
     overflow-y: auto;
