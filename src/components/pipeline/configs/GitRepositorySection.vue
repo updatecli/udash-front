@@ -38,7 +38,6 @@
               <ReportCard
                 :report="report"
                 :config-type="configType"
-                @view-details="$emit('view-report', $event)"
               />
             </v-col>
           </v-row>
@@ -64,6 +63,7 @@ export default {
   methods: {
     getGitProviderIcon(url) {
       const info = extractGitURLInfo(url)
+
       const icons = {
         'github': 'mdi-github',
         'gitlab': 'mdi-gitlab',

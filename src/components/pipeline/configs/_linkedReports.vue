@@ -52,7 +52,6 @@
                   :scm-url="scmURL"
                   :scm-data="scmData"
                   :config-type="configType"
-                  @view-report="navigateToReport"
                 />
               </div>
 
@@ -77,7 +76,6 @@
                     <ReportCard
                       :report="report"
                       :config-type="configType"
-                      @view-details="navigateToReport"
                     />
                   </v-col>
                 </v-row>
@@ -97,7 +95,7 @@ import GitRepositorySection from './GitRepositorySection.vue'
 import ReportCard from './ReportCard.vue'
 
 import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled } from '@/composables/runtime';
+import { isAuthEnabled, getAppBasePath } from '@/composables/runtime';
 
 export default {
   name: 'LinkedReports',
@@ -185,7 +183,8 @@ export default {
     },
 
     navigateToReport(reportId) {
-      this.$router.push(`/pipeline/reports/${reportId}`)
+      this.$router.push(`${getAppBasePath().replace(/\/$/, "")}/pipeline/reports/${reportId}`)
+
     },
 
     // Consolidated report parsing
