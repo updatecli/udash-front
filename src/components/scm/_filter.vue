@@ -93,47 +93,48 @@
                   </v-col>
                 </v-row>
               </div>
+                <!-- Date Range Labels -->
+                <v-row class="mb-0">
+                  <v-col cols="6" class="text-left">
+                    <v-text-field
+                      :model-value="stepToHumanDate(dateRange[0])"
+                      :hint="describeRelativeStep(dateRange[0])"
+                      persistent-hint
+                      readonly
+                      density="compact"
+                      variant="solo"
+                      :flat="true"
+                      hide-details="auto"
+                      class="date-range-field text-center"
+                    />
+                  </v-col>
+                  <v-col cols="6" class="text-right">
+                    <v-text-field
+                      :model-value="stepToHumanDate(dateRange[1])"
+                      :hint="describeRelativeStep(dateRange[1])"
+                      persistent-hint
+                      readonly
+                      density="compact"
+                      variant="solo"
+                      :flat="true"
+                      hide-details="auto"
+                      class="date-range-field text-center"
+                    />
+                  </v-col>
+                </v-row>
+                <!-- Date Range Slider -->
                 <v-row>
-                  <v-col cols="12" sm="12">
-                    <!-- Date Range Slider -->
+                  <v-col cols="12">
                     <v-range-slider
                       v-model="dateRange"
                       :reverse="false"
                       :min="0"
                       :max="30"
                       :step="1"
-                      class="py-6"
+                      class="py-2"
                       :strict="true"
                       :disabled="showRepositoryBranch && (!isRepositoriesData() || !isRepositoryBranchesData())"
-                    >
-                      <template v-slot:prepend>
-                        <v-text-field
-                          :model-value="stepToHumanDate(dateRange[0])"
-                          :hint="describeRelativeStep(dateRange[0])"
-                          persistent-hint
-                          readonly
-                          density="compact"
-                          variant="solo"
-                          :flat="true"
-                          hide-details="auto"
-                          class="date-range-field text-center"
-                        />
-                      </template>
-
-                      <template v-slot:append>
-                        <v-text-field
-                          :model-value="stepToHumanDate(dateRange[1])"
-                          :hint="describeRelativeStep(dateRange[1])"
-                          persistent-hint
-                          readonly
-                          density="compact"
-                          variant="solo"
-                          :flat="true"
-                          hide-details="auto"
-                          class="date-range-field text-center"
-                        />
-                      </template>
-                    </v-range-slider>
+                    />
                   </v-col>
                 </v-row>
             </v-expansion-panel-text>
@@ -836,11 +837,17 @@ export default {
 
 <style scoped>
 .date-range-field {
-  width: 240px;
+  width: 100%;
 }
 
 .date-range-field :deep(input) {
   text-align: center;
   font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+  .date-range-field :deep(input) {
+    font-size: 0.75rem;
+  }
 }
 </style>
