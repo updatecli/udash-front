@@ -24,7 +24,7 @@
         </div>
 
         <!-- Source-specific info -->
-        <div v-if="configType === 'source'">
+        <div v-if="configType === 'source' && report.Result !== '-'">
         <v-table density="compact">
           <thead>
             <tr>
@@ -42,14 +42,14 @@
         </div>
 
         <!-- Target-specific info -->
-        <div v-if="configType === 'target'">
+        <div v-if="configType === 'target' && report.Result !== '-'">
           <v-table density="compact">
-            <vhead>
+            <thead>
               <tr>
                 <th>Current</th>
                 <th>New</th>
               </tr>
-            </vhead>
+            </thead>
             <tbody>
               <tr>
                 <td>{{ report.Information }}</td>
@@ -58,14 +58,13 @@
             </tbody>
           </v-table>
         </div>
-
         <v-card-actions>
           <v-btn
             variant="text"
             size="small"
             prepend-icon="mdi-eye"
-            @click="navigateToReport(report.ID)"
             block
+            :to="navigateToReport(report.ID)"
           >
             View Details
           </v-btn>
@@ -78,6 +77,7 @@
 <script>
 
 import { getStatusColor } from '@/composables/status'
+import { getAppBasePath } from '@/composables/runtime'
 
 export default {
   name: 'ReportCard',
@@ -100,7 +100,8 @@ export default {
 
   methods: {
     navigateToReport(reportId) {
-      this.$router.push(`/pipeline/reports/${reportId}`)
+      return `${getAppBasePath().replace(/\/$/, "")}/pipeline/reports/${reportId}`
+
     },
     getStatusColor(result) {
       return getStatusColor(result)
