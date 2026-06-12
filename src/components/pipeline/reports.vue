@@ -147,8 +147,12 @@
                 :color=getStatusColor(item.Result)
                 ></v-icon>
             </template>
+            <template v-slot:item.Name="{ item }">
+              <span style="min-width: 400px; display: inline-block;">{{ item.Name || 'Unnamed Report' }}</span>
+            </template>
             <template v-slot:item.UpdatedAt="{ item }">
-              {{ toLocalDate(item.UpdatedAt) }}
+              <span style="min-width: 175px; display: inline-block;">{{ toLocalDate(item.UpdatedAt) }}</span>
+
             </template>
             <template v-slot:item.Action="{ item }">
               <div v-for="(actionURL, index) in getActionsURL(item)" :key="index">
