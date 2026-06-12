@@ -77,6 +77,7 @@
 <script>
 
 import { getStatusColor } from '@/composables/status'
+import { getAppBasePath } from '@/composables/runtime'
 
 export default {
   name: 'ReportCard',
@@ -99,7 +100,7 @@ export default {
 
   methods: {
     navigateToReport(reportId) {
-      return `pipeline/reports/${reportId}`
+      return `${getAppBasePath().replace(/\/$/, "")}/pipeline/reports/${reportId}`
     },
     getStatusColor(result) {
       return getStatusColor(result)
