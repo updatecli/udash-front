@@ -95,7 +95,7 @@ import GitRepositorySection from './GitRepositorySection.vue'
 import ReportCard from './ReportCard.vue'
 
 import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled, getAppBasePath } from '@/composables/runtime';
+import { isAuthEnabled } from '@/composables/runtime';
 
 export default {
   name: 'LinkedReports',
@@ -180,11 +180,6 @@ export default {
       })
 
       return total
-    },
-
-    navigateToReport(reportId) {
-      this.$router.push(`${getAppBasePath().replace(/\/$/, "")}/pipeline/reports/${reportId}`)
-
     },
 
     // Consolidated report parsing
