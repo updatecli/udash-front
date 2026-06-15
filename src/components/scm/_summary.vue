@@ -380,6 +380,7 @@ export default {
         hasMoreData: true,
         loadedPages: new Set(),
         isFetching: false,
+        currentRequestId: 0,
         hasSearched: false,
         collapseAllByDefault: true,
         collapsedRepositories: {},
@@ -441,6 +442,8 @@ export default {
         },
 
         resetPagination() {
+            this.currentRequestId += 1;
+            this.isFetching = false;
             this.currentPage = 0;
             this.totalCount = 0;
             this.hasMoreData = true;
@@ -614,13 +617,7 @@ export default {
                 return;
             }
 
-            const next = this.currentPage + 1;
-            await this.getSummaryData(next, false);
-            this.currentPage = next;
-
-            if (this.currentPage >= this.totalCount) {
-                this.hasMoreData = false;
-            }
+            await this.getSummaryData(this.currentPage + 1, false);
         },
 
         async getSummaryData(page= 1 , reset = false) {
@@ -629,6 +626,7 @@ export default {
                 return;
             }
 
+            const requestId = this.currentRequestId;
             this.isFetching = true;
             this.isLoading= true;
             this.$emit('loaded', false)
@@ -698,6 +696,9 @@ export default {
 
                 const responseData = await response.json();
 
+                // Discard stale results if the filter changed while fetching
+                if (requestId !== this.currentRequestId) return;
+
                 // Handle different response structures
                 const scmData = responseData.data || responseData.scms || responseData;
                 const totalCount = responseData.total_count || 0;
@@ -714,22 +715,26 @@ export default {
                     this.data = { ...this.data, ...scmData };
                 }
 
-                // Mark this page as loaded
+                // Mark this page as loaded and advance the page cursor
                 this.loadedPages.add(page);
+                this.currentPage = page;
 
                 // Check if there's more data to load
                 this.hasMoreData = this.countLoadedScmBranches(this.data) < this.totalCount;
 
-                                // Update doughnut chart data only for the newly loaded items
-                                this.updateDoughnutDataForScmData(scmData);
+                // Update doughnut chart data only for the newly loaded items
+                this.updateDoughnutDataForScmData(scmData);
 
             } catch (error) {
-                console.error('Error fetching summary data:', error);
-                // Handle error appropriately
+                if (requestId === this.currentRequestId) {
+                    console.error('Error fetching summary data:', error);
+                }
             } finally {
-                                this.isFetching = false;
-                this.isLoading = false;
-                this.$emit('loaded', true);
+                if (requestId === this.currentRequestId) {
+                    this.isFetching = false;
+                    this.isLoading = false;
+                    this.$emit('loaded', true);
+                }
             }
         },
 

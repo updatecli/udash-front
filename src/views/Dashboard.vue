@@ -57,6 +57,7 @@
             sm="12"
           >
             <PipelineSCMSSummary
+              v-if="isFilterLoaded"
               :filter="filter"
               @loaded="setSummaryLoaded"
             />
@@ -89,6 +90,7 @@ export default {
 
   data: () => ({
     isLoading: true,
+    isFilterLoaded: false,
     filter: {},
     host: window.location.protocol + "//" + window.location.host,
     externalLinks:[
@@ -123,6 +125,7 @@ export default {
       this.filter = newFilter
     },
     setFilterLoaded: function(val) {
+      this.isFilterLoaded = val
       if (!val) this.isLoading = true
     },
     setSummaryLoaded: function(val) {

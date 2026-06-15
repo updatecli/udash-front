@@ -270,62 +270,64 @@ export default {
 
     async getSCMSData() {
       this.$emit('loaded', false)
-      const auth_enabled = isAuthEnabled;
+      try {
+        const auth_enabled = isAuthEnabled;
 
-      let query = `${getApiBaseURL()}/pipeline/scms`;
+        let query = `${getApiBaseURL()}/pipeline/scms`;
 
-      if (this.restrictedSCM != "") {
-        query = query + `?scmid=${this.restrictedSCM}`
-      }
+        if (this.restrictedSCM != "") {
+          query = query + `?scmid=${this.restrictedSCM}`
+        }
 
-      if (auth_enabled) {
-        const token = await this.$auth0.getAccessTokenSilently();
+        if (auth_enabled) {
+          const token = await this.$auth0.getAccessTokenSilently();
 
-        const response = await fetch(query, {
+          const response = await fetch(query, {
             headers: {
-            Authorization: `Bearer ${token}`
+              Authorization: `Bearer ${token}`
+            }
+          });
+          const data = await response.json();
+          this.scms = data.scms
+        } else {
+          const response = await fetch(query);
+          const data = await response.json();
+          this.scms = data.scms
+        }
+
+        let urlArray = []
+        this.repositories = []
+        for (var i = 0 ; i < this.scms.length; i++) {
+          if (urlArray.includes(this.scms[i].URL)) {
+            continue
           }
-        });
-        const data = await response.json();
-        this.scms = data.scms
-      } else {
+          urlArray.push(this.scms[i].URL)
 
-        const response = await fetch(query);
-        const data = await response.json();
-        this.scms = data.scms
-      }
-
-      let urlArray = []
-      this.repositories = []
-      for (var i = 0 ; i < this.scms.length; i++) {
-        if (urlArray.includes(this.scms[i].URL)) {
-          continue
-        }
-        urlArray.push(this.scms[i].URL)
-
-        this.repositories.push({
-          id: this.scms[i].URL,
-          text: this.prettifyURL(this.scms[i].URL)
-        })
-      }
-
-      if (this.repositories.length > 0) {
-        const hasStoredRepository = this.repositories.some((item) => item.id === this.repository)
-        if (!hasStoredRepository) {
-          this.repository = this.repositories[0].id
+          this.repositories.push({
+            id: this.scms[i].URL,
+            text: this.prettifyURL(this.scms[i].URL)
+          })
         }
 
-        const repositoryBranches = this.getRepositoryBranches(this.repository)
-        this.branches = repositoryBranches
-        if (!repositoryBranches.includes(this.branch)) {
-          this.branch = repositoryBranches[0] || ''
+        if (this.repositories.length > 0) {
+          const hasStoredRepository = this.repositories.some((item) => item.id === this.repository)
+          if (!hasStoredRepository) {
+            this.repository = this.repositories[0].id
+          }
+
+          const repositoryBranches = this.getRepositoryBranches(this.repository)
+          this.branches = repositoryBranches
+          if (!repositoryBranches.includes(this.branch)) {
+            this.branch = repositoryBranches[0] || ''
+          }
+
+          this.applyFilter()
         }
-
-        this.applyFilter()
+      } catch (error) {
+        console.error('Error fetching SCM data:', error)
+      } finally {
+        this.$emit('loaded', true)
       }
-
-      this.$emit('loaded', true)
-
     },
 
     isRestrictedSCM() {
@@ -825,9 +827,15 @@ export default {
           } else {
             this.getSCMSData()
           }
+          await this.getLabelKeys()
+        } else {
+          // When not showing repository/branch selectors, emit the initial
+          // time-range filter directly so child components get the correct filter.
+          this.$emit('loaded', false)
+          await this.getLabelKeys()
+          this.applyFilter()
+          this.$emit('loaded', true)
         }
-        // Load label keys on component creation
-        await this.getLabelKeys();
     } catch (error) {
       console.log(error);
     }
