@@ -2,6 +2,7 @@
 
     <v-navigation-drawer
         v-model="drawer"
+        color="background"
         expand-on-hover
         permanent
         rail
