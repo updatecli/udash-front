@@ -359,8 +359,8 @@ export default {
   computed: {
     pipelineURLs() {
 
-      if (this.pipeline?.Pipeline?.ci != undefined) {
-        return [this.pipeline.Pipeline.ci.url]
+      if (this.pipeline?.Pipeline?.CI != undefined) {
+        return [this.pipeline.Pipeline.CI["URL"]]
       }
 
       const actions = this.pipeline?.Pipeline?.Actions
