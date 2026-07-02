@@ -7,23 +7,7 @@ import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 
-const updatecliTheme = {
-  dark: true,
-  colors: {
-    background: '#FFFFFF',
-    surface: '#FFFFFF',
-    primary: '#6200EE',
-    'primary-darken-1': '#3700B3',
-    secondary: '#03DAC6',
-    'secondary-darken-1': '#018786',
-    error: '#B00020',
-    info: '#2196F3',
-    success: '#4CAF50',
-    warning: '#FB8C00',
-  }
-}
-
-const spaceTheme = {
+const darkTheme = {
   dark: true,
   colors: {
     background: '#070B12',
@@ -39,7 +23,7 @@ const spaceTheme = {
   }
 }
 
-const spaceLightTheme = {
+const lightTheme = {
   dark: false,
   colors: {
     background: '#F4F9FF',
@@ -55,54 +39,14 @@ const spaceLightTheme = {
   }
 }
 
-const deepSpaceNavyTheme = {
-  dark: true,
-  colors: {
-    background: '#060A14',
-    surface: '#0C1426',
-    primary: '#34D8FF',
-    'primary-darken-1': '#1D9FC4',
-    secondary: '#7CF7FF',
-    'secondary-darken-1': '#3CC4CE',
-    error: '#FF6A8B',
-    info: '#66B3FF',
-    success: '#3DE9A9',
-    warning: '#FFD166',
-  }
-}
-
-const nebulaGlowTheme = {
-  dark: true,
-  colors: {
-    background: '#120A24',
-    surface: '#1B1333',
-    primary: '#D36CFF',
-    'primary-darken-1': '#9A46C9',
-    secondary: '#52E7FF',
-    'secondary-darken-1': '#2AA8C2',
-    error: '#FF5F8A',
-    info: '#74C0FF',
-    success: '#47E0A1',
-    warning: '#FFC76A',
-  }
-}
-
 export default createVuetify({
   components,
   directives,
   theme: {
-    // Valid values: updatecliTheme | spaceTheme | spaceLightTheme | deepSpaceNavyTheme | nebulaGlowTheme
-    defaultTheme: "spaceTheme",
-    //defaultTheme: "updatecliTheme",
-    //defaultTheme: "deepSpaceNavyTheme",
-    //defaultTheme: "nebulaGlowTheme",
-    //defaultTheme: "spaceLightTheme",
+    defaultTheme: "system",
     themes: {
-      updatecliTheme: updatecliTheme,
-      spaceTheme: spaceTheme,
-      spaceLightTheme: spaceLightTheme,
-      deepSpaceNavyTheme: deepSpaceNavyTheme,
-      nebulaGlowTheme: nebulaGlowTheme,
+      light: lightTheme,
+      dark: darkTheme,
     }
   }
 }
