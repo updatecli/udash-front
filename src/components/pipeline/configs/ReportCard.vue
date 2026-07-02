@@ -64,7 +64,7 @@
             size="small"
             prepend-icon="mdi-eye"
             block
-            :to="navigateToReport(report.ID)"
+            :to="getReportLink(report.ID)"
           >
             View Details
           </v-btn>
@@ -77,7 +77,6 @@
 <script>
 
 import { getStatusColor } from '@/composables/status'
-import { getAppBasePath } from '@/composables/runtime'
 
 export default {
   name: 'ReportCard',
@@ -99,8 +98,8 @@ export default {
   },
 
   methods: {
-    navigateToReport(reportId) {
-      return `${getAppBasePath().replace(/\/$/, "")}/pipeline/reports/${reportId}`
+    getReportLink(reportId) {
+      return `/pipeline/reports/${reportId}`
     },
     getStatusColor(result) {
       return getStatusColor(result)
