@@ -41,15 +41,21 @@
           ></v-list-item>
         </v-list>
       </v-menu>
+      <v-spacer></v-spacer>
+      <ThemeSwitcher/>
     </v-system-bar>
 </template>
 
 <script>
     import { useAuth0 } from '@auth0/auth0-vue';
     import { getAppBaseUrl, isAuthEnabled } from '@/composables/runtime';
+    import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
 
     export default {
       name: 'HeadNavigation',
+      components: {
+        ThemeSwitcher: ThemeSwitcher,
+      },
       setup() {
         if (isAuthEnabled) {
           const auth0 = useAuth0();
