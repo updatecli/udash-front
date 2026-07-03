@@ -11,9 +11,10 @@
   
         <v-list-item
           height="48"
-          prepend-avatar="/updatecli.png"
+          :prepend-avatar="getUpdatecliLogo"
           title="Menu"
           nav
+          class="ml-2"
         ></v-list-item>
   
         <v-divider></v-divider>
@@ -50,6 +51,8 @@
 <script>
     import { useAuth0 } from '@auth0/auth0-vue';
     import { isAuthEnabled } from '@/composables/runtime';
+    import { getAppBaseUrl } from '@/composables/runtime';
+
     export default {
         name: 'SideNavigation',
         setup() {
@@ -66,6 +69,13 @@
             isLoading: false,
           }
 
+        },
+
+        computed: {
+          getUpdatecliLogo() {
+            const baseUrl = getAppBaseUrl().replace(/\/+$/, '');
+            return baseUrl + '/updatecli.png';
+          }
         },
         data: () => ({
             drawer: true,
