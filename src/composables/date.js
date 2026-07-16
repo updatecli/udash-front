@@ -1,6 +1,6 @@
- import { getStorageKey } from '@/composables/runtime';
+import { getStorageKey } from '@/composables/runtime'
 
-const FILTER_STORAGE_KEY = getStorageKey('scm.filter.v1');
+const FILTER_STORAGE_KEY = getStorageKey('scm.filter.v1')
 
 export function toLocalDate(rawDate) {
 
