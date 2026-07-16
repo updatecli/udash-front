@@ -161,6 +161,7 @@
             justify-center
             class="pl-4"
           >Reset</v-btn>
+
         </div>
     </v-form>
   </v-container>
@@ -402,6 +403,7 @@ export default {
     resetRestrictedSCM() {
       const queryParams = { ...router.currentRoute.query }
       delete queryParams.scmid
+      delete queryParams.filter
       router.replace({ query: queryParams })
 
       this.clearPersistedFilterState()
@@ -448,6 +450,49 @@ export default {
       }
 
       return repositoryBranches
+    },
+
+    loadFilterFromURL() {
+      try {
+        const encoded = router.currentRoute.value.query.filter
+        if (!encoded) {
+          return false
+        }
+
+        const decoded = JSON.parse(atob(encoded))
+
+        if (Array.isArray(decoded.dateRange) && decoded.dateRange.length === 2) {
+          const start = Number(decoded.dateRange[0])
+          const end = Number(decoded.dateRange[1])
+          if (Number.isFinite(start) && Number.isFinite(end)) {
+            this.dateRange = [start, end]
+          }
+        }
+
+        if (Array.isArray(decoded.selectedLabels)) {
+          const restoredLabels = decoded.selectedLabels
+            .filter((item) => item && typeof item === 'object')
+            .map((item) => ({
+              key: item.key || null,
+              value: item.value || null,
+            }))
+          this.selectedLabels = restoredLabels.length > 0 ? restoredLabels : [{ key: null, value: null }]
+        }
+
+        if (this.showRepositoryBranch) {
+          if (typeof decoded.repository === 'string') {
+            this.repository = decoded.repository
+          }
+          if (typeof decoded.branch === 'string') {
+            this.branch = decoded.branch
+          }
+        }
+
+        return true
+      } catch (error) {
+        console.warn('Unable to load SCM filter from URL parameter', error)
+        return false
+      }
     },
 
     loadPersistedFilterState() {
@@ -546,6 +591,19 @@ export default {
       }
 
       this.persistFilterState();
+
+      // Keep the URL in sync so the current filter is always shareable
+      const urlState = {
+        dateRange: this.dateRange,
+        selectedLabels: this.selectedLabels,
+      }
+      if (this.showRepositoryBranch) {
+        urlState.repository = this.repository
+        urlState.branch = this.branch
+      }
+      router.replace({
+        query: { ...router.currentRoute.value.query, filter: btoa(JSON.stringify(urlState)) },
+      })
 
       this.$emit('update-filter', newFilter)
     },
@@ -815,7 +873,10 @@ export default {
 
   async created() {
     try {
-        this.loadPersistedFilterState()
+        const urlFilterLoaded = this.loadFilterFromURL()
+        if (!urlFilterLoaded) {
+          this.loadPersistedFilterState()
+        }
         if (this.hasActiveAdvancedFilters) {
           this.expandedPanels = [0]
         }
