@@ -82,6 +82,7 @@ export function getStartTimeFromStorage() {
 }
 
 export function getEndTimeFromStorage() {
+    try{
         const storedFilter = localStorage.getItem(FILTER_STORAGE_KEY)
         if (storedFilter) {
             const parsedFilter = JSON.parse(storedFilter)
@@ -91,5 +92,9 @@ export function getEndTimeFromStorage() {
             }
         }
 
+    }catch{
         return null
+    }
+
+    return null
 }
