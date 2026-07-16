@@ -128,8 +128,8 @@ export default {
     gitReportsData: {},
     localReportsData: [],
     configData: { data: {} },
-    start_time: getStartTimeFromStorage(),
-    end_time: getEndTimeFromStorage(),
+    startTime: getStartTimeFromStorage(),
+    endTime: getEndTimeFromStorage(),
   }),
 
   computed: {
@@ -386,12 +386,12 @@ export default {
           target: 'targetid'
         }
 
-        if (this.start_time != null ){
-          jsonReqBody.start_time = this.start_time
+        if (this.startTime != null ){
+          jsonReqBody.start_time = this.startTime
         }
 
-        if (this.end_time != null ){
-          jsonReqBody.end_time = this.end_time
+        if (this.endTime != null ){
+          jsonReqBody.end_time = this.endTime
         }
 
         const field = fieldMap[this.configType]
