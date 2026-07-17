@@ -401,10 +401,12 @@ export default {
     },
 
     resetRestrictedSCM() {
-      const queryParams = { ...router.currentRoute.query }
+      const queryParams = { ...router.currentRoute.value.query }
+
       delete queryParams.scmid
       delete queryParams.filter
-      router.replace({ query: queryParams })
+
+      router.replace({ query: queryParams }).catch(() => {})
 
       this.clearPersistedFilterState()
       this.repository = ""
@@ -452,14 +454,37 @@ export default {
       return repositoryBranches
     },
 
+    encodeBase64UrlUtf8(value) {
+      const bytes = new TextEncoder().encode(value)
+      let binary = ''
+      for (const byte of bytes) {
+        binary += String.fromCharCode(byte)
+      }
+      return btoa(binary)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '')
+    },
+
+    decodeBase64UrlUtf8(value) {
+      const padded = value
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .padEnd(value.length + (4 - (value.length % 4 || 4)), '=')
+
+      const binary = atob(padded)
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+      return new TextDecoder().decode(bytes)
+    },
+
     loadFilterFromURL() {
       try {
         const encoded = router.currentRoute.value.query.filter
-        if (!encoded) {
+        if (!encoded || typeof encoded !== 'string') {
           return false
         }
 
-        const decoded = JSON.parse(atob(encoded))
+        const decoded = JSON.parse(this.decodeBase64UrlUtf8(encoded))
 
         if (Array.isArray(decoded.dateRange) && decoded.dateRange.length === 2) {
           const start = Number(decoded.dateRange[0])
@@ -602,8 +627,8 @@ export default {
         urlState.branch = this.branch
       }
       router.replace({
-        query: { ...router.currentRoute.value.query, filter: btoa(JSON.stringify(urlState)) },
-      })
+        query: { ...router.currentRoute.value.query, filter: this.encodeBase64UrlUtf8(JSON.stringify(urlState)) },
+      }).catch(() => {})
 
       this.$emit('update-filter', newFilter)
     },
