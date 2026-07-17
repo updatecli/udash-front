@@ -171,9 +171,9 @@
 import router from '../../router'
 
 import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled, getStorageKey } from '@/composables/runtime';
+import { isAuthEnabled } from '@/composables/runtime';
+import { FILTER_STORAGE_KEY, stepToISO, formatToLayoutWithoutTimezone } from '@/composables/date';
 
-const FILTER_STORAGE_KEY = getStorageKey('scm.filter.v1');
 const DEFAULT_DATE_RANGE = [0, 24];
 
 export default {
@@ -202,7 +202,7 @@ export default {
     branches: [],
     branch : "",
     restrictedSCM: "",
-    dateRange: [...DEFAULT_DATE_RANGE],  // [6 hours ago, now] by default
+    dateRange: [...DEFAULT_DATE_RANGE],  // [start step, end step] by default
     labelKeys: [],
     labelValuesByKey: {},  // Map to store label values for each key
     selectedLabels: [{ key: null, value: null }],  // Array of label selections
@@ -252,11 +252,11 @@ export default {
     },
 
     formattedStartTime() {
-      return this.stepToISO(this.dateRange[0])
+      return stepToISO(this.dateRange[0])
     },
 
     formattedEndTime() {
-      return this.stepToISO(this.dateRange[1])
+      return stepToISO(this.dateRange[1])
     },
   },
 
@@ -674,12 +674,8 @@ export default {
       return date
     },
 
-    stepToISO(step) {
-      return this.formatToLayout(this.stepToDate(step))
-    },
-
     stepToISOWithoutTimezone(step) {
-      return this.formatToLayoutWithoutTimezone(this.stepToDate(step))
+      return formatToLayoutWithoutTimezone(this.stepToDate(step))
     },
 
     formatHumanDate(date) {
@@ -733,34 +729,6 @@ export default {
         }
         return `${daysAgo} days`
       }
-    },
-
-    formatToLayout(date) {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-      const seconds = String(date.getSeconds()).padStart(2, '0')
-      
-      const offset = -date.getTimezoneOffset()
-      const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0')
-      const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, '0')
-      const sign = offset >= 0 ? '+' : '-'
-      const tzOffset = `${sign}${offsetHours}:${offsetMinutes}`
-
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}${tzOffset}`
-    },
-
-    formatToLayoutWithoutTimezone(date) {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-      const seconds = String(date.getSeconds()).padStart(2, '0')
-
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     },
 
     getLabelValuesForIndex(index) {
@@ -859,8 +827,8 @@ export default {
         }
 
         // Emit only if valid (not equal)
-        const startTime = this.stepToISO(val[0])
-        const endTime = this.stepToISO(val[1])
+        const startTime = stepToISO(val[0])
+        const endTime = stepToISO(val[1])
         this.$emit('date-range-changed', { startTime, endTime })
 
         // Debounce label refresh to avoid an API call on every slider tick

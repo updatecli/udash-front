@@ -96,6 +96,7 @@ import ReportCard from './ReportCard.vue'
 
 import { getApiBaseURL } from '@/composables/api';
 import { isAuthEnabled } from '@/composables/runtime';
+import { getStartTimeFromStorage, getEndTimeFromStorage } from '@/composables/date';
 
 export default {
   name: 'LinkedReports',
@@ -127,6 +128,8 @@ export default {
     gitReportsData: {},
     localReportsData: [],
     configData: { data: {} },
+    startTime: getStartTimeFromStorage(),
+    endTime: getEndTimeFromStorage(),
   }),
 
   computed: {
@@ -381,6 +384,14 @@ export default {
           source: 'sourceid',
           condition: 'conditionid',
           target: 'targetid'
+        }
+
+        if (this.startTime != null ){
+          jsonReqBody.start_time = this.startTime
+        }
+
+        if (this.endTime != null ){
+          jsonReqBody.end_time = this.endTime
         }
 
         const field = fieldMap[this.configType]
