@@ -67,34 +67,47 @@ function formatToLayout(date) {
 export function getStartTimeFromStorage() {
     try{
         const storedFilter = localStorage.getItem(FILTER_STORAGE_KEY)
-        if (storedFilter) {
-            const parsedFilter = JSON.parse(storedFilter)
-            if (parsedFilter.dateRange && parsedFilter.dateRange.length === 2) {
-                const start = parsedFilter.dateRange[0]
-                return stepToISO(start)
-            }
+        if (!storedFilter) {
+            return null
         }
 
-    }catch{
+        const parsedFilter = JSON.parse(storedFilter)
+        if (!Array.isArray(parsedFilter.dateRange) || parsedFilter.dateRange.length !== 2) {
+            return null
+        }
+
+        const start = Number(parsedFilter.dateRange[0])
+        if (!Number.isFinite(start)) {
+            return null
+        }
+        return stepToISO(start)
+
+   } catch (error) {
+        console.error('Error retrieving start time from storage:', error)
         return null
-    }
-    return null
+   }
 }
 
 export function getEndTimeFromStorage() {
     try{
         const storedFilter = localStorage.getItem(FILTER_STORAGE_KEY)
-        if (storedFilter) {
-            const parsedFilter = JSON.parse(storedFilter)
-            if (parsedFilter.dateRange && parsedFilter.dateRange.length === 2) {
-                const end = parsedFilter.dateRange[1]
-                return stepToISO(end)
-            }
+        if (!storedFilter) {
+            return null
         }
 
-    }catch{
-        return null
-    }
+        const parsedFilter = JSON.parse(storedFilter)
+        if (!Array.isArray(parsedFilter.dateRange) || parsedFilter.dateRange.length !== 2) {
+            return null
+        }
 
-    return null
+        const end = Number(parsedFilter.dateRange[1])
+        if (!Number.isFinite(end)) {
+            return null
+        }
+        return stepToISO(end)
+
+   } catch (error) {
+        console.error('Error retrieving end time from storage:', error)
+        return null
+   }
 }
