@@ -161,6 +161,7 @@
             justify-center
             class="pl-4"
           >Reset</v-btn>
+
         </div>
     </v-form>
   </v-container>
@@ -400,9 +401,12 @@ export default {
     },
 
     resetRestrictedSCM() {
-      const queryParams = { ...router.currentRoute.query }
+      const queryParams = { ...router.currentRoute.value.query }
+
       delete queryParams.scmid
-      router.replace({ query: queryParams })
+      delete queryParams.filter
+
+      router.replace({ query: queryParams }).catch(() => {})
 
       this.clearPersistedFilterState()
       this.repository = ""
@@ -448,6 +452,72 @@ export default {
       }
 
       return repositoryBranches
+    },
+
+    encodeBase64UrlUtf8(value) {
+      const bytes = new TextEncoder().encode(value)
+      let binary = ''
+      for (const byte of bytes) {
+        binary += String.fromCharCode(byte)
+      }
+      return btoa(binary)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '')
+    },
+
+    decodeBase64UrlUtf8(value) {
+      const padded = value
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .padEnd(value.length + (4 - (value.length % 4 || 4)), '=')
+
+      const binary = atob(padded)
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+      return new TextDecoder().decode(bytes)
+    },
+
+    loadFilterFromURL() {
+      try {
+        const encoded = router.currentRoute.value.query.filter
+        if (!encoded || typeof encoded !== 'string') {
+          return false
+        }
+
+        const decoded = JSON.parse(this.decodeBase64UrlUtf8(encoded))
+
+        if (Array.isArray(decoded.dateRange) && decoded.dateRange.length === 2) {
+          const start = Number(decoded.dateRange[0])
+          const end = Number(decoded.dateRange[1])
+          if (Number.isFinite(start) && Number.isFinite(end)) {
+            this.dateRange = [start, end]
+          }
+        }
+
+        if (Array.isArray(decoded.selectedLabels)) {
+          const restoredLabels = decoded.selectedLabels
+            .filter((item) => item && typeof item === 'object')
+            .map((item) => ({
+              key: item.key || null,
+              value: item.value || null,
+            }))
+          this.selectedLabels = restoredLabels.length > 0 ? restoredLabels : [{ key: null, value: null }]
+        }
+
+        if (this.showRepositoryBranch) {
+          if (typeof decoded.repository === 'string') {
+            this.repository = decoded.repository
+          }
+          if (typeof decoded.branch === 'string') {
+            this.branch = decoded.branch
+          }
+        }
+
+        return true
+      } catch (error) {
+        console.warn('Unable to load SCM filter from URL parameter', error)
+        return false
+      }
     },
 
     loadPersistedFilterState() {
@@ -546,6 +616,19 @@ export default {
       }
 
       this.persistFilterState();
+
+      // Keep the URL in sync so the current filter is always shareable
+      const urlState = {
+        dateRange: this.dateRange,
+        selectedLabels: this.selectedLabels,
+      }
+      if (this.showRepositoryBranch) {
+        urlState.repository = this.repository
+        urlState.branch = this.branch
+      }
+      router.replace({
+        query: { ...router.currentRoute.value.query, filter: this.encodeBase64UrlUtf8(JSON.stringify(urlState)) },
+      }).catch(() => {})
 
       this.$emit('update-filter', newFilter)
     },
@@ -783,7 +866,10 @@ export default {
 
   async created() {
     try {
-        this.loadPersistedFilterState()
+        const urlFilterLoaded = this.loadFilterFromURL()
+        if (!urlFilterLoaded) {
+          this.loadPersistedFilterState()
+        }
         if (this.hasActiveAdvancedFilters) {
           this.expandedPanels = [0]
         }
