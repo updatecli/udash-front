@@ -12,7 +12,7 @@
               Udash <v-icon size="large" icon="mdi-home-city"></v-icon>
             </h1>
             <p class="text-h6 mb-8 text-medium-emphasis">
-              A monitoring platform for your project's dependencies
+              the Updatecli dashboard, track automated updates across your Git repositories.
             </p>
           </v-col>
         </v-row>
