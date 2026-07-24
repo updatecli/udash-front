@@ -64,8 +64,8 @@
 </template>
 
 <script>
-  import { useAuth0 } from '@auth0/auth0-vue';
-  
+  import { useAuth } from '@/composables/auth';
+
   import ReleaseFooter from '../components/ReleaseFooter.vue';
   import SideNavigation from '../components/SideNavigation.vue';
   import HeadNavigation from '../components/HeadNavigation.vue';
@@ -78,10 +78,10 @@
       HeadNavigation,
     },
     setup() {
-      const auth0 = useAuth0();
-      
+      const auth = useAuth();
+
       return {
-        user: auth0.user,
+        user: auth.user,
       }
     }
   };

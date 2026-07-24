@@ -47,8 +47,8 @@
 </template>
 
 <script>
-    import { useAuth0 } from '@auth0/auth0-vue';
-    import { getAppBaseUrl, isAuthEnabled } from '@/composables/runtime';
+    import { useAuth } from '@/composables/auth';
+    import { isAuthEnabled } from '@/composables/runtime';
     import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
 
     export default {
@@ -58,22 +58,18 @@
       },
       setup() {
         if (isAuthEnabled) {
-          const auth0 = useAuth0();
+          const auth = useAuth();
 
           return {
             isAuthEnabled: isAuthEnabled,
-            isAuthenticated: auth0.isAuthenticated,
-            isLoading: auth0.isLoading,
-            user: auth0.user,
+            isAuthenticated: auth.isAuthenticated,
+            isLoading: auth.isLoading,
+            user: auth.user,
             login() {
-              auth0.loginWithRedirect();
+              auth.login();
             },
             logout() {
-              auth0.logout({
-                logoutParams: {
-                  returnTo: getAppBaseUrl()
-                }
-              });
+              auth.logout();
             }
           }
         }

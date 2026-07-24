@@ -96,6 +96,7 @@ import ReportCard from './ReportCard.vue'
 
 import { getApiBaseURL } from '@/composables/api';
 import { isAuthEnabled } from '@/composables/runtime';
+import { getAccessToken } from '@/composables/auth';
 import { getStartTimeFromStorage, getEndTimeFromStorage } from '@/composables/date';
 
 export default {
@@ -340,7 +341,7 @@ export default {
         const headers = { 'Content-Type': 'application/json' }
 
         if (isAuthEnabled) {
-          const token = await this.$auth0.getAccessTokenSilently()
+          const token = await getAccessToken()
           headers.Authorization = `Bearer ${token}`
         }
 
@@ -404,7 +405,7 @@ export default {
 
         const headers = { 'Content-Type': 'application/json' }
         if (isAuthEnabled) {
-          const token = await this.$auth0.getAccessTokenSilently()
+          const token = await getAccessToken()
           headers.Authorization = `Bearer ${token}`
         }
 

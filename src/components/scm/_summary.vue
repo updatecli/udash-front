@@ -326,6 +326,7 @@ import SCMDoughnut from './_scmDoughnut.vue'
 import { getApiBaseURL } from '@/composables/api';
 import { extractGitURLInfo } from '@/composables/git';
 import { isAuthEnabled, getStorageKey } from '@/composables/runtime';
+import { getAccessToken } from '@/composables/auth';
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
 
@@ -671,7 +672,7 @@ export default {
 
                 let response;
                 if (auth_enabled) {
-                    const token = await this.$auth0.getAccessTokenSilently();
+                    const token = await getAccessToken();
                     response = await fetch(query, {
                         method: 'POST',
                         headers: {

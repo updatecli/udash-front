@@ -327,6 +327,7 @@ import { getStatusColor, getStatusIcon, getStatusText } from '@/composables/stat
 import { toLocalDate } from '@/composables/date';
 import { getApiBaseURL } from '@/composables/api';
 import { isAuthEnabled } from '@/composables/runtime';
+import { getAccessToken } from '@/composables/auth';
 
 export default {
   name: 'PipelineReportView',
@@ -524,7 +525,7 @@ export default {
 
     async getPipelineReportData() {
       if (isAuthEnabled) {
-        const token = await this.$auth0.getAccessTokenSilently();
+        const token = await getAccessToken();
         const response = await fetch(`${getApiBaseURL()}/pipeline/reports/` + this.$route.params.id, {
             headers: {
             Authorization: `Bearer ${token}`

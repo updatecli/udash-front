@@ -184,6 +184,7 @@ import { extractGitURLInfo } from '@/composables/git'
 import { toLocalDate } from '@/composables/date'
 import { getApiBaseURL } from '@/composables/api';
 import { isAuthEnabled } from '@/composables/runtime';
+import { getAccessToken } from '@/composables/auth';
 
 export default {
   name: 'PipelinesTable',
@@ -352,7 +353,7 @@ export default {
       try {
         let response;
         if (isAuthEnabled) {
-          const token = await this.$auth0.getAccessTokenSilently();
+          const token = await getAccessToken();
           response = await fetch(queryURL, {
             method: 'POST',
             headers: {

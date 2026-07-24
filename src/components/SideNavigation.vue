@@ -30,7 +30,7 @@
             prepend-icon="mdi-view-dashboard"
             title="Dashboard"
             to="/scm/dashboard"
-            value="scmSummary"></v-list-item>
+            value="scmDashboard"></v-list-item>
           <v-list-item
             prepend-icon="mdi-book-open-variant"
             v-if="isAuthenticated"
@@ -49,7 +49,7 @@
 </template>
 
 <script>
-    import { useAuth0 } from '@auth0/auth0-vue';
+    import { useAuth } from '@/composables/auth';
     import { isAuthEnabled } from '@/composables/runtime';
     import { getAppBaseUrl } from '@/composables/runtime';
 
@@ -57,10 +57,10 @@
         name: 'SideNavigation',
         setup() {
           if (isAuthEnabled) {
-            const auth0 = useAuth0();
+            const auth = useAuth();
             return {
-              isAuthenticated: auth0.isAuthenticated,
-              isLoading: auth0.isLoading,
+              isAuthenticated: auth.isAuthenticated,
+              isLoading: auth.isLoading,
             }
           }
 

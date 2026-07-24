@@ -3,8 +3,8 @@ import App from './App.vue'
 import vuetify from './plugins/vuetify'
 import { loadFonts } from './plugins/webfontloader'
 import router from './router'
-import { createAuth0 } from '@auth0/auth0-vue'
-import { getAppBaseUrl, getRuntimeConfig, isAuthEnabled } from '@/composables/runtime'
+import { initAuth, consumeReturnTo } from '@/composables/auth'
+import { isAuthEnabled } from '@/composables/runtime'
 
 import hljs from 'highlight.js'
 //import 'highlight.js/styles/atom-one-dark.css'
@@ -22,25 +22,25 @@ const highlightDirective = {
   }
 }
 
-const runtimeConfig = getRuntimeConfig()
+async function bootstrap() {
+  const app = createApp(App)
+    .use(router)
+    .use(vuetify)
+    .directive('highlight', highlightDirective)
 
-const app = createApp(App)
-  .use(router)
-  .use(vuetify)
+  if (isAuthEnabled) {
+    // Initialize OIDC (and process any login callback) before mounting so
+    // route guards and the UI see the resolved auth state.
+    await initAuth()
 
-if (isAuthEnabled) {
-  app.use(
-    createAuth0({
-      domain: runtimeConfig.OAUTH_DOMAIN,
-      clientId: runtimeConfig.OAUTH_CLIENTID,
-      authorizationParams: {
-        redirect_uri: getAppBaseUrl(),
-        audience: runtimeConfig.OAUTH_AUDIENCE,
-      }
-    })
-  )
+    // After a login redirect, navigate back to the originally requested route.
+    const returnTo = consumeReturnTo()
+    if (returnTo) {
+      router.replace(returnTo)
+    }
+  }
+
+  app.mount('#app')
 }
 
-app
-  .directive('highlight', highlightDirective)
-  .mount('#app')
+bootstrap()

@@ -4,7 +4,7 @@ import PipelineReportsView from '../views/pipeline/ReportsView.vue'
 import PipelineReportView from '../views/pipeline/ReportView.vue'
 import ProfileView from "../views/ProfileView.vue";
 import Dashboard from "../views/Dashboard.vue";
-import { createAuthGuard } from "@auth0/auth0-vue";
+import { authGuard } from "@/composables/auth";
 import { getAppBasePath, isAuthEnabled } from '@/composables/runtime'
 
 let routes = []
@@ -22,27 +22,27 @@ if (isAuthEnabled) {
       component: () => import('../views/AboutView.vue')
     },
     {
-      beforeEnter: createAuthGuard(),
+      beforeEnter: authGuard,
       path: '/pipeline/reports',
       name: 'pipelineReports',
       component: PipelineReportsView
     },
     {
-      beforeEnter: createAuthGuard(),
+      beforeEnter: authGuard,
       path: '/pipeline/reports/:id',
       name: 'pipelineReport',
       component: PipelineReportView
     },
     {
-      beforeEnter: createAuthGuard(),
+      beforeEnter: authGuard,
       path: "/profile",
       name: "profile",
       component: ProfileView
     },
     {
-      beforeEnter: createAuthGuard(),
-      path: "/scm/summary",
-      name: "scmSummary",
+      beforeEnter: authGuard,
+      path: "/scm/dashboard",
+      name: "scmDashboard",
       component: Dashboard
     }
   ]

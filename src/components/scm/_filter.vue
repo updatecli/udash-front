@@ -172,6 +172,7 @@ import router from '../../router'
 
 import { getApiBaseURL } from '@/composables/api';
 import { isAuthEnabled } from '@/composables/runtime';
+import { getAccessToken } from '@/composables/auth';
 import { FILTER_STORAGE_KEY, stepToISO, formatToLayoutWithoutTimezone } from '@/composables/date';
 
 const DEFAULT_DATE_RANGE = [0, 24];
@@ -281,7 +282,7 @@ export default {
         }
 
         if (auth_enabled) {
-          const token = await this.$auth0.getAccessTokenSilently();
+          const token = await getAccessToken();
 
           const response = await fetch(query, {
             headers: {
@@ -341,7 +342,7 @@ export default {
         let query = `${getApiBaseURL()}/pipeline/labels?keyonly=true&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
 
         if (auth_enabled) {
-          const token = await this.$auth0.getAccessTokenSilently();
+          const token = await getAccessToken();
           const response = await fetch(query, {
             headers: {
               Authorization: `Bearer ${token}`
@@ -375,7 +376,7 @@ export default {
         let query = `${getApiBaseURL()}/pipeline/labels?key=${encodeURIComponent(labelKey)}&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
 
         if (auth_enabled) {
-          const token = await this.$auth0.getAccessTokenSilently();
+          const token = await getAccessToken();
           const response = await fetch(query, {
             headers: {
               Authorization: `Bearer ${token}`
