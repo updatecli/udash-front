@@ -22,7 +22,7 @@
     "vue-chartjs": "^5.3.4",
     "vue-mermaid-string": "^8.0.2",
     "vue-router": "^5.2.0",
-    "vuetify": "^4.1.5",
+    "vuetify": "^4.1.6",
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
