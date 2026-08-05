@@ -38,11 +38,21 @@ Set it in the runtime config files to mount the SPA below a subpath such as `/ud
    "OAUTH_CLIENTID": "xxx",
    "OAUTH_SCOPE": "openid profile email offline_access urn:zitadel:iam:org:project:id:PROJECT_ID:aud",
    "API_BASE_URL": "/api",
-   "APP_BASE_PATH": "/udash/"
+   "APP_BASE_PATH": "/udash/",
+   "MAX_HISTORY_DAYS": 30
 }
 ```
 
 The app bootstraps from `config.json` before loading the Vue bundle, then exposes the same values on `window.config`.
+
+`MAX_HISTORY_DAYS` caps how far back the interface looks: it sets how far the dashboard
+date filter reaches and the window of the activity chart on the home page. It defaults to
+`30` when unset and is capped at the API's own maximum of `366`.
+
+Raising it does not change how much work the backend does by default — the date filter
+still starts on the last day whatever the maximum, so a wider range is only ever queried
+when someone explicitly asks for one. Lower it on instances where a large report history
+makes the wider queries expensive.
 
 #### Authentication (OIDC)
 

@@ -93,12 +93,16 @@
                   </v-col>
                 </v-row>
               </div>
-                <!-- Date Range Labels -->
+                <!-- Date Range Labels
+
+                     Oldest on the left, newest on the right, matching the reversed
+                     slider below: dateRange[0] is "now" and larger steps go further
+                     back, so the second entry is the one that starts the range. -->
                 <v-row class="mb-0">
                   <v-col cols="6" class="text-left">
                     <v-text-field
-                      :model-value="stepToHumanDate(dateRange[0])"
-                      :hint="describeRelativeStep(dateRange[0])"
+                      :model-value="stepToHumanDate(dateRange[1])"
+                      :hint="describeRelativeStep(dateRange[1])"
                       persistent-hint
                       readonly
                       density="compact"
@@ -110,8 +114,8 @@
                   </v-col>
                   <v-col cols="6" class="text-right">
                     <v-text-field
-                      :model-value="stepToHumanDate(dateRange[1])"
-                      :hint="describeRelativeStep(dateRange[1])"
+                      :model-value="stepToHumanDate(dateRange[0])"
+                      :hint="describeRelativeStep(dateRange[0])"
                       persistent-hint
                       readonly
                       density="compact"
@@ -126,11 +130,14 @@
                 <v-row>
                   <v-col cols="12">
                     <v-range-slider
-                      v-model="dateRange"
+                      v-model="sliderRange"
                       :reverse="false"
                       :min="0"
-                      :max="30"
+                      :max="maxDateStep"
                       :step="1"
+                      :ticks="sliderTicks"
+                      show-ticks="always"
+                      tick-size="3"
                       class="py-2"
                       :strict="true"
                       :disabled="showRepositoryBranch && (!isRepositoriesData() || !isRepositoryBranchesData())"
@@ -171,10 +178,15 @@
 import router from '../../router'
 
 import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled } from '@/composables/runtime';
+import { isAuthEnabled, getMaxHistoryDays } from '@/composables/runtime';
 import { getAccessToken } from '@/composables/auth';
 import { FILTER_STORAGE_KEY, stepToISO, formatToLayoutWithoutTimezone } from '@/composables/date';
 
+// Steps 0-23 are hours ago; from 24 onwards a step is a day, so the step standing
+// for D days back is D + DAY_STEP_OFFSET. The default range is deliberately left at
+// the last day whatever the configured maximum: widening the slider must not widen
+// what every visitor asks the backend for by default.
+const DAY_STEP_OFFSET = 23;
 const DEFAULT_DATE_RANGE = [0, 24];
 
 export default {
@@ -223,45 +235,86 @@ export default {
       return this.selectedLabels.some(label => label.key !== null)
     },
 
-    tickLabels() {
-      const labels = []
-      // Hours: 0-23 (1-24 hours ago)
-      for (let i = 0; i < 24; i++) {
-        if (i === 0) {
-          labels.push('now')
-          continue
-        }
-        if (i === 1) {
-          labels.push('1 hour')
-          continue
-        }
-        labels.push(`${i} hours`)
+    // sliderTicks marks a handful of anchors along the slider so the scale is
+    // readable. Labelling every step is unusable once the range spans weeks, and the
+    // exact instants either side are already spelled out in the two fields above it.
+    //
+    // Anchors follow the same mapping as stepToDate: below 24 a step is an hour, and
+    // the step for D days back is D + DAY_STEP_OFFSET.
+    sliderTicks() {
+      const ticks = {}
+      const maxDays = getMaxHistoryDays()
+
+      const hourAnchors = { 0: 'now', 6: '6h', 12: '12h', 18: '18h' }
+      Object.entries(hourAnchors).forEach(([step, label]) => {
+        ticks[this.toSliderValue(Number(step))] = label
+      })
+
+      const dayAnchors = [1, 7, 14, 30, 60, 90, 180, 365].filter((days) => days <= maxDays)
+
+      // Always mark the far end, so how far the filter reaches is legible at a glance.
+      if (!dayAnchors.includes(maxDays)) {
+        dayAnchors.push(maxDays)
       }
-      // Days: 24-30 (1-7 days ago)
-      for (let i = 0; i < 7; i++) {
-        if (i === 0) {
-          labels.push('end of today')
-          continue
-        }
-        if (i === 1) {
-          labels.push('1 day')
-          continue
-        }
-        labels.push(`${i} days`)
-      }
-      return labels
+
+      dayAnchors.forEach((days) => {
+        ticks[this.toSliderValue(days + DAY_STEP_OFFSET)] = days === 1 ? '1 day' : `${days} days`
+      })
+
+      return ticks
     },
 
+    // sliderRange presents dateRange the way a timeline reads: oldest on the left,
+    // now on the right. dateRange itself stays in "steps ago", which is what gets
+    // persisted, shared in the URL and turned into timestamps, so nothing downstream
+    // has to know about the flip.
+    //
+    // This is done by mirroring the values rather than with the slider's own reverse
+    // prop: reverse leaves the ticks sitting at the minimum and maximum pinned to the
+    // wrong ends, which puts "now" and the oldest label on the wrong sides.
+    sliderRange: {
+      get() {
+        return [this.toSliderValue(this.dateRange[1]), this.toSliderValue(this.dateRange[0])]
+      },
+      set(value) {
+        const [older, newer] = [...value].sort((a, b) => a - b)
+        this.dateRange = [this.toSliderValue(newer), this.toSliderValue(older)]
+      },
+    },
+
+    // dateRange[0] is the step closest to now and dateRange[1] the furthest back, so
+    // the range starts at the second entry. The API tolerates the two being handed
+    // over the wrong way round, which is why this read backwards for so long without
+    // breaking anything.
     formattedStartTime() {
-      return stepToISO(this.dateRange[0])
+      return stepToISO(this.dateRange[1])
     },
 
     formattedEndTime() {
-      return stepToISO(this.dateRange[1])
+      return stepToISO(this.dateRange[0])
+    },
+
+    // maxDateStep is how far the slider reaches, driven by the instance's configured
+    // history window rather than a fixed bound.
+    maxDateStep() {
+      return DAY_STEP_OFFSET + getMaxHistoryDays()
     },
   },
 
   methods: {
+    // clampStep keeps a restored step inside the slider. A range saved while the
+    // instance allowed more history would otherwise survive a lowered
+    // MAX_HISTORY_DAYS and keep querying beyond it.
+    clampStep(step) {
+      return Math.min(Math.max(step, 0), this.maxDateStep)
+    },
+
+    // toSliderValue mirrors a step across the track. It is its own inverse, so the
+    // same call converts in both directions.
+    toSliderValue(step) {
+      return this.maxDateStep - step
+    },
+
     isRepositoriesData() {
       return this.repositories.length > 0
     },
@@ -491,7 +544,7 @@ export default {
           const start = Number(decoded.dateRange[0])
           const end = Number(decoded.dateRange[1])
           if (Number.isFinite(start) && Number.isFinite(end)) {
-            this.dateRange = [start, end]
+            this.dateRange = [this.clampStep(start), this.clampStep(end)]
           }
         }
 
@@ -534,7 +587,7 @@ export default {
           const start = Number(savedState.dateRange[0])
           const end = Number(savedState.dateRange[1])
           if (Number.isFinite(start) && Number.isFinite(end)) {
-            this.dateRange = [start, end]
+            this.dateRange = [this.clampStep(start), this.clampStep(end)]
           }
         }
 
@@ -707,31 +760,6 @@ export default {
       return this.formatHumanDate(date)
     },
 
-    tickLabel(label) {
-
-      if (label < 24 ){
-        // Hours: 0-23 (1-24 hours ago)
-        if (label === 0) {
-          return 'now'
-        }
-        if (label === 1) {
-          return '1 hour'
-        }
-        return `${label} hours`
-      }
-      else {
-        // Days: 24-30 (1-7 days ago)
-        const daysAgo = label - 24
-        if (daysAgo === 0) {
-          return 'end of today'
-        }
-        if (daysAgo === 1) {
-          return '1 day'
-        }
-        return `${daysAgo} days`
-      }
-    },
-
     getLabelValuesForIndex(index) {
       const labelKey = this.selectedLabels[index].key;
       const values = this.labelValuesByKey[labelKey] || [];
@@ -827,9 +855,9 @@ export default {
           return
         }
 
-        // Emit only if valid (not equal)
-        const startTime = stepToISO(val[0])
-        const endTime = stepToISO(val[1])
+        // Emit only if valid (not equal). The furthest step back starts the range.
+        const startTime = stepToISO(val[1])
+        const endTime = stepToISO(val[0])
         this.$emit('date-range-changed', { startTime, endTime })
 
         // Debounce label refresh to avoid an API call on every slider tick

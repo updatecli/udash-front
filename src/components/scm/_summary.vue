@@ -115,7 +115,7 @@
                                                                     <div class="flex-grow-1">
                                                                         <div class="font-weight-medium">{{ branch }}</div>
                                                                         <div class="text-caption text-grey-darken-1">
-                                                                            {{ branchData.total_result || 0 }} reports
+                                                                            {{ branchData.total_result || 0 }} {{ (branchData.total_result || 0) === 1 ? 'pipeline' : 'pipelines' }}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -193,7 +193,7 @@
                                                                 <div class="flex-grow-1">
                                                                     <div class="font-weight-medium">{{ branch }}</div>
                                                                     <div class="text-caption text-grey-darken-1">
-                                                                        {{ branchData.total_result || 0 }} reports
+                                                                        {{ branchData.total_result || 0 }} {{ (branchData.total_result || 0) === 1 ? 'pipeline' : 'pipelines' }}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -249,6 +249,34 @@
                                                     </v-col>
                                                 </v-row>
                                             </div>
+                                        </div>
+
+                                        <!-- Reports received on this branch. It sits
+                                             outside the link above so hovering the bars
+                                             does not read as navigation, and it only
+                                             mounts once a repository is expanded, so a
+                                             collapsed page costs nothing.
+
+                                             It follows the filter's window: the bucket
+                                             size is derived from that window, so the
+                                             last day now reads as hours rather than
+                                             collapsing into a single bar. Every card
+                                             shares the one window, which is what keeps
+                                             the branches comparable to each other. It
+                                             falls back to the full history when no
+                                             range is set. -->
+                                        <div class="branch-activity px-4 pb-2">
+                                            <ActivityChart
+                                                mode="volume"
+                                                granularity="auto"
+                                                height="44px"
+                                                compact
+                                                :start-time="filter.startTime || ''"
+                                                :end-time="filter.endTime || ''"
+                                                :days="maxHistoryDays"
+                                                :scmid="branchData.id"
+                                                :labels="filter.labels"
+                                            />
                                         </div>
 
                                         <v-divider
@@ -322,10 +350,11 @@ import {
 import router from '../../router'
 
 import SCMDoughnut from './_scmDoughnut.vue'
+import ActivityChart from '../pipeline/activityChart.vue'
 
 import { getApiBaseURL } from '@/composables/api';
 import { extractGitURLInfo } from '@/composables/git';
-import { isAuthEnabled, getStorageKey } from '@/composables/runtime';
+import { isAuthEnabled, getStorageKey, getMaxHistoryDays } from '@/composables/runtime';
 import { getAccessToken } from '@/composables/auth';
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
@@ -336,6 +365,7 @@ const COLLAPSE_STORAGE_KEY = getStorageKey('scm.summary.collapse.v1');
 export default {
     components: {
         SCMDoughnut,
+        ActivityChart,
     },
     name: "SCMDashboard",
     props: {
@@ -391,6 +421,12 @@ export default {
     }),
 
     computed: {
+        // The per-branch activity strips span whatever history this instance is
+        // configured to serve, so they narrow along with MAX_HISTORY_DAYS.
+        maxHistoryDays() {
+            return getMaxHistoryDays();
+        },
+
         loadedScmBranchCount() {
             return this.countLoadedScmBranches(this.data);
         },
