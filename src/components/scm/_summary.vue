@@ -169,7 +169,7 @@
                                                     <div class="chart-container" v-if="hasDoughnutData(url, branch)">
                                                         <SCMDoughnut
                                                             :chartData="getDoughnutData(url, branch)"
-                                                            :chartOptions="miniDoughnutOptions"
+                                                            :chartOptions="doughnutOptionsFor(url, branch, branchData)"
                                                             :centerText="branchData.total_result"
                                                             size="small"
                                                         />
@@ -241,7 +241,7 @@
                                                         <div class="chart-container" v-if="hasDoughnutData(url, branch)">
                                                             <SCMDoughnut
                                                                 :chartData="getDoughnutData(url, branch)"
-                                                                :chartOptions="miniDoughnutOptions"
+                                                                :chartOptions="doughnutOptionsFor(url, branch, branchData)"
                                                                 :centerText="branchData.total_result"
                                                                 size="small"
                                                             />
@@ -276,6 +276,7 @@
                                                 :days="maxHistoryDays"
                                                 :scmid="branchData.id"
                                                 :labels="filter.labels"
+                                                :results="filter.results"
                                             />
                                         </div>
 
@@ -356,10 +357,27 @@ import { getApiBaseURL } from '@/composables/api';
 import { extractGitURLInfo } from '@/composables/git';
 import { isAuthEnabled, getStorageKey, getMaxHistoryDays } from '@/composables/runtime';
 import { getAccessToken } from '@/composables/auth';
+import { encodeFilterState, decodeFilterState } from '@/composables/filter';
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
 
 const EMPTY_DONUT_DATA = Object.freeze({ labels: [], datasets: [] });
+
+// DOUGHNUT_SEGMENTS ties every slice to the pipeline result it counts, so the chart
+// and the click handler reading a slice back cannot drift apart. The last one has no
+// result: it counts whatever Updatecli did not report as one, so there is nothing to
+// filter on, and clicking it does nothing.
+//
+// The wording follows PIPELINE_RESULTS rather than getStatusText: at pipeline level
+// "⚠" is Updatecli reporting that it changed something, which "Warning" reads as the
+// opposite of.
+const DOUGHNUT_SEGMENTS = Object.freeze([
+    { result: '✔', label: '✔ Success', color: 'rgba(16, 185, 129, 0.7)' },  // Green
+    { result: '⚠', label: '⚠ Changed', color: 'rgba(245, 158, 11, 0.7)' },  // Amber
+    { result: '✗', label: '✗ Failed', color: 'rgba(220, 38, 38, 0.7)' },    // Red
+    { result: '-', label: '- Skipped', color: 'rgba(107, 114, 128, 0.7)' }, // Gray
+    { result: null, label: '? Unknown', color: 'rgba(139, 92, 246, 0.7)' }, // Purple
+]);
 const COLLAPSE_STORAGE_KEY = getStorageKey('scm.summary.collapse.v1');
 
 export default {
@@ -704,6 +722,10 @@ export default {
                     }
                 }
 
+                if (Array.isArray(this.filter?.results) && this.filter.results.length > 0) {
+                    requestBody.results = this.filter.results;
+                }
+
                 const query = `${getApiBaseURL()}/pipeline/scms/search`;
 
                 let response;
@@ -869,56 +891,100 @@ export default {
         },
 
         buildDoughnutData(branchData) {
-            const labels = [
-                '✔ Success',
-                '⚠ Warning',
-                '✗ Error',
-                '- Skipped',
-                '? Unknown',
-            ];
-            const labelColors = [
-               'rgba(16, 185, 129, 0.7)',  // Green
-               'rgba(245, 158, 11, 0.7)',  // Amber
-               'rgba(220, 38, 38, 0.7)',   // Red
-               'rgba(107, 114, 128, 0.7)', // Gray
-               'rgba(139, 92, 246, 0.7)',  // Purple
-            ];
-
             if (!branchData || branchData.total_result === undefined) {
                 return EMPTY_DONUT_DATA;
             }
 
             const resultsByType = branchData.total_result_by_type || {};
-
-            let successResults = 0;
-            let warningResults = 0;
-            let errorResults = 0;
-            let skippedResults = 0;
-            let otherResults = 0;
+            const counts = DOUGHNUT_SEGMENTS.map(() => 0);
 
             for (let result in resultsByType) {
-                if (result === '✔') {
-                    successResults = resultsByType[result];
-                } else if (result === '✗') {
-                    errorResults = resultsByType[result];
-                } else if (result === '⚠') {
-                    warningResults = resultsByType[result];
-                } else if (result === '-') {
-                    skippedResults = resultsByType[result];
-                } else {
-                    otherResults += resultsByType[result];
-                }
+                const index = DOUGHNUT_SEGMENTS.findIndex((segment) => segment.result === result);
+                // Anything which is not an Updatecli result lands in the last segment,
+                // which is the one carrying no result and so the one not filtering.
+                counts[index === -1 ? DOUGHNUT_SEGMENTS.length - 1 : index] += resultsByType[result];
             }
 
             return {
-                labels,
+                labels: DOUGHNUT_SEGMENTS.map((segment) => segment.label),
                 datasets: [
                     {
-                        data: [successResults, warningResults, errorResults, skippedResults, otherResults],
-                        backgroundColor: labelColors,
+                        data: counts,
+                        backgroundColor: DOUGHNUT_SEGMENTS.map((segment) => segment.color),
                     }
                 ]
             };
+        },
+
+        // doughnutOptionsFor gives every doughnut its own options so the click handler
+        // knows which branch it belongs to. They are cached outside the reactive state:
+        // handing the chart a fresh options object on each render would have it
+        // reinitialise itself, and writing to reactive data while rendering would loop.
+        doughnutOptionsFor(url, branch, branchData) {
+            const key = JSON.stringify([url, branch]);
+
+            if (!this.doughnutOptionsCache[key]) {
+                const scmID = branchData.id;
+
+                this.doughnutOptionsCache[key] = {
+                    ...this.miniDoughnutOptions,
+                    onHover: (event, elements) => {
+                        const target = event?.native?.target;
+                        if (target) {
+                            target.style.cursor = this.isFilterableSegment(elements) ? 'pointer' : 'default';
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (!this.isFilterableSegment(elements)) {
+                            return;
+                        }
+
+                        // On the dashboard the whole card is a link to this branch's
+                        // reports, and the canvas sits inside it. Stop the click there
+                        // so picking a segment does not also follow the link, losing
+                        // the result on the way.
+                        event?.native?.preventDefault();
+                        event?.native?.stopPropagation();
+
+                        this.selectResult(DOUGHNUT_SEGMENTS[elements[0].index].result, scmID);
+                    },
+                };
+            }
+
+            return this.doughnutOptionsCache[key];
+        },
+
+        // isFilterableSegment answers whether a click landed on a segment standing for
+        // a single result. The unknown one counts everything Updatecli did not report
+        // as a result, which is not something the search API can be asked for.
+        isFilterableSegment(elements) {
+            if (!Array.isArray(elements) || elements.length === 0) {
+                return false;
+            }
+
+            return !!DOUGHNUT_SEGMENTS[elements[0].index]?.result;
+        },
+
+        selectResult(result, scmID) {
+            if (this.hideButton) {
+                // The reports for this branch are already on screen, so narrowing the
+                // filter in place is enough; navigating would only lose the reader's
+                // position on the page.
+                this.$emit('toggle-result', result);
+                return;
+            }
+
+            // The card already links to this branch's reports, so a segment click goes
+            // to that same place with the result carried over rather than somewhere
+            // new. The current filter travels along, keeping the date range and the
+            // labels the reader had set here.
+            const query = { ...router.currentRoute.value.query, scmid: scmID };
+            const state = decodeFilterState(query.filter) || {};
+
+            state.selectedResults = [result];
+            query.filter = encodeFilterState(state);
+
+            router.push({ path: '/pipeline/reports', query }).catch(() => {});
         },
 
         updateDoughnutDataForScmData(scmData) {
@@ -960,6 +1026,10 @@ export default {
         },
     },
     async created() {
+        // Kept off the reactive state on purpose: it only holds the per-doughnut
+        // options objects, which have to keep their identity across renders.
+        this.doughnutOptionsCache = {};
+
         this.loadPersistedCollapseState();
         this.resetPagination();
         await this.loadNextPage();

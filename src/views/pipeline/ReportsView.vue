@@ -65,6 +65,7 @@
             </div>
 
             <PipelineSCMFilter
+              ref="scmFilter"
               :filter="filter"
               :show-repository-branch="true"
               @update-filter="updateFilter"
@@ -109,6 +110,7 @@
               :disableLinks=true
               :hideRepositoryTitle=true
               @update-filter="updateFilter"
+              @toggle-result="toggleResult"
               @loaded="setSummaryLoaded"
               class="align-center justify-center"
             />
@@ -240,6 +242,13 @@ export default {
     },
     updateFilter: function(filter) {
       this.filter = filter;
+    },
+    // The summary doughnuts narrow the filter rather than filtering themselves, so
+    // they keep showing the whole breakdown of the branch while the reports below
+    // shrink to the result which was clicked. The filter owns that state, hence the
+    // hand off rather than a second copy of it here.
+    toggleResult: function(result) {
+      this.$refs.scmFilter?.toggleResult(result);
     },
     isAllComponentsLoaded: function() {
       if (this.isFilterLoaded && this.isSummaryLoaded && this.isReportsLoaded) {

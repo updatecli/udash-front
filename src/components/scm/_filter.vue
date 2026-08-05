@@ -93,6 +93,30 @@
                   </v-col>
                 </v-row>
               </div>
+                <!-- Pipeline Result Selection
+
+                     Every other control here can be checked against the rows it
+                     returns, but a result is picked from its name alone, so the
+                     items carry a subtitle spelling out what each one means. -->
+                <v-row>
+                  <v-col cols="12">
+                    <v-select
+                      variant="outlined"
+                      label="Pipeline Result (Optional)"
+                      :items="pipelineResults"
+                      :item-props="true"
+                      item-value="value"
+                      prepend-inner-icon="mdi-list-status"
+                      v-model="selectedResults"
+                      multiple
+                      chips
+                      closable-chips
+                      clearable
+                      hint="Leave empty to show every result"
+                      persistent-hint
+                    ></v-select>
+                  </v-col>
+                </v-row>
                 <!-- Date Range Labels
 
                      Oldest on the left, newest on the right, matching the reversed
@@ -181,6 +205,8 @@ import { getApiBaseURL } from '@/composables/api';
 import { isAuthEnabled, getMaxHistoryDays } from '@/composables/runtime';
 import { getAccessToken } from '@/composables/auth';
 import { FILTER_STORAGE_KEY, stepToISO, formatToLayoutWithoutTimezone } from '@/composables/date';
+import { PIPELINE_RESULTS, PIPELINE_RESULT_VALUES } from '@/composables/status';
+import { encodeFilterState, decodeFilterState } from '@/composables/filter';
 
 // Steps 0-23 are hours ago; from 24 onwards a step is a day, so the step standing
 // for D days back is D + DAY_STEP_OFFSET. The default range is deliberately left at
@@ -219,6 +245,8 @@ export default {
     labelKeys: [],
     labelValuesByKey: {},  // Map to store label values for each key
     selectedLabels: [{ key: null, value: null }],  // Array of label selections
+    selectedResults: [],  // Pipeline results to keep, empty meaning all of them
+    pipelineResults: PIPELINE_RESULTS,
     debounceTimer: null,
     nowTicker: null,
     nowRefreshKey: 0,
@@ -232,7 +260,7 @@ export default {
 
   computed: {
     hasActiveAdvancedFilters() {
-      return this.selectedLabels.some(label => label.key !== null)
+      return this.selectedLabels.some(label => label.key !== null) || this.selectedResults.length > 0
     },
 
     // sliderTicks marks a handful of anchors along the slider so the scale is
@@ -313,6 +341,38 @@ export default {
     // same call converts in both directions.
     toSliderValue(step) {
       return this.maxDateStep - step
+    },
+
+    // sanitizeResults keeps only the results the API knows about, so a hand-edited
+    // URL or a stale local storage entry cannot turn into a query matching nothing.
+    sanitizeResults(value) {
+      if (!Array.isArray(value)) {
+        return []
+      }
+
+      return [...new Set(value.filter((result) => PIPELINE_RESULT_VALUES.includes(result)))]
+    },
+
+    // toggleResult is what the summary doughnuts call when one of their segments is
+    // clicked. Clicking the same segment again clears it, so a click is never a
+    // one-way trip into a filter the reader then has to scroll up to undo.
+    toggleResult(result) {
+      const sanitized = this.sanitizeResults([result])
+      if (sanitized.length === 0) {
+        return
+      }
+
+      this.selectedResults = this.selectedResults.includes(sanitized[0])
+        ? this.selectedResults.filter((selected) => selected !== sanitized[0])
+        : [...this.selectedResults, sanitized[0]]
+
+      // Show what just changed: the control lives in a panel which is collapsed by
+      // default, and a filter the reader cannot see is a filter they cannot undo.
+      if (!this.expandedPanels.includes(0)) {
+        this.expandedPanels = [...this.expandedPanels, 0]
+      }
+
+      this.applyFilter()
     },
 
     isRepositoriesData() {
@@ -468,6 +528,7 @@ export default {
       this.restrictedSCM = ""
       this.dateRange = [...DEFAULT_DATE_RANGE]
       this.selectedLabels = [{ key: null, value: null }]
+      this.selectedResults = []
       this.labelValuesByKey = {}
       this.getSCMSData()
       this.getLabelKeys()
@@ -508,37 +569,12 @@ export default {
       return repositoryBranches
     },
 
-    encodeBase64UrlUtf8(value) {
-      const bytes = new TextEncoder().encode(value)
-      let binary = ''
-      for (const byte of bytes) {
-        binary += String.fromCharCode(byte)
-      }
-      return btoa(binary)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/g, '')
-    },
-
-    decodeBase64UrlUtf8(value) {
-      const padded = value
-        .replace(/-/g, '+')
-        .replace(/_/g, '/')
-        .padEnd(value.length + (4 - (value.length % 4 || 4)), '=')
-
-      const binary = atob(padded)
-      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
-      return new TextDecoder().decode(bytes)
-    },
-
     loadFilterFromURL() {
       try {
-        const encoded = router.currentRoute.value.query.filter
-        if (!encoded || typeof encoded !== 'string') {
+        const decoded = decodeFilterState(router.currentRoute.value.query.filter)
+        if (!decoded) {
           return false
         }
-
-        const decoded = JSON.parse(this.decodeBase64UrlUtf8(encoded))
 
         if (Array.isArray(decoded.dateRange) && decoded.dateRange.length === 2) {
           const start = Number(decoded.dateRange[0])
@@ -557,6 +593,8 @@ export default {
             }))
           this.selectedLabels = restoredLabels.length > 0 ? restoredLabels : [{ key: null, value: null }]
         }
+
+        this.selectedResults = this.sanitizeResults(decoded.selectedResults)
 
         if (this.showRepositoryBranch) {
           if (typeof decoded.repository === 'string') {
@@ -602,6 +640,8 @@ export default {
           this.selectedLabels = restoredLabels.length > 0 ? restoredLabels : [{ key: null, value: null }]
         }
 
+        this.selectedResults = this.sanitizeResults(savedState.selectedResults)
+
         if (this.showRepositoryBranch) {
           if (typeof savedState.repository === 'string') {
             this.repository = savedState.repository
@@ -621,6 +661,7 @@ export default {
         const stateToPersist = {
           dateRange: this.dateRange,
           selectedLabels: this.selectedLabels,
+          selectedResults: this.selectedResults,
           repository: this.showRepositoryBranch ? this.repository : '',
           branch: this.showRepositoryBranch ? this.branch : '',
           updatedAt: new Date().toISOString(),
@@ -669,19 +710,24 @@ export default {
         newFilter.labels = labels;
       }
 
+      if (this.selectedResults.length > 0) {
+        newFilter.results = [...this.selectedResults];
+      }
+
       this.persistFilterState();
 
       // Keep the URL in sync so the current filter is always shareable
       const urlState = {
         dateRange: this.dateRange,
         selectedLabels: this.selectedLabels,
+        selectedResults: this.selectedResults,
       }
       if (this.showRepositoryBranch) {
         urlState.repository = this.repository
         urlState.branch = this.branch
       }
       router.replace({
-        query: { ...router.currentRoute.value.query, filter: this.encodeBase64UrlUtf8(JSON.stringify(urlState)) },
+        query: { ...router.currentRoute.value.query, filter: encodeFilterState(urlState) },
       }).catch(() => {})
 
       this.$emit('update-filter', newFilter)

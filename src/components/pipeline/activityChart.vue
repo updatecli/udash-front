@@ -198,6 +198,13 @@ export default {
             default: null,
         },
 
+        // results restricts the summary to those pipeline results. In "results" mode
+        // the plot keeps stacking, with only the selected results left to stack.
+        results: {
+            type: Array,
+            default: null,
+        },
+
         // showStats toggles the summary line above the plot. It is what makes a
         // handful of failures readable when they are too few to occupy a pixel.
         showStats: {
@@ -452,6 +459,10 @@ export default {
             handler: 'fetchSummary',
             deep: true,
         },
+        results: {
+            handler: 'fetchSummary',
+            deep: true,
+        },
     },
 
     mounted() {
@@ -577,6 +588,10 @@ export default {
                 if (Object.keys(labels).length > 0) {
                     body.labels = labels;
                 }
+            }
+
+            if (Array.isArray(this.results) && this.results.length > 0) {
+                body.results = this.results;
             }
 
             return body;

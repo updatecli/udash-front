@@ -350,6 +350,13 @@ export default {
         }
       }
 
+      // Results has to be filtered server side: this table is paginated by the API,
+      // so dropping rows once they arrive would leave short pages and a total count
+      // counting reports the reader was never shown.
+      if (Array.isArray(this.filter?.results) && this.filter.results.length > 0) {
+        requestBody.results = this.filter.results
+      }
+
       try {
         let response;
         if (isAuthEnabled) {
