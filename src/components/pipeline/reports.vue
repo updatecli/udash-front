@@ -205,9 +205,7 @@
 import { getStatusColor, getStatusIcon, getStatusText, OPEN_ACTION_ICON, OPEN_ACTION_COLOR } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git'
 import { toLocalDate } from '@/composables/date'
-import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled } from '@/composables/runtime';
-import { getAccessToken } from '@/composables/auth';
+import { apiFetch } from '@/composables/api';
 
 export default {
   name: 'PipelinesTable',
@@ -347,7 +345,6 @@ export default {
 
     async getReportsData(page =1 ) {
       this.$emit('loaded', false)
-      const queryURL = `${getApiBaseURL()}/pipeline/reports/search`
 
       const requestBody = {
         limit: this.itemsPerPage,
@@ -409,32 +406,10 @@ export default {
       }
 
       try {
-        let response;
-        if (isAuthEnabled) {
-          const token = await getAccessToken();
-          response = await fetch(queryURL, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-          });
-        } else {
-          response = await fetch(queryURL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-          });
-        }
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await apiFetch('/pipeline/reports/search', {
+          method: 'POST',
+          body: requestBody,
+        });
 
         this.pipelines = data.data || data.reports || [];
         this.getPipelinesActionsURL()

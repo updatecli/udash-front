@@ -222,9 +222,8 @@
 <script>
 import router from '../../router'
 
-import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled, getMaxHistoryDays } from '@/composables/runtime';
-import { getAccessToken } from '@/composables/auth';
+import { apiFetch } from '@/composables/api';
+import { getMaxHistoryDays } from '@/composables/runtime';
 import { FILTER_STORAGE_KEY, stepToISO, formatToLayoutWithoutTimezone } from '@/composables/date';
 import { PIPELINE_RESULTS, PIPELINE_RESULT_VALUES, OPEN_ACTION_OPTIONS, OPEN_ACTION_VALUES, openActionToQuery } from '@/composables/status';
 import { encodeFilterState, decodeFilterState } from '@/composables/filter';
@@ -436,29 +435,14 @@ export default {
     async getSCMSData() {
       this.$emit('loaded', false)
       try {
-        const auth_enabled = isAuthEnabled;
-
-        let query = `${getApiBaseURL()}/pipeline/scms`;
+        let query = '/pipeline/scms';
 
         if (this.restrictedSCM != "") {
           query = query + `?scmid=${this.restrictedSCM}`
         }
 
-        if (auth_enabled) {
-          const token = await getAccessToken();
-
-          const response = await fetch(query, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          const data = await response.json();
-          this.scms = data.scms
-        } else {
-          const response = await fetch(query);
-          const data = await response.json();
-          this.scms = data.scms
-        }
+        const data = await apiFetch(query);
+        this.scms = data.scms || []
 
         let urlArray = []
         this.repositories = []
@@ -501,23 +485,10 @@ export default {
 
     async getLabelKeys() {
       try {
-        const auth_enabled = isAuthEnabled;
-        let query = `${getApiBaseURL()}/pipeline/labels?keyonly=true&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
+        const query = `/pipeline/labels?keyonly=true&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
 
-        if (auth_enabled) {
-          const token = await getAccessToken();
-          const response = await fetch(query, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          const data = await response.json();
-          this.labelKeys = data.labels || [];
-        } else {
-          const response = await fetch(query);
-          const data = await response.json();
-          this.labelKeys = data.labels || [];
-        }
+        const data = await apiFetch(query);
+        this.labelKeys = data.labels || [];
       } catch (error) {
         console.error('Error fetching label keys:', error);
         this.labelKeys = [];
@@ -535,29 +506,14 @@ export default {
           return this.labelValuesByKey[labelKey];
         }
 
-        const auth_enabled = isAuthEnabled;
-        let query = `${getApiBaseURL()}/pipeline/labels?key=${encodeURIComponent(labelKey)}&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
+        const query = `/pipeline/labels?key=${encodeURIComponent(labelKey)}&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
 
-        if (auth_enabled) {
-          const token = await getAccessToken();
-          const response = await fetch(query, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          const data = await response.json();
-          // Extract unique values from the labels array
-          const uniqueValues = [...new Set(data.labels.map(label => label.value))];
-          this.labelValuesByKey[labelKey] = uniqueValues || [];
-          return this.labelValuesByKey[labelKey];
-        } else {
-          const response = await fetch(query);
-          const data = await response.json();
-          // Extract unique values from the labels array
-          const uniqueValues = [...new Set(data.labels.map(label => label.value))];
-          this.labelValuesByKey[labelKey] = uniqueValues || [];
-          return this.labelValuesByKey[labelKey];
-        }
+        const data = await apiFetch(query);
+
+        // Extract unique values from the labels array
+        const uniqueValues = [...new Set((data.labels || []).map(label => label.value))];
+        this.labelValuesByKey[labelKey] = uniqueValues;
+        return this.labelValuesByKey[labelKey];
       } catch (error) {
         console.error('Error fetching label values:', error);
         return [];

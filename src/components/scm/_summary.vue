@@ -354,10 +354,9 @@ import router from '../../router'
 import SCMDoughnut from './_scmDoughnut.vue'
 import ActivityChart from '../pipeline/activityChart.vue'
 
-import { getApiBaseURL } from '@/composables/api';
+import { apiFetch } from '@/composables/api';
 import { extractGitURLInfo } from '@/composables/git';
-import { isAuthEnabled, getStorageKey, getMaxHistoryDays } from '@/composables/runtime';
-import { getAccessToken } from '@/composables/auth';
+import { getStorageKey, getMaxHistoryDays } from '@/composables/runtime';
 import { encodeFilterState, decodeFilterState } from '@/composables/filter';
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
@@ -694,7 +693,6 @@ export default {
             this.$emit('loaded', false)
 
             try {
-                const auth_enabled = isAuthEnabled;
                 const restrictedSCM = router.currentRoute.value.query.filter?.scmid;
 
                 const requestBody = {
@@ -740,34 +738,10 @@ export default {
                     requestBody.open_action = this.filter.openAction;
                 }
 
-                const query = `${getApiBaseURL()}/pipeline/scms/search`;
-
-                let response;
-                if (auth_enabled) {
-                    const token = await getAccessToken();
-                    response = await fetch(query, {
-                        method: 'POST',
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(requestBody),
-                    });
-                } else {
-                    response = await fetch(query, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(requestBody),
-                    });
-                }
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const responseData = await response.json();
+                const responseData = await apiFetch('/pipeline/scms/search', {
+                    method: 'POST',
+                    body: requestBody,
+                });
 
                 // Discard stale results if the filter changed while fetching
                 if (requestId !== this.currentRequestId) return;

@@ -49,9 +49,7 @@ import {
   Legend,
 } from 'chart.js'
 
-import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled } from '@/composables/runtime';
-import { getAccessToken } from '@/composables/auth';
+import { apiFetch } from '@/composables/api';
 
 // Register chart parts and plugin
 ChartJS.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
@@ -645,46 +643,13 @@ export default {
             this.error = null;
 
             try {
-                const query = `${getApiBaseURL()}/pipeline/reports/summary`;
-                const body = JSON.stringify(this.buildRequestBody());
-
-                let response;
-                if (isAuthEnabled) {
-                    const token = await getAccessToken();
-                    response = await fetch(query, {
-                        method: 'POST',
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body,
-                    });
-                } else {
-                    response = await fetch(query, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body,
-                    });
-                }
-
-                if (!response.ok) {
-                    // The API names what it refused in the body. Now that a window and a
-                    // granularity can be rejected together, that sentence is the only
-                    // thing telling the reader why the plot is missing.
-                    let detail = '';
-                    try {
-                        const errorBody = await response.json();
-                        detail = errorBody?.error || errorBody?.message || '';
-                    } catch {
-                        detail = '';
-                    }
-
-                    throw new Error(detail || `HTTP error! status: ${response.status}`);
-                }
-
-                const responseData = await response.json();
+                // apiFetch surfaces the sentence the API puts in the body of a rejection.
+                // Now that a window and a granularity can be refused together, that
+                // sentence is the only thing telling the reader why the plot is missing.
+                const responseData = await apiFetch('/pipeline/reports/summary', {
+                    method: 'POST',
+                    body: this.buildRequestBody(),
+                });
 
                 // Discard stale results if the props changed while fetching
                 if (requestId !== this.currentRequestId) return;
