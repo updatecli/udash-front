@@ -277,6 +277,7 @@
                                                 :scmid="branchData.id"
                                                 :labels="filter.labels"
                                                 :results="filter.results"
+                                                :open-action="filter.openAction ?? null"
                                             />
                                         </div>
 
@@ -371,8 +372,14 @@ const EMPTY_DONUT_DATA = Object.freeze({ labels: [], datasets: [] });
 // The wording follows PIPELINE_RESULTS rather than getStatusText: at pipeline level
 // "⚠" is Updatecli reporting that it changed something, which "Warning" reads as the
 // opposite of.
+//
+// Success is split in two, matching RESULT_SERIES in activityChart.vue. A pipeline which
+// had nothing to change reports a success even when the change is already waiting in a
+// pull request nobody merged, and those are the ones worth looking at: without the split
+// they are indistinguishable from the branches which are genuinely up to date.
 const DOUGHNUT_SEGMENTS = Object.freeze([
-    { result: '✔', label: '✔ Success', color: 'rgba(16, 185, 129, 0.7)' },  // Green
+    { result: '✔', openAction: true, label: '✔ Waiting to be merged', color: 'rgba(59, 130, 246, 0.7)' }, // Blue
+    { result: '✔', openAction: false, label: '✔ Success', color: 'rgba(16, 185, 129, 0.7)' },  // Green
     { result: '⚠', label: '⚠ Changed', color: 'rgba(245, 158, 11, 0.7)' },  // Amber
     { result: '✗', label: '✗ Failed', color: 'rgba(220, 38, 38, 0.7)' },    // Red
     { result: '-', label: '- Skipped', color: 'rgba(107, 114, 128, 0.7)' }, // Gray
@@ -726,6 +733,13 @@ export default {
                     requestBody.results = this.filter.results;
                 }
 
+                // Tri-state: an unset filter has to stay absent from the body rather than
+                // be sent as false, which would drop every pipeline with an open pull
+                // request.
+                if (typeof this.filter?.openAction === 'boolean') {
+                    requestBody.open_action = this.filter.openAction;
+                }
+
                 const query = `${getApiBaseURL()}/pipeline/scms/search`;
 
                 let response;
@@ -896,13 +910,30 @@ export default {
             }
 
             const resultsByType = branchData.total_result_by_type || {};
+            // total_open_action_by_result is a breakdown of total_result_by_type rather
+            // than an addition to it, so a split result contributes to both of its
+            // segments and the doughnut still totals total_result.
+            const openActionsByType = branchData.total_open_action_by_result || {};
             const counts = DOUGHNUT_SEGMENTS.map(() => 0);
 
             for (let result in resultsByType) {
-                const index = DOUGHNUT_SEGMENTS.findIndex((segment) => segment.result === result);
+                const open = openActionsByType[result] || 0;
+
+                const openIndex = DOUGHNUT_SEGMENTS.findIndex(
+                    (segment) => segment.result === result && segment.openAction === true);
+                const index = DOUGHNUT_SEGMENTS.findIndex(
+                    (segment) => segment.result === result && segment.openAction !== true);
+
+                if (openIndex !== -1) {
+                    counts[openIndex] += open;
+                }
+
                 // Anything which is not an Updatecli result lands in the last segment,
-                // which is the one carrying no result and so the one not filtering.
-                counts[index === -1 ? DOUGHNUT_SEGMENTS.length - 1 : index] += resultsByType[result];
+                // which is the one carrying no result and so the one not filtering. A
+                // result without a split segment keeps its whole count, so an open action
+                // on it is still counted, just not called out.
+                counts[index === -1 ? DOUGHNUT_SEGMENTS.length - 1 : index] +=
+                    openIndex === -1 ? resultsByType[result] : resultsByType[result] - open;
             }
 
             return {
@@ -946,7 +977,8 @@ export default {
                         event?.native?.preventDefault();
                         event?.native?.stopPropagation();
 
-                        this.selectResult(DOUGHNUT_SEGMENTS[elements[0].index].result, scmID);
+                        const segment = DOUGHNUT_SEGMENTS[elements[0].index];
+                        this.selectResult(segment.result, scmID, segment.openAction);
                     },
                 };
             }
@@ -965,12 +997,15 @@ export default {
             return !!DOUGHNUT_SEGMENTS[elements[0].index]?.result;
         },
 
-        selectResult(result, scmID) {
+        // openAction is undefined for the segments counting a result whole, and true or
+        // false for the two halves of a split one, which have to carry both dimensions
+        // so the reader lands on the pipelines the slice actually stood for.
+        selectResult(result, scmID, openAction) {
             if (this.hideButton) {
                 // The reports for this branch are already on screen, so narrowing the
                 // filter in place is enough; navigating would only lose the reader's
                 // position on the page.
-                this.$emit('toggle-result', result);
+                this.$emit('toggle-result', result, openAction);
                 return;
             }
 
@@ -982,6 +1017,9 @@ export default {
             const state = decodeFilterState(query.filter) || {};
 
             state.selectedResults = [result];
+            if (openAction !== undefined) {
+                state.selectedOpenAction = openAction ? 'open' : 'none';
+            }
             query.filter = encodeFilterState(state);
 
             router.push({ path: '/pipeline/reports', query }).catch(() => {});

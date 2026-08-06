@@ -68,13 +68,37 @@ ChartJS.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip,
 // compositing them over the page background drops green and amber below the 3:1
 // contrast floor. Red and amber stay close under deuteranopia, which is why every
 // label carries its result glyph — identity is never left to colour alone.
+//
+// The success bucket is split in two. A pipeline which had nothing to change reports a
+// success even when the change it would have made is already waiting in a pull request
+// nobody merged, so lumping both together buries the ones needing a human under the ones
+// which are genuinely up to date. The split is drawn below plain success, next to the
+// other results worth acting on, in the blue forges use for an open pull request — a hue
+// none of the other segments occupies.
 const RESULT_SERIES = Object.freeze([
     { key: '✗',       label: '✗ Error',   color: '#dc2626' }, // Red
     { key: '⚠',       label: '⚠ Warning', color: '#f59e0b' }, // Amber
-    { key: '✔',       label: '✔ Success', color: '#10b981' }, // Green
+    { key: '✔:open',  label: '✔ Waiting to be merged', color: '#3b82f6', result: '✔', openAction: true }, // Blue
+    { key: '✔',       label: '✔ Success', color: '#10b981', result: '✔', openAction: false }, // Green
     { key: '-',       label: '- Skipped', color: '#6b7280' }, // Gray
     { key: 'unknown', label: '? Unknown', color: '#8b5cf6' }, // Purple
 ]);
+
+// seriesCount reads what a series contributes to a bucket. open_actions is a breakdown of
+// results rather than an addition to it, so the plain success segment is what is left once
+// the ones waiting on a pull request are taken out, and the two together still add up to
+// the success count the API reported.
+function seriesCount(entry, serie) {
+    const total = entry?.results?.[serie.result || serie.key] || 0;
+
+    if (serie.openAction === undefined) {
+        return total;
+    }
+
+    const open = entry?.open_actions?.[serie.result] || 0;
+
+    return serie.openAction ? open : Math.max(total - open, 0);
+}
 
 // VOLUME_COLOR is pinned rather than read from the theme. It is the light theme's
 // primary, and it is the one step that clears every check against *both* chart
@@ -205,6 +229,15 @@ export default {
             default: null,
         },
 
+        // openAction restricts the summary to the pipelines carrying an action left open,
+        // such as a pull request still waiting to be merged, when true, or to the ones
+        // without when false. Null leaves both in, which is what makes the success bucket
+        // splittable: the breakdown is reported whether or not it is filtered on.
+        openAction: {
+            type: Boolean,
+            default: null,
+        },
+
         // showStats toggles the summary line above the plot. It is what makes a
         // handful of failures readable when they are too few to occupy a pixel.
         showStats: {
@@ -288,7 +321,7 @@ export default {
         // key rather than to a position, so dropping one never repaints the others.
         activeSeries() {
             return RESULT_SERIES.filter(
-                (serie) => this.entries.some((entry) => (entry.results?.[serie.key] || 0) > 0)
+                (serie) => this.entries.some((entry) => seriesCount(entry, serie) > 0)
             );
         },
 
@@ -340,7 +373,7 @@ export default {
                 labels,
                 datasets: series.map((serie, index) => ({
                     label: serie.label,
-                    data: this.entries.map((entry) => entry.results?.[serie.key] || 0),
+                    data: this.entries.map((entry) => seriesCount(entry, serie)),
                     backgroundColor: serie.color,
                     stack: 'results',
                     // A 2px slice of the surface separates the segments instead of a
@@ -424,8 +457,8 @@ export default {
                                 if (!entry) return '';
 
                                 const parts = RESULT_SERIES
-                                    .filter((serie) => (entry.results?.[serie.key] || 0) > 0)
-                                    .map((serie) => `${serie.key} ${entry.results[serie.key]}`);
+                                    .filter((serie) => seriesCount(entry, serie) > 0)
+                                    .map((serie) => `${serie.key} ${seriesCount(entry, serie)}`);
 
                                 return parts.length ? parts.join('  ') : '';
                             },
@@ -463,6 +496,7 @@ export default {
             handler: 'fetchSummary',
             deep: true,
         },
+        openAction: 'fetchSummary',
     },
 
     mounted() {
@@ -592,6 +626,12 @@ export default {
 
             if (Array.isArray(this.results) && this.results.length > 0) {
                 body.results = this.results;
+            }
+
+            // Tri-state: an unset filter has to stay absent from the body rather than be
+            // sent as false, which would drop every pipeline with an open pull request.
+            if (typeof this.openAction === 'boolean') {
+                body.open_action = this.openAction;
             }
 
             return body;

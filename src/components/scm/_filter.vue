@@ -93,13 +93,20 @@
                   </v-col>
                 </v-row>
               </div>
-                <!-- Pipeline Result Selection
+                <!-- Pipeline Result and Open Pull Request Selection
 
-                     Every other control here can be checked against the rows it
-                     returns, but a result is picked from its name alone, so the
-                     items carry a subtitle spelling out what each one means. -->
+                     Both are picked from their name alone, unlike every other control
+                     here which can be checked against the rows it returns, so their
+                     items carry a subtitle spelling out what each one means.
+
+                     They sit side by side because they are read together: a pipeline
+                     reports a success when it had nothing to change, including when the
+                     change is already waiting in a pull request nobody merged, and
+                     pairing the two is what isolates those. They remain two controls
+                     rather than one list of five: an open pull request is a dimension of
+                     its own, orthogonal to the result. -->
                 <v-row>
-                  <v-col cols="12">
+                  <v-col cols="12" md="6">
                     <v-select
                       variant="outlined"
                       label="Pipeline Result (Optional)"
@@ -113,6 +120,20 @@
                       closable-chips
                       clearable
                       hint="Leave empty to show every result"
+                      persistent-hint
+                    ></v-select>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-select
+                      variant="outlined"
+                      label="Open Pull Request (Optional)"
+                      :items="openActionOptions"
+                      :item-props="true"
+                      item-value="value"
+                      prepend-inner-icon="mdi-source-pull"
+                      v-model="selectedOpenAction"
+                      clearable
+                      hint="Leave empty to show pipelines whether or not one is open"
                       persistent-hint
                     ></v-select>
                   </v-col>
@@ -205,7 +226,7 @@ import { getApiBaseURL } from '@/composables/api';
 import { isAuthEnabled, getMaxHistoryDays } from '@/composables/runtime';
 import { getAccessToken } from '@/composables/auth';
 import { FILTER_STORAGE_KEY, stepToISO, formatToLayoutWithoutTimezone } from '@/composables/date';
-import { PIPELINE_RESULTS, PIPELINE_RESULT_VALUES } from '@/composables/status';
+import { PIPELINE_RESULTS, PIPELINE_RESULT_VALUES, OPEN_ACTION_OPTIONS, OPEN_ACTION_VALUES, openActionToQuery } from '@/composables/status';
 import { encodeFilterState, decodeFilterState } from '@/composables/filter';
 
 // Steps 0-23 are hours ago; from 24 onwards a step is a day, so the step standing
@@ -247,6 +268,8 @@ export default {
     selectedLabels: [{ key: null, value: null }],  // Array of label selections
     selectedResults: [],  // Pipeline results to keep, empty meaning all of them
     pipelineResults: PIPELINE_RESULTS,
+    selectedOpenAction: null,  // "open", "none", or null meaning both
+    openActionOptions: OPEN_ACTION_OPTIONS,
     debounceTimer: null,
     nowTicker: null,
     nowRefreshKey: 0,
@@ -260,7 +283,7 @@ export default {
 
   computed: {
     hasActiveAdvancedFilters() {
-      return this.selectedLabels.some(label => label.key !== null) || this.selectedResults.length > 0
+      return this.selectedLabels.some(label => label.key !== null) || this.selectedResults.length > 0 || this.selectedOpenAction !== null
     },
 
     // sliderTicks marks a handful of anchors along the slider so the scale is
@@ -353,9 +376,20 @@ export default {
       return [...new Set(value.filter((result) => PIPELINE_RESULT_VALUES.includes(result)))]
     },
 
+    // sanitizeOpenAction does for the open action what sanitizeResults does for the
+    // results: anything the API would not understand becomes "no filter" rather than a
+    // query matching nothing.
+    sanitizeOpenAction(value) {
+      return OPEN_ACTION_VALUES.includes(value) ? value : null
+    },
+
     // toggleResult is what the summary doughnuts call when one of their segments is
     // clicked. Clicking the same segment again clears it, so a click is never a
     // one-way trip into a filter the reader then has to scroll up to undo.
+    //
+    // Segments standing for one half of a result split on whether a pull request is
+    // still open go through toggleResultWithOpenAction instead, so that both dimensions
+    // are set together.
     toggleResult(result) {
       const sanitized = this.sanitizeResults([result])
       if (sanitized.length === 0) {
@@ -368,6 +402,22 @@ export default {
 
       // Show what just changed: the control lives in a panel which is collapsed by
       // default, and a filter the reader cannot see is a filter they cannot undo.
+      if (!this.expandedPanels.includes(0)) {
+        this.expandedPanels = [...this.expandedPanels, 0]
+      }
+
+      this.applyFilter()
+    },
+
+    // toggleResultWithOpenAction is what the segments split on the open action call, so
+    // that clicking "succeeded, waiting to be merged" selects both dimensions in one go
+    // rather than leaving the reader with a half applied filter.
+    toggleResultWithOpenAction(result, openAction) {
+      const wasSelected = this.selectedResults.includes(result) && this.selectedOpenAction === openAction
+
+      this.selectedResults = wasSelected ? [] : [result]
+      this.selectedOpenAction = wasSelected ? null : this.sanitizeOpenAction(openAction)
+
       if (!this.expandedPanels.includes(0)) {
         this.expandedPanels = [...this.expandedPanels, 0]
       }
@@ -529,6 +579,7 @@ export default {
       this.dateRange = [...DEFAULT_DATE_RANGE]
       this.selectedLabels = [{ key: null, value: null }]
       this.selectedResults = []
+      this.selectedOpenAction = null
       this.labelValuesByKey = {}
       this.getSCMSData()
       this.getLabelKeys()
@@ -595,6 +646,7 @@ export default {
         }
 
         this.selectedResults = this.sanitizeResults(decoded.selectedResults)
+        this.selectedOpenAction = this.sanitizeOpenAction(decoded.selectedOpenAction)
 
         if (this.showRepositoryBranch) {
           if (typeof decoded.repository === 'string') {
@@ -641,6 +693,7 @@ export default {
         }
 
         this.selectedResults = this.sanitizeResults(savedState.selectedResults)
+        this.selectedOpenAction = this.sanitizeOpenAction(savedState.selectedOpenAction)
 
         if (this.showRepositoryBranch) {
           if (typeof savedState.repository === 'string') {
@@ -662,6 +715,7 @@ export default {
           dateRange: this.dateRange,
           selectedLabels: this.selectedLabels,
           selectedResults: this.selectedResults,
+          selectedOpenAction: this.selectedOpenAction,
           repository: this.showRepositoryBranch ? this.repository : '',
           branch: this.showRepositoryBranch ? this.branch : '',
           updatedAt: new Date().toISOString(),
@@ -714,6 +768,14 @@ export default {
         newFilter.results = [...this.selectedResults];
       }
 
+      // The API reads the open action as an optional boolean, so an unset filter has to
+      // stay absent from the body rather than be sent as false, which would drop every
+      // pipeline carrying an open pull request.
+      const openAction = openActionToQuery(this.selectedOpenAction);
+      if (openAction !== undefined) {
+        newFilter.openAction = openAction;
+      }
+
       this.persistFilterState();
 
       // Keep the URL in sync so the current filter is always shareable
@@ -721,6 +783,7 @@ export default {
         dateRange: this.dateRange,
         selectedLabels: this.selectedLabels,
         selectedResults: this.selectedResults,
+        selectedOpenAction: this.selectedOpenAction,
       }
       if (this.showRepositoryBranch) {
         urlState.repository = this.repository

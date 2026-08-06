@@ -247,8 +247,17 @@ export default {
     // they keep showing the whole breakdown of the branch while the reports below
     // shrink to the result which was clicked. The filter owns that state, hence the
     // hand off rather than a second copy of it here.
-    toggleResult: function(result) {
-      this.$refs.scmFilter?.toggleResult(result);
+    //
+    // openAction is set only by the segments standing for one half of a result split on
+    // whether a pull request is still open. Both dimensions are then handed over
+    // together, so the reports below never show a half applied filter.
+    toggleResult: function(result, openAction) {
+      if (openAction === undefined) {
+        this.$refs.scmFilter?.toggleResult(result);
+        return;
+      }
+
+      this.$refs.scmFilter?.toggleResultWithOpenAction(result, openAction ? 'open' : 'none');
     },
     isAllComponentsLoaded: function() {
       if (this.isFilterLoaded && this.isSummaryLoaded && this.isReportsLoaded) {
