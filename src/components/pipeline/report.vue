@@ -1,317 +1,369 @@
 <template>
+  <!-- The report is on its way. -->
   <v-container
-    v-if="pipeline"
+    v-if="isLoading"
+    class="d-flex justify-center align-center loading-container"
   >
-      <v-overlay
-      :model-value="isLoading"
-      class="align-center justify-center"
-      :disabled="true"
-      :eager="true"
-      :no-click-animation="true"
-      :persistent="true"
-      :opacity="0"
-    >
-      <v-progress-circular
-        color="black"
-        indeterminate
-        size="64"
-      ></v-progress-circular>
-    </v-overlay>
-
-    <v-row>
-      <v-col
-        class="text-right"
-        cols="auto"
-        lg="8"
-        md="8"
-        sm="12"
-      >
-        <h1>
-          Report <v-icon icon="mdi-book-open-variant"></v-icon>
-        </h1>
-      </v-col>
-      <v-col class="text-center">
-
-        <v-icon
-          :icon="getStatusIcon(pipeline.Pipeline.Result)"
-          :color="getStatusColor(pipeline.Pipeline.Result)"
-          size="80"
-          ></v-icon>
-      </v-col>
-    </v-row>
+    <v-progress-circular
+      color="primary"
+      indeterminate
+      size="64"
+    ></v-progress-circular>
   </v-container>
-  <v-container
-    v-if="pipeline"
-  >
-    <!-- Show metadata -->
-    <v-row>
-      <v-col>
-        <v-card
+
+  <!-- The request never came back with a report. Saying so beats an empty page: the
+       reader otherwise has no way to tell a broken API from a report with no content. -->
+  <v-container v-else-if="loadError">
+    <v-card variant="outlined">
+      <v-card-title>
+        <v-icon
+          icon="mdi-alert-circle"
+          color="error"
+          class="mr-2"
+        ></v-icon>
+        Could not load this report
+      </v-card-title>
+
+      <v-card-text>
+        <p>{{ loadError }}</p>
+      </v-card-text>
+
+      <v-card-actions>
+        <v-btn
           variant="flat"
+          prepend-icon="mdi-refresh"
+          @click="getPipelineReportData"
         >
-          <v-card-text>
-            <v-table density="compact">
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Executed</th>
-                  <th>Pipeline</th>
-                  <th>CI</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    {{ getStatusText(pipeline.Pipeline.Result) }}
-                  </td>
-                  <td>{{ formatDate(pipeline.Updated_at) }}</td>
-                  <td>{{ pipeline.Pipeline.Name }}</td>
-                  <td>
-                    <template v-if="pipelinePrimaryURL">
-                      <v-btn
-                        :href="pipelinePrimaryURL"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        size="small"
-                        variant="outlined"
-                        prepend-icon="mdi-open-in-new"
-                      >
-                        View Job
-                      </v-btn>
-                    </template>
-                    <span
-                      v-else
-                      class="text-grey"
-                    >
-                      N/A
-                    </span>
-                    <span
-                      v-if="hasMultiplePipelineURLs"
-                      class="text-warning text-caption ci-warning"
-                    >
-                      Multiple CI URLs detected. Using the first one.
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+          Retry
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-container>
 
-    <!-- Show labels -->
-    <v-row v-if="pipeline.Pipeline.Labels && Object.keys(pipeline.Pipeline.Labels).length > 0">
-      <v-col>
-        <v-card variant="flat">
-          <v-card-text class="labels-card">
-            <div class="labels-header">Labels</div>
-            <div class="labels-list">
-              <div
-                v-for="([key, value]) in sortedLabels"
-                :key="key"
-                class="label-row"
-              >
-                <div class="label-key-wrap">
-                  <v-icon
-                    size="18"
-                    color="grey-darken-1"
-                    class="label-icon"
-                  >
-                    mdi-label-outline
-                  </v-icon>
-                  <span class="label-key">{{ key }}</span>
-                </div>
-                <div class="label-value">{{ value }}</div>
-              </div>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row v-else>
-      <v-col>
-        <v-card variant="flat">
-          <v-card-text>
-            <p class="text-grey">No labels</p>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+  <!-- The API answered fine, it just has nothing under that id. -->
+  <v-container v-else-if="!pipeline">
+    <v-card variant="outlined">
+      <v-card-title>
+        <v-icon
+          icon="mdi-help-circle"
+          color="grey"
+          class="mr-2"
+        ></v-icon>
+        Report not found
+      </v-card-title>
 
-    <!-- Show link to latest report -->
-     <v-row
-        v-if="latestReportByID"
-     >
-      <v-col>
-        <v-card
-          variant="outlined"
-          v-show="!isLatestReport()"
+      <v-card-text>
+        <p>
+          No report exists with the id <code>{{ pipelineUUID }}</code>.
+          It may have been removed since this link was created.
+        </p>
+      </v-card-text>
+
+      <v-card-actions>
+        <v-btn
+          variant="flat"
+          prepend-icon="mdi-arrow-left"
+          to="/pipeline/reports"
         >
-          <v-card-title>
-            Newer report detected
-          </v-card-title>
+          Back to reports
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-container>
 
-          <v-card-text>
-            <p>
-              Updated at {{ latestReportByID.Updated_at }}
-            </p>
-              <v-icon :icon="getStatusIcon(latestReportByID.Pipeline.Result)" :color="getStatusColor(latestReportByID.Pipeline.Result)"></v-icon>  {{ latestReportByID.Pipeline.Name }}
-              <v-btn
-                icon="mdi-arrow-right-circle"
-                variant="flat"
-                :to=getPipelineReportLink(latestReportByID.ID)>
-              </v-btn>
-          <v-divider></v-divider>
-          </v-card-text>
-        </v-card>
-      </v-col>
-     </v-row>
-
-    <v-row>
-      <v-col
-        cols="auto"
-        lg="12"
-        md="12"
-        sm="12"
-      >
-
-        <v-container
-          class="d-flex justify-center align-center"
+  <template v-else>
+    <v-container>
+      <v-row>
+        <v-col
+          class="text-right"
+          cols="auto"
+          lg="8"
+          md="8"
+          sm="12"
         >
-          <v-btn-toggle v-model="resourceStage">
-            <v-btn
-              v-if="isSources()"
-              variant="text"
-              value="source"
-              :class="{ 'v-btn--active': resourceStage === 'source' }"
-            >Source</v-btn>
-            <v-btn
-              v-if="isConditions()"
-              variant="text"
-              value="condition"
-              :class="{ 'v-btn--active': resourceStage === 'condition' }"
-            >Condition</v-btn>
-            <v-btn
-              v-if="isTargets()"
-              variant="text"
-              value="target"
-              :class="{ 'v-btn--active': resourceStage === 'target' }"
-            >Target</v-btn>
-            <v-btn
-              v-if="isActions()"
-              variant="text"
-              value="action"
-              :class="{ 'v-btn--active': resourceStage === 'action' }"
-            >Action</v-btn>
-          </v-btn-toggle>
-        </v-container>
+          <h1>
+            Report <v-icon icon="mdi-book-open-variant"></v-icon>
+          </h1>
+        </v-col>
+        <v-col class="text-center">
 
-        <!-- Show Sources -->
-        <v-card
-          variant="outlined"
-          v-if="isSources() && resourceStage === 'source'"
-        >
-          <v-card-text>
-              <v-card
-                variant="flat"
-                v-for="(data, key) in pipeline.Pipeline.Sources" :key="key"
-              >
-                <SourceComponent
-                  :id="key"
-                  :data="data"
-                ></SourceComponent>
-                <LinkedReports
-                  :configID="getResourceUUID('source', key)"
-                  configType="source"
-                  :pipelineUUID="pipelineUUID"
-                ></LinkedReports>
-              </v-card>
-          </v-card-text>
-        </v-card>
-
-        <!-- Show Conditions -->
-        <v-card
-          variant="outlined"
-          v-if="isConditions() && resourceStage === 'condition'"
-        >
-          <v-card-text>
-              <v-card
-                variant="flat"
-                v-for="(data, key) in pipeline.Pipeline.Conditions" :key="key"
-              >
-                <ConditionComponent
-                  :id="key"
-                  :data="data"
-                ></ConditionComponent>
-                <LinkedReports
-                  :configID="getResourceUUID('condition', key)"
-                  configType="condition"
-                  :pipelineUUID="pipelineUUID"
-                ></LinkedReports>
-              </v-card>
-          </v-card-text>
-        </v-card>
-
-        <!-- Show Targets -->
-        <v-card
-          variant="outlined"
-          v-if="isTargets() && resourceStage === 'target'"
-        >
-          <v-card-text>
-              <v-card
-                v-for="(data, key) in pipeline.Pipeline.Targets" :key="key"
-                variant="flat"
-              >
-                <TargetComponent
-                  :id="key"
-                  :data="data"
-                ></TargetComponent>
-                <LinkedReports
-                  :configID="getResourceUUID('target', key)"
-                  configType="target"
-                  :pipelineUUID="pipelineUUID"
-                ></LinkedReports>
-              </v-card>
-          </v-card-text>
-        </v-card>
-        <!-- Show Actions -->
-        <v-card
-          variant="outlined"
-          v-if="isActions() && resourceStage === 'action'"
-        >
-          <v-card-text>
-              <v-card
-                variant="flat"
-                v-for="(data, key) in pipeline.Pipeline.Actions" :key="key"
-              >
-                <ActionComponent
-                  :id="key"
-                  :data="data"
-                ></ActionComponent>
-              </v-card>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-row>
-      <v-col
-        cols="auto"
-        lg="12"
-        md="12"
-        sm="12"
-        class="text-center"
-      >
+          <v-icon
+            :icon="getStatusIcon(pipeline.Pipeline.Result)"
+            :color="getStatusColor(pipeline.Pipeline.Result)"
+            size="80"
+            ></v-icon>
+        </v-col>
+      </v-row>
+    </v-container>
+    <v-container>
+      <!-- Show metadata -->
+      <v-row>
+        <v-col>
           <v-card
             variant="flat"
-            v-if="pipeline.Pipeline.Graph"
           >
-              <PipelineGraphComponent :data="pipeline.Pipeline.Graph" />
+            <v-card-text>
+              <v-table density="compact">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Executed</th>
+                    <th>Pipeline</th>
+                    <th>CI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      {{ getStatusText(pipeline.Pipeline.Result) }}
+                    </td>
+                    <td>{{ formatDate(pipeline.Updated_at) }}</td>
+                    <td>{{ pipeline.Pipeline.Name }}</td>
+                    <td>
+                      <template v-if="pipelinePrimaryURL">
+                        <v-btn
+                          :href="pipelinePrimaryURL"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          size="small"
+                          variant="outlined"
+                          prepend-icon="mdi-open-in-new"
+                        >
+                          View Job
+                        </v-btn>
+                      </template>
+                      <span
+                        v-else
+                        class="text-grey"
+                      >
+                        N/A
+                      </span>
+                      <span
+                        v-if="hasMultiplePipelineURLs"
+                        class="text-warning text-caption ci-warning"
+                      >
+                        Multiple CI URLs detected. Using the first one.
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </v-card-text>
           </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+        </v-col>
+      </v-row>
+
+      <!-- Show labels -->
+      <v-row v-if="sortedLabels.length > 0">
+        <v-col>
+          <v-card variant="flat">
+            <v-card-text class="labels-card">
+              <div class="labels-header">Labels</div>
+              <div class="labels-list">
+                <div
+                  v-for="([key, value]) in sortedLabels"
+                  :key="key"
+                  class="label-row"
+                >
+                  <div class="label-key-wrap">
+                    <v-icon
+                      size="18"
+                      color="grey-darken-1"
+                      class="label-icon"
+                    >
+                      mdi-label-outline
+                    </v-icon>
+                    <span class="label-key">{{ key }}</span>
+                  </div>
+                  <div class="label-value">{{ value }}</div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+      <v-row v-else>
+        <v-col>
+          <v-card variant="flat">
+            <v-card-text>
+              <p class="text-grey">No labels</p>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Show link to latest report -->
+       <v-row
+          v-if="latestReportByID && !isLatestReport"
+       >
+        <v-col>
+          <v-card
+            variant="outlined"
+          >
+            <v-card-title>
+              Newer report detected
+            </v-card-title>
+
+            <v-card-text>
+              <p>
+                Updated at {{ formatDate(latestReportByID.Updated_at) }}
+              </p>
+                <v-icon :icon="getStatusIcon(latestReportByID.Pipeline.Result)" :color="getStatusColor(latestReportByID.Pipeline.Result)"></v-icon>  {{ latestReportByID.Pipeline.Name }}
+                <v-btn
+                  icon="mdi-arrow-right-circle"
+                  variant="flat"
+                  :to=getPipelineReportLink(latestReportByID.ID)>
+                </v-btn>
+            <v-divider></v-divider>
+            </v-card-text>
+          </v-card>
+        </v-col>
+       </v-row>
+
+      <v-row>
+        <v-col
+          cols="auto"
+          lg="12"
+          md="12"
+          sm="12"
+        >
+
+          <v-container
+            class="d-flex justify-center align-center"
+          >
+            <v-btn-toggle
+              v-model="resourceStage"
+              mandatory
+            >
+              <v-btn
+                v-if="hasSources"
+                variant="text"
+                value="source"
+              >Source</v-btn>
+              <v-btn
+                v-if="hasConditions"
+                variant="text"
+                value="condition"
+              >Condition</v-btn>
+              <v-btn
+                v-if="hasTargets"
+                variant="text"
+                value="target"
+              >Target</v-btn>
+              <v-btn
+                v-if="hasActions"
+                variant="text"
+                value="action"
+              >Action</v-btn>
+            </v-btn-toggle>
+          </v-container>
+
+          <!-- Show Sources -->
+          <v-card
+            variant="outlined"
+            v-if="hasSources && resourceStage === 'source'"
+          >
+            <v-card-text>
+                <v-card
+                  variant="flat"
+                  v-for="(data, key) in pipeline.Pipeline.Sources" :key="key"
+                >
+                  <SourceComponent
+                    :id="key"
+                    :data="data"
+                  ></SourceComponent>
+                  <LinkedReports
+                    :configID="getResourceUUID('source', key)"
+                    configType="source"
+                    :pipelineUUID="pipelineUUID"
+                  ></LinkedReports>
+                </v-card>
+            </v-card-text>
+          </v-card>
+
+          <!-- Show Conditions -->
+          <v-card
+            variant="outlined"
+            v-if="hasConditions && resourceStage === 'condition'"
+          >
+            <v-card-text>
+                <v-card
+                  variant="flat"
+                  v-for="(data, key) in pipeline.Pipeline.Conditions" :key="key"
+                >
+                  <ConditionComponent
+                    :id="key"
+                    :data="data"
+                  ></ConditionComponent>
+                  <LinkedReports
+                    :configID="getResourceUUID('condition', key)"
+                    configType="condition"
+                    :pipelineUUID="pipelineUUID"
+                  ></LinkedReports>
+                </v-card>
+            </v-card-text>
+          </v-card>
+
+          <!-- Show Targets -->
+          <v-card
+            variant="outlined"
+            v-if="hasTargets && resourceStage === 'target'"
+          >
+            <v-card-text>
+                <v-card
+                  v-for="(data, key) in pipeline.Pipeline.Targets" :key="key"
+                  variant="flat"
+                >
+                  <TargetComponent
+                    :id="key"
+                    :data="data"
+                  ></TargetComponent>
+                  <LinkedReports
+                    :configID="getResourceUUID('target', key)"
+                    configType="target"
+                    :pipelineUUID="pipelineUUID"
+                  ></LinkedReports>
+                </v-card>
+            </v-card-text>
+          </v-card>
+          <!-- Show Actions -->
+          <v-card
+            variant="outlined"
+            v-if="hasActions && resourceStage === 'action'"
+          >
+            <v-card-text>
+                <v-card
+                  variant="flat"
+                  v-for="(data, key) in pipeline.Pipeline.Actions" :key="key"
+                >
+                  <ActionComponent
+                    :id="key"
+                    :data="data"
+                  ></ActionComponent>
+                </v-card>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <v-row>
+        <v-col
+          cols="auto"
+          lg="12"
+          md="12"
+          sm="12"
+          class="text-center"
+        >
+            <v-card
+              variant="flat"
+              v-if="pipeline.Pipeline.Graph"
+            >
+                <PipelineGraphComponent :data="pipeline.Pipeline.Graph" />
+            </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+  </template>
 </template>
 
 <script>
@@ -325,12 +377,19 @@ import LinkedReports from './configs/_linkedReports.vue';
 
 import { getStatusColor, getStatusIcon, getStatusText } from '@/composables/status';
 import { toLocalDate } from '@/composables/date';
-import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled } from '@/composables/runtime';
-import { getAccessToken } from '@/composables/auth';
+import { apiFetch } from '@/composables/api';
+
+// CONFIG_ID_KEYS names, per resource stage, the field of the report holding the mapping
+// from a config UUID to the resource it belongs to. Actions are absent on purpose: they
+// carry no config of their own to link back to.
+const CONFIG_ID_KEYS = {
+  source: 'SourceConfigIDs',
+  condition: 'ConditionConfigIDs',
+  target: 'TargetConfigIDs',
+};
 
 export default {
-  name: 'PipelineReportView',
+  name: 'PipelineReport',
 
   components: {
     ActionComponent,
@@ -343,19 +402,15 @@ export default {
 
   data: () => ({
     isLoading: true,
+    loadError: '',
     resourceStage: "source",
     pipelineUUID: "",
-    pipeline: {
-      "Pipeline": {}
-    },
-    latestReportByID: {
-      "Pipeline": {}
-    },
+    // Both start empty rather than holding a placeholder shape: the template tells the
+    // three states apart by them, and a placeholder would render a report header with an
+    // unknown status before anything has been fetched.
+    pipeline: null,
+    latestReportByID: null,
   }),
-
-  beforeUnmount() {
-    this.cancelAutoUpdate();
-  },
 
   computed: {
     pipelineURLs() {
@@ -397,47 +452,54 @@ export default {
 
       return Object.entries(labels).sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
     },
+
+    hasSources() {
+      return Object.keys(this.pipeline?.Pipeline?.Sources || {}).length > 0
+    },
+
+    hasConditions() {
+      return Object.keys(this.pipeline?.Pipeline?.Conditions || {}).length > 0
+    },
+
+    hasTargets() {
+      return Object.keys(this.pipeline?.Pipeline?.Targets || {}).length > 0
+    },
+
+    // hasActions asks for an actionUrl rather than merely for an action: an action with
+    // nowhere to link to has nothing to show on its tab.
+    hasActions() {
+      const actions = this.pipeline?.Pipeline?.Actions
+      if (!actions) {
+        return false
+      }
+
+      return Object.values(actions).some((action) => action?.actionUrl !== undefined)
+    },
+
+    isLatestReport() {
+      if (!this.latestReportByID || !this.pipeline) {
+        return false
+      }
+
+      return this.latestReportByID.ID === this.pipeline.ID
+    },
+
+    // resourceUUIDsByName indexes each stage's config UUIDs by resource name, so the
+    // template can look one up per resource instead of scanning the whole mapping.
+    resourceUUIDsByName() {
+      const index = (configIDs) => Object.fromEntries(
+        Object.entries(configIDs || {}).map(([uuid, name]) => [name, uuid])
+      )
+
+      return Object.fromEntries(
+        Object.entries(CONFIG_ID_KEYS).map(([stage, key]) => [stage, index(this.pipeline?.[key])])
+      )
+    },
   },
 
   methods: {
     getResourceUUID(type, id) {
-      if (type === "source") {
-        if (this.pipeline.SourceConfigIDs === undefined) {
-          return ""
-        }
-
-        for (const [uuid, name] of Object.entries(this.pipeline.SourceConfigIDs)) {
-          if (name === id) {
-            return uuid
-          }
-        }
-      }
-
-      if (type === "condition") {
-        if (this.pipeline.ConditionConfigIDs === undefined) {
-          return ""
-        }
-
-        for (const [uuid, name] of Object.entries(this.pipeline.ConditionConfigIDs)) {
-          if (name === id) {
-            return uuid
-          }
-        }
-      }
-
-      if (type === "target") {
-        if (this.pipeline.TargetConfigIDs === undefined) {
-          return ""
-        }
-
-        for (const [uuid, name] of Object.entries(this.pipeline.TargetConfigIDs)) {
-          if (name === id) {
-            return uuid
-          }
-        }
-      }
-
-      return ``
+      return this.resourceUUIDsByName[type]?.[id] || ''
     },
 
     formatDate(rawDate) {
@@ -453,62 +515,21 @@ export default {
     },
 
     getDefaultStage(){
-      if (this.isActions()) {
+      if (this.hasActions) {
         return "action"
-      } else if (this.isSources()) {
+      } else if (this.hasSources) {
         return "source"
-      } else if (this.isConditions()) {
+      } else if (this.hasConditions) {
         return "condition"
-      } else if (this.isTargets()) {
+      } else if (this.hasTargets) {
         return "target"
       }
 
       return "source";
     },
 
-    isActions(){
-      for (const action in this.pipeline.Pipeline.Actions) {
-        if (this.pipeline.Pipeline.Actions[action].actionUrl !== undefined){
-          return true
-        }
-      }
-      return false;
-    },
-
-    isLatestReport(){
-      if (this.latestReportByID !== null) {
-        return this.latestReportByID.ID == this.pipeline.ID
-      }
-      return ""
-    },
-
-    isConditions(){
-      for (const condition in this.pipeline.Pipeline.Conditions) {
-        return true
-      }
-      return false;
-    },
-
-    isSources(){
-      for (const source in this.pipeline.Pipeline.Sources) {
-        return true
-      }
-      return false;
-    },
-
-    isTargets(){
-      for (const target in this.pipeline.Pipeline.Targets) {
-        return true
-      }
-      return false;
-    },
-
     getPipelineReportLink: function(id){
       return "/pipeline/reports/" + id
-    },
-
-    cancelAutoUpdate() {
-      clearInterval(this.timer);
     },
 
     getStatusColor: function(input){
@@ -524,45 +545,27 @@ export default {
     },
 
     async getPipelineReportData() {
-      if (isAuthEnabled) {
-        const token = await getAccessToken();
-        const response = await fetch(`${getApiBaseURL()}/pipeline/reports/` + this.$route.params.id, {
-            headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
+      this.isLoading = true
+      this.loadError = ''
 
-        this.pipeline = data.data;
-        this.isLoading = false;
+      try {
+        const data = await apiFetch(`/pipeline/reports/${this.pipelineUUID}`)
 
-        if (this.pipeline !== null) {
-          this.latestReportByID = data.latestReportByID
-          this.isLatestReport()
-        }
-      } else {
-        const response = await fetch(`${getApiBaseURL()}/pipeline/reports/` + this.$route.params.id);
-        const data = await response.json();
-
-        this.pipeline = data.data;
-        this.isLoading = false;
-
-        if (this.pipeline !== null) {
-          this.latestReportByID = data.latestReportByID
-          this.isLatestReport()
-        }
+        this.pipeline = data.data ?? null
+        this.latestReportByID = data.latestReportByID ?? null
+        this.resourceStage = this.getDefaultStage()
+      } catch (error) {
+        console.error('Error fetching pipeline report:', error)
+        this.pipeline = null
+        this.latestReportByID = null
+        // A 404 is how the API says the id has nothing behind it, which is not a failure
+        // to report. Leaving loadError empty falls through to the "not found" state, which
+        // tells the reader what happened better than the API's own "no rows in result set".
+        this.loadError = error.status === 404 ? '' : error.message
+      } finally {
+        this.isLoading = false
       }
-
-      this.resourceStage = this.getDefaultStage();
     },
-  },
-
-  watch: {
-      isLoading (val) {
-        val && setTimeout(() => {
-          this.isLoading = false
-        }, 3000)
-      },
   },
 
   async created() {
@@ -571,25 +574,25 @@ export default {
     this.$watch(
       () => this.$route.params,
       (toParams, previousParams) => {
-        if (toParams.id != previousParams.id) {
-          try {
-            this.getPipelineReportData()
-          } catch (error) {
-            console.log(error);
-          }
+        if (toParams.id !== previousParams.id) {
+          // The UUID has to follow the route: it is also what tells LinkedReports which
+          // report to leave out of the list it shows.
+          this.pipelineUUID = toParams.id
+          this.getPipelineReportData()
         }
       }
     )
-    try {
-      this.getPipelineReportData()
-    } catch (error) {
-      console.log(error);
-    }
+
+    await this.getPipelineReportData()
   },
 }
 </script>
 
 <style scoped>
+.loading-container {
+  min-height: 50vh;
+}
+
 .ci-warning {
   display: block;
   margin-top: 6px;
@@ -620,7 +623,8 @@ export default {
   gap: 16px;
   padding: 14px 16px;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  /* Themed rather than a fixed black: the dark surface would otherwise swallow it. */
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .label-key-wrap {

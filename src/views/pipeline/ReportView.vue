@@ -24,16 +24,7 @@ export default {
     ReleaseFooter,
     SideNavigation,
     HeadNavigation,
-    PipelineReport: PipelineReport,
+    PipelineReport,
   },
-  data: () => ({
-    links:[
-      {
-      name: "Updatecli",
-      to: "https://www.updatecli.io",
-      icon: "mdi-arrow-right-circle",
-      },
-  ]
-  })
 }
 </script>
