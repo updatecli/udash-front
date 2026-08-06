@@ -37,9 +37,10 @@
             title="Reports"
             to="/pipeline/reports"
             value="reports"></v-list-item>
+          <!-- Public route, so the link is shown to anonymous visitors too: it is the
+               only path to the project's licence and attribution details. -->
           <v-list-item
             prepend-icon="mdi-information"
-            v-if="isAuthenticated"
             title="About"
             to="/about"
             value="about"></v-list-item>
