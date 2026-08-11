@@ -1,79 +1,67 @@
 <template>
-  <v-app>
-    <HeadNavigation/>
-    <SideNavigation/>
-
-    <v-main>
-      <v-container
-        class="py-8 px-6"
-        fluid
+  <v-container
+    class="py-8 px-6"
+    fluid
+  >
+    <v-overlay
+      :model-value="isLoading"
+      class="align-center justify-center"
+      :disabled=false
+      :eager=true
+      :no-click-animation=false
+      :persistent=false
+      :opacity="0"
       >
-        <v-overlay
-          :model-value="isLoading"
-          class="align-center justify-center"
-          :disabled=false
-          :eager=true
-          :no-click-animation=false
-          :persistent=false
-          :opacity="0"
-          >
-          <v-progress-circular
-            color="black"
-            indeterminate
-            size="64"
-          ></v-progress-circular>
-        </v-overlay>
-        <v-row>
-          <v-col
-            class="text-right"
-            cols="auto"
-            lg="8"
-            md="8"
-            sm="12"
-          >
-            <h1>Git Dashboard<v-icon icon="mdi-view-dashboard"> </v-icon></h1>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col
-            cols="auto"
-            lg="12"
-            md="12"
-            sm="12"
-          >
-            <PipelineSCMFilter
-              :filter="filter"
-              :show-repository-branch="false"
-              @update-filter="updateFilter"
-              @loaded="setFilterLoaded"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col
-            cols="auto"
-            lg="12"
-            md="12"
-            sm="12"
-          >
-            <PipelineSCMSSummary
-              v-if="isFilterLoaded"
-              :filter="filter"
-              @loaded="setSummaryLoaded"
-            />
-          </v-col>
-        </v-row>
-      </v-container>
-    </v-main>
-
-    <ReleaseFooter/>
-  </v-app>
+      <v-progress-circular
+        color="black"
+        indeterminate
+        size="64"
+      ></v-progress-circular>
+    </v-overlay>
+    <v-row>
+      <v-col
+        class="text-right"
+        cols="auto"
+        lg="8"
+        md="8"
+        sm="12"
+      >
+        <h1>Git Dashboard<v-icon icon="mdi-view-dashboard"> </v-icon></h1>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col
+        cols="auto"
+        lg="12"
+        md="12"
+        sm="12"
+      >
+        <PipelineSCMFilter
+          :filter="filter"
+          :show-repository-branch="false"
+          @update-filter="updateFilter"
+          @loaded="setFilterLoaded"
+        />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col
+        cols="auto"
+        lg="12"
+        md="12"
+        sm="12"
+      >
+        <PipelineSCMSSummary
+          v-if="isFilterLoaded"
+          :filter="filter"
+          @loaded="setSummaryLoaded"
+        />
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
-import ReleaseFooter from '../components/ReleaseFooter.vue';
-import SideNavigation from '../components/SideNavigation.vue';
-import HeadNavigation from '../components/HeadNavigation.vue';
 import SCMSDashboard from '../components/scm/_summary.vue';
 
 import PipelineSCMFilter from '../components/scm/_filter.vue';
@@ -81,9 +69,6 @@ import PipelineSCMFilter from '../components/scm/_filter.vue';
 export default {
   name: 'DashboardView',
   components: {
-    ReleaseFooter,
-    SideNavigation,
-    HeadNavigation,
     PipelineSCMFilter,
     PipelineSCMSSummary: SCMSDashboard,
   },
