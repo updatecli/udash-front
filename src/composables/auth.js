@@ -5,7 +5,7 @@ import { getRuntimeConfig, getAppBaseUrl, isAuthEnabled } from '@/composables/ru
 // Provider-agnostic OIDC auth layer (Authorization Code + PKCE).
 // Backed by oidc-client-ts, configured from the runtime config.json so any
 // standards-compliant provider (e.g. Zitadel) can be plugged in without code
-// changes. Replaces the former @auth0/auth0-vue integration.
+// changes.
 
 const RETURN_TO_KEY = 'udash.auth.returnTo'
 
@@ -19,10 +19,49 @@ const state = reactive({
 let userManager = null
 let initPromise = null
 
-function applyUser(user) {
+// loadUserInfoClaims resolves the profile claims for a session. The ID token carries
+// only what the provider chooses to put there — Zitadel omits `email`, `name`,
+// `preferred_username` and `picture` unless the application opts in — so the claims are
+// read from the userinfo endpoint and merged over the token's own.
+//
+// This is deliberately non-fatal. oidc-client-ts' built-in `loadUserInfo` runs inside
+// the signin callback and the refresh path and throws on failure, which would cost the
+// user their session over a transient userinfo error. Here a failure degrades to the
+// sparse ID-token profile and is recorded for the UI to surface.
+async function loadUserInfoClaims(user) {
+  if (!user?.access_token) {
+    return user?.profile ?? null
+  }
+
+  try {
+    const endpoint = await getUserManager().metadataService.getUserInfoEndpoint()
+    const response = await fetch(endpoint, {
+      headers: { Authorization: `Bearer ${user.access_token}` },
+    })
+
+    if (!response.ok) {
+      throw new Error(`userinfo request failed with status ${response.status}`)
+    }
+
+    const claims = await response.json()
+
+    // A response describing a different subject must never be merged in.
+    if (claims.sub !== user.profile.sub) {
+      throw new Error('userinfo subject does not match the ID token subject')
+    }
+
+    return { ...user.profile, ...claims }
+  } catch (err) {
+    state.error = err
+    return user.profile
+  }
+}
+
+async function applyUser(user) {
   if (user && !user.expired) {
+    // Resolve the profile before flipping the flag so the two never disagree.
+    state.user = await loadUserInfoClaims(user)
     state.isAuthenticated = true
-    state.user = user.profile
   } else {
     state.isAuthenticated = false
     state.user = null
@@ -75,7 +114,7 @@ export function initAuth() {
       const params = new URLSearchParams(window.location.search)
       if (params.has('code') && params.has('state')) {
         const user = await mgr.signinRedirectCallback()
-        applyUser(user)
+        await applyUser(user)
 
         // Strip the OAuth query params, keeping the current path and hash.
         window.history.replaceState(
@@ -84,11 +123,11 @@ export function initAuth() {
           window.location.pathname + window.location.hash
         )
       } else {
-        applyUser(await mgr.getUser())
+        await applyUser(await mgr.getUser())
       }
     } catch (err) {
       state.error = err
-      applyUser(null)
+      await applyUser(null)
     } finally {
       state.isLoading = false
     }
