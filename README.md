@@ -34,6 +34,7 @@ Set it in the runtime config files to mount the SPA below a subpath such as `/ud
 .public/config.json
 ```
 {
+   "AUTH_ENABLED": false,
    "OAUTH_DOMAIN": "https://your-instance.zitadel.cloud",
    "OAUTH_CLIENTID": "xxx",
    "OAUTH_SCOPE": "openid profile email offline_access urn:zitadel:iam:org:project:id:PROJECT_ID:aud",
@@ -59,9 +60,10 @@ makes the wider queries expensive.
 Authentication uses the standards-based OpenID Connect Authorization Code + PKCE
 flow via [`oidc-client-ts`](https://github.com/authts/oidc-client-ts), and works
 with any compliant provider (the reference deployment uses [Zitadel](https://zitadel.com)).
-It is toggled at build time with `VITE_AUTH_ENABLED` (`.env`) and configured at
-runtime through `config.json`:
+It is toggled and configured entirely at runtime through `config.json`, so the same
+image serves both authenticated and open deployments:
 
+- `AUTH_ENABLED` — set to `true` to require authentication. Defaults to `false`.
 - `OAUTH_DOMAIN` — the provider's issuer URL (e.g. `https://your-instance.zitadel.cloud`).
 - `OAUTH_CLIENTID` — the SPA application's client ID.
 - `OAUTH_SCOPE` — requested scopes. Include `openid profile email offline_access`
