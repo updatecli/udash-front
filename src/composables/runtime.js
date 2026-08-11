@@ -11,7 +11,11 @@ const runtimeConfig = window.config || {}
 const DEFAULT_MAX_HISTORY_DAYS = 30
 const API_MAX_HISTORY_DAYS = 366
 
-export const isAuthEnabled = import.meta.env.VITE_AUTH_ENABLED === 'true'
+// AUTH_ENABLED is read from the runtime config rather than the build environment so a
+// single image can serve both authenticated and open deployments. index.html populates
+// window.config before importing the bundle, so this is resolved by the time any module
+// body runs.
+export const isAuthEnabled = String(runtimeConfig.AUTH_ENABLED) === 'true'
 
 export function getRuntimeConfig() {
   return runtimeConfig

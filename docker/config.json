@@ -1,4 +1,5 @@
 {
+   "AUTH_ENABLED": false,
    "OAUTH_DOMAIN": "https://your-instance.zitadel.cloud",
    "OAUTH_CLIENTID": "client_id",
    "OAUTH_SCOPE": "openid profile email offline_access urn:zitadel:iam:org:project:id:PROJECT_ID:aud",
