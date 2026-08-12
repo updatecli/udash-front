@@ -1,7 +1,9 @@
 {
-   "OAUTH_DOMAIN": "https://oauth.domain",
+   "AUTH_ENABLED": false,
+   "OAUTH_DOMAIN": "https://your-instance.zitadel.cloud",
    "OAUTH_CLIENTID": "client_id",
-   "OAUTH_AUDIENCE": "http://localhost:8080/api",
+   "OAUTH_SCOPE": "openid profile email offline_access urn:zitadel:iam:org:project:id:PROJECT_ID:aud",
    "API_BASE_URL": "/api",
-   "APP_BASE_PATH": "/"
+   "APP_BASE_PATH": "/",
+   "MAX_HISTORY_DAYS": 30
 }

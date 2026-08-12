@@ -93,12 +93,61 @@
                   </v-col>
                 </v-row>
               </div>
-                <!-- Date Range Labels -->
+                <!-- Pipeline Result and Open Pull Request Selection
+
+                     Both are picked from their name alone, unlike every other control
+                     here which can be checked against the rows it returns, so their
+                     items carry a subtitle spelling out what each one means.
+
+                     They sit side by side because they are read together: a pipeline
+                     reports a success when it had nothing to change, including when the
+                     change is already waiting in a pull request nobody merged, and
+                     pairing the two is what isolates those. They remain two controls
+                     rather than one list of five: an open pull request is a dimension of
+                     its own, orthogonal to the result. -->
+                <v-row>
+                  <v-col cols="12" md="6">
+                    <v-select
+                      variant="outlined"
+                      label="Pipeline Result (Optional)"
+                      :items="pipelineResults"
+                      :item-props="true"
+                      item-value="value"
+                      prepend-inner-icon="mdi-list-status"
+                      v-model="selectedResults"
+                      multiple
+                      chips
+                      closable-chips
+                      clearable
+                      hint="Leave empty to show every result"
+                      persistent-hint
+                    ></v-select>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-select
+                      variant="outlined"
+                      label="Open Pull Request (Optional)"
+                      :items="openActionOptions"
+                      :item-props="true"
+                      item-value="value"
+                      prepend-inner-icon="mdi-source-pull"
+                      v-model="selectedOpenAction"
+                      clearable
+                      hint="Leave empty to show pipelines whether or not one is open"
+                      persistent-hint
+                    ></v-select>
+                  </v-col>
+                </v-row>
+                <!-- Date Range Labels
+
+                     Oldest on the left, newest on the right, matching the reversed
+                     slider below: dateRange[0] is "now" and larger steps go further
+                     back, so the second entry is the one that starts the range. -->
                 <v-row class="mb-0">
                   <v-col cols="6" class="text-left">
                     <v-text-field
-                      :model-value="stepToHumanDate(dateRange[0])"
-                      :hint="describeRelativeStep(dateRange[0])"
+                      :model-value="stepToHumanDate(dateRange[1])"
+                      :hint="describeRelativeStep(dateRange[1])"
                       persistent-hint
                       readonly
                       density="compact"
@@ -110,8 +159,8 @@
                   </v-col>
                   <v-col cols="6" class="text-right">
                     <v-text-field
-                      :model-value="stepToHumanDate(dateRange[1])"
-                      :hint="describeRelativeStep(dateRange[1])"
+                      :model-value="stepToHumanDate(dateRange[0])"
+                      :hint="describeRelativeStep(dateRange[0])"
                       persistent-hint
                       readonly
                       density="compact"
@@ -126,11 +175,14 @@
                 <v-row>
                   <v-col cols="12">
                     <v-range-slider
-                      v-model="dateRange"
+                      v-model="sliderRange"
                       :reverse="false"
                       :min="0"
-                      :max="30"
+                      :max="maxDateStep"
                       :step="1"
+                      :ticks="sliderTicks"
+                      show-ticks="always"
+                      tick-size="3"
                       class="py-2"
                       :strict="true"
                       :disabled="showRepositoryBranch && (!isRepositoriesData() || !isRepositoryBranchesData())"
@@ -170,10 +222,17 @@
 <script>
 import router from '../../router'
 
-import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled } from '@/composables/runtime';
+import { apiFetch } from '@/composables/api';
+import { getMaxHistoryDays } from '@/composables/runtime';
 import { FILTER_STORAGE_KEY, stepToISO, formatToLayoutWithoutTimezone } from '@/composables/date';
+import { PIPELINE_RESULTS, PIPELINE_RESULT_VALUES, OPEN_ACTION_OPTIONS, OPEN_ACTION_VALUES, openActionToQuery } from '@/composables/status';
+import { encodeFilterState, decodeFilterState } from '@/composables/filter';
 
+// Steps 0-23 are hours ago; from 24 onwards a step is a day, so the step standing
+// for D days back is D + DAY_STEP_OFFSET. The default range is deliberately left at
+// the last day whatever the configured maximum: widening the slider must not widen
+// what every visitor asks the backend for by default.
+const DAY_STEP_OFFSET = 23;
 const DEFAULT_DATE_RANGE = [0, 24];
 
 export default {
@@ -206,6 +265,10 @@ export default {
     labelKeys: [],
     labelValuesByKey: {},  // Map to store label values for each key
     selectedLabels: [{ key: null, value: null }],  // Array of label selections
+    selectedResults: [],  // Pipeline results to keep, empty meaning all of them
+    pipelineResults: PIPELINE_RESULTS,
+    selectedOpenAction: null,  // "open", "none", or null meaning both
+    openActionOptions: OPEN_ACTION_OPTIONS,
     debounceTimer: null,
     nowTicker: null,
     nowRefreshKey: 0,
@@ -219,48 +282,148 @@ export default {
 
   computed: {
     hasActiveAdvancedFilters() {
-      return this.selectedLabels.some(label => label.key !== null)
+      return this.selectedLabels.some(label => label.key !== null) || this.selectedResults.length > 0 || this.selectedOpenAction !== null
     },
 
-    tickLabels() {
-      const labels = []
-      // Hours: 0-23 (1-24 hours ago)
-      for (let i = 0; i < 24; i++) {
-        if (i === 0) {
-          labels.push('now')
-          continue
-        }
-        if (i === 1) {
-          labels.push('1 hour')
-          continue
-        }
-        labels.push(`${i} hours`)
+    // sliderTicks marks a handful of anchors along the slider so the scale is
+    // readable. Labelling every step is unusable once the range spans weeks, and the
+    // exact instants either side are already spelled out in the two fields above it.
+    //
+    // Anchors follow the same mapping as stepToDate: below 24 a step is an hour, and
+    // the step for D days back is D + DAY_STEP_OFFSET.
+    sliderTicks() {
+      const ticks = {}
+      const maxDays = getMaxHistoryDays()
+
+      const hourAnchors = { 0: 'now', 6: '6h', 12: '12h', 18: '18h' }
+      Object.entries(hourAnchors).forEach(([step, label]) => {
+        ticks[this.toSliderValue(Number(step))] = label
+      })
+
+      const dayAnchors = [1, 7, 14, 30, 60, 90, 180, 365].filter((days) => days <= maxDays)
+
+      // Always mark the far end, so how far the filter reaches is legible at a glance.
+      if (!dayAnchors.includes(maxDays)) {
+        dayAnchors.push(maxDays)
       }
-      // Days: 24-30 (1-7 days ago)
-      for (let i = 0; i < 7; i++) {
-        if (i === 0) {
-          labels.push('end of today')
-          continue
-        }
-        if (i === 1) {
-          labels.push('1 day')
-          continue
-        }
-        labels.push(`${i} days`)
-      }
-      return labels
+
+      dayAnchors.forEach((days) => {
+        ticks[this.toSliderValue(days + DAY_STEP_OFFSET)] = days === 1 ? '1 day' : `${days} days`
+      })
+
+      return ticks
     },
 
+    // sliderRange presents dateRange the way a timeline reads: oldest on the left,
+    // now on the right. dateRange itself stays in "steps ago", which is what gets
+    // persisted, shared in the URL and turned into timestamps, so nothing downstream
+    // has to know about the flip.
+    //
+    // This is done by mirroring the values rather than with the slider's own reverse
+    // prop: reverse leaves the ticks sitting at the minimum and maximum pinned to the
+    // wrong ends, which puts "now" and the oldest label on the wrong sides.
+    sliderRange: {
+      get() {
+        return [this.toSliderValue(this.dateRange[1]), this.toSliderValue(this.dateRange[0])]
+      },
+      set(value) {
+        const [older, newer] = [...value].sort((a, b) => a - b)
+        this.dateRange = [this.toSliderValue(newer), this.toSliderValue(older)]
+      },
+    },
+
+    // dateRange[0] is the step closest to now and dateRange[1] the furthest back, so
+    // the range starts at the second entry. The API tolerates the two being handed
+    // over the wrong way round, which is why this read backwards for so long without
+    // breaking anything.
     formattedStartTime() {
-      return stepToISO(this.dateRange[0])
+      return stepToISO(this.dateRange[1])
     },
 
     formattedEndTime() {
-      return stepToISO(this.dateRange[1])
+      return stepToISO(this.dateRange[0])
+    },
+
+    // maxDateStep is how far the slider reaches, driven by the instance's configured
+    // history window rather than a fixed bound.
+    maxDateStep() {
+      return DAY_STEP_OFFSET + getMaxHistoryDays()
     },
   },
 
   methods: {
+    // clampStep keeps a restored step inside the slider. A range saved while the
+    // instance allowed more history would otherwise survive a lowered
+    // MAX_HISTORY_DAYS and keep querying beyond it.
+    clampStep(step) {
+      return Math.min(Math.max(step, 0), this.maxDateStep)
+    },
+
+    // toSliderValue mirrors a step across the track. It is its own inverse, so the
+    // same call converts in both directions.
+    toSliderValue(step) {
+      return this.maxDateStep - step
+    },
+
+    // sanitizeResults keeps only the results the API knows about, so a hand-edited
+    // URL or a stale local storage entry cannot turn into a query matching nothing.
+    sanitizeResults(value) {
+      if (!Array.isArray(value)) {
+        return []
+      }
+
+      return [...new Set(value.filter((result) => PIPELINE_RESULT_VALUES.includes(result)))]
+    },
+
+    // sanitizeOpenAction does for the open action what sanitizeResults does for the
+    // results: anything the API would not understand becomes "no filter" rather than a
+    // query matching nothing.
+    sanitizeOpenAction(value) {
+      return OPEN_ACTION_VALUES.includes(value) ? value : null
+    },
+
+    // toggleResult is what the summary doughnuts call when one of their segments is
+    // clicked. Clicking the same segment again clears it, so a click is never a
+    // one-way trip into a filter the reader then has to scroll up to undo.
+    //
+    // Segments standing for one half of a result split on whether a pull request is
+    // still open go through toggleResultWithOpenAction instead, so that both dimensions
+    // are set together.
+    toggleResult(result) {
+      const sanitized = this.sanitizeResults([result])
+      if (sanitized.length === 0) {
+        return
+      }
+
+      this.selectedResults = this.selectedResults.includes(sanitized[0])
+        ? this.selectedResults.filter((selected) => selected !== sanitized[0])
+        : [...this.selectedResults, sanitized[0]]
+
+      // Show what just changed: the control lives in a panel which is collapsed by
+      // default, and a filter the reader cannot see is a filter they cannot undo.
+      if (!this.expandedPanels.includes(0)) {
+        this.expandedPanels = [...this.expandedPanels, 0]
+      }
+
+      this.applyFilter()
+    },
+
+    // toggleResultWithOpenAction is what the segments split on the open action call, so
+    // that clicking "succeeded, waiting to be merged" selects both dimensions in one go
+    // rather than leaving the reader with a half applied filter.
+    toggleResultWithOpenAction(result, openAction) {
+      const wasSelected = this.selectedResults.includes(result) && this.selectedOpenAction === openAction
+
+      this.selectedResults = wasSelected ? [] : [result]
+      this.selectedOpenAction = wasSelected ? null : this.sanitizeOpenAction(openAction)
+
+      if (!this.expandedPanels.includes(0)) {
+        this.expandedPanels = [...this.expandedPanels, 0]
+      }
+
+      this.applyFilter()
+    },
+
     isRepositoriesData() {
       return this.repositories.length > 0
     },
@@ -272,29 +435,14 @@ export default {
     async getSCMSData() {
       this.$emit('loaded', false)
       try {
-        const auth_enabled = isAuthEnabled;
-
-        let query = `${getApiBaseURL()}/pipeline/scms`;
+        let query = '/pipeline/scms';
 
         if (this.restrictedSCM != "") {
           query = query + `?scmid=${this.restrictedSCM}`
         }
 
-        if (auth_enabled) {
-          const token = await this.$auth0.getAccessTokenSilently();
-
-          const response = await fetch(query, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          const data = await response.json();
-          this.scms = data.scms
-        } else {
-          const response = await fetch(query);
-          const data = await response.json();
-          this.scms = data.scms
-        }
+        const data = await apiFetch(query);
+        this.scms = data.scms || []
 
         let urlArray = []
         this.repositories = []
@@ -337,23 +485,10 @@ export default {
 
     async getLabelKeys() {
       try {
-        const auth_enabled = isAuthEnabled;
-        let query = `${getApiBaseURL()}/pipeline/labels?keyonly=true&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
+        const query = `/pipeline/labels?keyonly=true&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
 
-        if (auth_enabled) {
-          const token = await this.$auth0.getAccessTokenSilently();
-          const response = await fetch(query, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          const data = await response.json();
-          this.labelKeys = data.labels || [];
-        } else {
-          const response = await fetch(query);
-          const data = await response.json();
-          this.labelKeys = data.labels || [];
-        }
+        const data = await apiFetch(query);
+        this.labelKeys = data.labels || [];
       } catch (error) {
         console.error('Error fetching label keys:', error);
         this.labelKeys = [];
@@ -371,29 +506,14 @@ export default {
           return this.labelValuesByKey[labelKey];
         }
 
-        const auth_enabled = isAuthEnabled;
-        let query = `${getApiBaseURL()}/pipeline/labels?key=${encodeURIComponent(labelKey)}&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
+        const query = `/pipeline/labels?key=${encodeURIComponent(labelKey)}&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
 
-        if (auth_enabled) {
-          const token = await this.$auth0.getAccessTokenSilently();
-          const response = await fetch(query, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          const data = await response.json();
-          // Extract unique values from the labels array
-          const uniqueValues = [...new Set(data.labels.map(label => label.value))];
-          this.labelValuesByKey[labelKey] = uniqueValues || [];
-          return this.labelValuesByKey[labelKey];
-        } else {
-          const response = await fetch(query);
-          const data = await response.json();
-          // Extract unique values from the labels array
-          const uniqueValues = [...new Set(data.labels.map(label => label.value))];
-          this.labelValuesByKey[labelKey] = uniqueValues || [];
-          return this.labelValuesByKey[labelKey];
-        }
+        const data = await apiFetch(query);
+
+        // Extract unique values from the labels array
+        const uniqueValues = [...new Set((data.labels || []).map(label => label.value))];
+        this.labelValuesByKey[labelKey] = uniqueValues;
+        return this.labelValuesByKey[labelKey];
       } catch (error) {
         console.error('Error fetching label values:', error);
         return [];
@@ -414,6 +534,8 @@ export default {
       this.restrictedSCM = ""
       this.dateRange = [...DEFAULT_DATE_RANGE]
       this.selectedLabels = [{ key: null, value: null }]
+      this.selectedResults = []
+      this.selectedOpenAction = null
       this.labelValuesByKey = {}
       this.getSCMSData()
       this.getLabelKeys()
@@ -454,43 +576,18 @@ export default {
       return repositoryBranches
     },
 
-    encodeBase64UrlUtf8(value) {
-      const bytes = new TextEncoder().encode(value)
-      let binary = ''
-      for (const byte of bytes) {
-        binary += String.fromCharCode(byte)
-      }
-      return btoa(binary)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/g, '')
-    },
-
-    decodeBase64UrlUtf8(value) {
-      const padded = value
-        .replace(/-/g, '+')
-        .replace(/_/g, '/')
-        .padEnd(value.length + (4 - (value.length % 4 || 4)), '=')
-
-      const binary = atob(padded)
-      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
-      return new TextDecoder().decode(bytes)
-    },
-
     loadFilterFromURL() {
       try {
-        const encoded = router.currentRoute.value.query.filter
-        if (!encoded || typeof encoded !== 'string') {
+        const decoded = decodeFilterState(router.currentRoute.value.query.filter)
+        if (!decoded) {
           return false
         }
-
-        const decoded = JSON.parse(this.decodeBase64UrlUtf8(encoded))
 
         if (Array.isArray(decoded.dateRange) && decoded.dateRange.length === 2) {
           const start = Number(decoded.dateRange[0])
           const end = Number(decoded.dateRange[1])
           if (Number.isFinite(start) && Number.isFinite(end)) {
-            this.dateRange = [start, end]
+            this.dateRange = [this.clampStep(start), this.clampStep(end)]
           }
         }
 
@@ -503,6 +600,9 @@ export default {
             }))
           this.selectedLabels = restoredLabels.length > 0 ? restoredLabels : [{ key: null, value: null }]
         }
+
+        this.selectedResults = this.sanitizeResults(decoded.selectedResults)
+        this.selectedOpenAction = this.sanitizeOpenAction(decoded.selectedOpenAction)
 
         if (this.showRepositoryBranch) {
           if (typeof decoded.repository === 'string') {
@@ -533,7 +633,7 @@ export default {
           const start = Number(savedState.dateRange[0])
           const end = Number(savedState.dateRange[1])
           if (Number.isFinite(start) && Number.isFinite(end)) {
-            this.dateRange = [start, end]
+            this.dateRange = [this.clampStep(start), this.clampStep(end)]
           }
         }
 
@@ -547,6 +647,9 @@ export default {
 
           this.selectedLabels = restoredLabels.length > 0 ? restoredLabels : [{ key: null, value: null }]
         }
+
+        this.selectedResults = this.sanitizeResults(savedState.selectedResults)
+        this.selectedOpenAction = this.sanitizeOpenAction(savedState.selectedOpenAction)
 
         if (this.showRepositoryBranch) {
           if (typeof savedState.repository === 'string') {
@@ -567,6 +670,8 @@ export default {
         const stateToPersist = {
           dateRange: this.dateRange,
           selectedLabels: this.selectedLabels,
+          selectedResults: this.selectedResults,
+          selectedOpenAction: this.selectedOpenAction,
           repository: this.showRepositoryBranch ? this.repository : '',
           branch: this.showRepositoryBranch ? this.branch : '',
           updatedAt: new Date().toISOString(),
@@ -615,19 +720,33 @@ export default {
         newFilter.labels = labels;
       }
 
+      if (this.selectedResults.length > 0) {
+        newFilter.results = [...this.selectedResults];
+      }
+
+      // The API reads the open action as an optional boolean, so an unset filter has to
+      // stay absent from the body rather than be sent as false, which would drop every
+      // pipeline carrying an open pull request.
+      const openAction = openActionToQuery(this.selectedOpenAction);
+      if (openAction !== undefined) {
+        newFilter.openAction = openAction;
+      }
+
       this.persistFilterState();
 
       // Keep the URL in sync so the current filter is always shareable
       const urlState = {
         dateRange: this.dateRange,
         selectedLabels: this.selectedLabels,
+        selectedResults: this.selectedResults,
+        selectedOpenAction: this.selectedOpenAction,
       }
       if (this.showRepositoryBranch) {
         urlState.repository = this.repository
         urlState.branch = this.branch
       }
       router.replace({
-        query: { ...router.currentRoute.value.query, filter: this.encodeBase64UrlUtf8(JSON.stringify(urlState)) },
+        query: { ...router.currentRoute.value.query, filter: encodeFilterState(urlState) },
       }).catch(() => {})
 
       this.$emit('update-filter', newFilter)
@@ -704,31 +823,6 @@ export default {
     stepToHumanDate(step) {
       const date = this.stepToDate(step)
       return this.formatHumanDate(date)
-    },
-
-    tickLabel(label) {
-
-      if (label < 24 ){
-        // Hours: 0-23 (1-24 hours ago)
-        if (label === 0) {
-          return 'now'
-        }
-        if (label === 1) {
-          return '1 hour'
-        }
-        return `${label} hours`
-      }
-      else {
-        // Days: 24-30 (1-7 days ago)
-        const daysAgo = label - 24
-        if (daysAgo === 0) {
-          return 'end of today'
-        }
-        if (daysAgo === 1) {
-          return '1 day'
-        }
-        return `${daysAgo} days`
-      }
     },
 
     getLabelValuesForIndex(index) {
@@ -826,9 +920,9 @@ export default {
           return
         }
 
-        // Emit only if valid (not equal)
-        const startTime = stepToISO(val[0])
-        const endTime = stepToISO(val[1])
+        // Emit only if valid (not equal). The furthest step back starts the range.
+        const startTime = stepToISO(val[1])
+        const endTime = stepToISO(val[0])
         this.$emit('date-range-changed', { startTime, endTime })
 
         // Debounce label refresh to avoid an API call on every slider tick

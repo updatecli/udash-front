@@ -87,7 +87,9 @@ export function getStartTimeFromStorage() {
             return null
         }
 
-        const start = Number(parsedFilter.dateRange[0])
+        // dateRange[0] is the step closest to now, dateRange[1] the furthest back, so
+        // the range starts at the second entry.
+        const start = Number(parsedFilter.dateRange[1])
         if (!Number.isFinite(start)) {
             return null
         }
@@ -111,7 +113,7 @@ export function getEndTimeFromStorage() {
             return null
         }
 
-        const end = Number(parsedFilter.dateRange[1])
+        const end = Number(parsedFilter.dateRange[0])
         if (!Number.isFinite(end)) {
             return null
         }

@@ -1,94 +1,74 @@
 <template>
-    <v-system-bar color="background" window app>
+  <v-system-bar color="background" window class="mr-2">
 
-      <v-spacer></v-spacer>
-      <v-btn
-        v-if="!isAuthenticated && !isLoading && isAuthEnabled"
-        density="compact"
-        variant="flat"
-        @click.prevent="login"
-      >
-        Login
-      </v-btn>
+    <v-spacer></v-spacer>
+    <v-btn v-if="!isAuthenticated && !isLoading && isAuthEnabled" density="compact" variant="flat"
+      @click.prevent="login">
+      Login
+    </v-btn>
 
-      <v-menu
-        class="text-center"
-        v-if="isAuthenticated && isAuthEnabled"
-      >
-        <template v-slot:activator="{ props }">
-          <v-btn density="compact" icon="mdi-account" v-bind="props"></v-btn>
-        </template>
-        <v-list>
-          <v-list-item>
-            <img
-              :src="user.picture"
-              alt="User's profile picture"
-              class="nav-user-profile rounded-circle"
-              width="50"
-            />
-          </v-list-item>
-          <v-list-item
-            prepend-icon="mdi-account"
-            title="Profile"
-            to="/profile"
-            value="profile"
-          ></v-list-item>
-          <v-list-item
-            prepend-icon="mdi-logout"
-            title="Logout"
-            value="logout"
-            @click.prevent="logout"
-          ></v-list-item>
-        </v-list>
-      </v-menu>
-      <v-spacer></v-spacer>
-      <ThemeSwitcher/>
-    </v-system-bar>
+    <v-menu v-if="isAuthenticated && isAuthEnabled">
+      <template v-slot:activator="{ props }">
+        <v-btn density="compact" variant="flat" icon="mdi-account" aria-label="Account menu" v-bind="props"></v-btn>
+      </template>
+      <v-list>
+        <v-list-item>
+          <v-avatar size="50" color="surface-variant" class="d-block mx-auto">
+            <v-img v-if="user?.picture" :src="user.picture" alt="User's profile picture" cover></v-img>
+            <v-icon v-else icon="mdi-account"></v-icon>
+          </v-avatar>
+        </v-list-item>
+        <v-list-item prepend-icon="mdi-account" title="Profile" to="/profile" value="profile"></v-list-item>
+        <v-list-item prepend-icon="mdi-logout" title="Logout" value="logout" @click.prevent="logout"></v-list-item>
+      </v-list>
+    </v-menu>
+    <ThemeSwitcher />
+  </v-system-bar>
 </template>
 
 <script>
-    import { useAuth0 } from '@auth0/auth0-vue';
-    import { getAppBaseUrl, isAuthEnabled } from '@/composables/runtime';
-    import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
+import { useRoute } from 'vue-router';
+import { useAuth } from '@/composables/auth';
+import { isAuthEnabled } from '@/composables/runtime';
+import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
 
-    export default {
-      name: 'HeadNavigation',
-      components: {
-        ThemeSwitcher: ThemeSwitcher,
-      },
-      setup() {
-        if (isAuthEnabled) {
-          const auth0 = useAuth0();
-
-          return {
-            isAuthEnabled: isAuthEnabled,
-            isAuthenticated: auth0.isAuthenticated,
-            isLoading: auth0.isLoading,
-            user: auth0.user,
-            login() {
-              auth0.loginWithRedirect();
-            },
-            logout() {
-              auth0.logout({
-                logoutParams: {
-                  returnTo: getAppBaseUrl()
-                }
-              });
-            }
-          }
-        }
-
-        return {
-          isAuthEnabled: isAuthEnabled,
-          isAuthenticated: true,
-          isLoading: false,
-          user: {
-            picture: 'https://cdn.vuetifyjs.com/images'
-          },
-        }
-
-      },
-      data: () => ({
-      }),
+export default {
+  name: 'HeadNavigation',
+  components: {
+    ThemeSwitcher,
+  },
+  setup() {
+    // With auth disabled neither the login button nor the account menu renders,
+    // so there is no auth state for the template to read.
+    if (!isAuthEnabled) {
+      return { isAuthEnabled };
     }
+
+    const auth = useAuth();
+    const route = useRoute();
+
+    return {
+      isAuthEnabled,
+      isAuthenticated: auth.isAuthenticated,
+      isLoading: auth.isLoading,
+      user: auth.user,
+      // Carry the current route through the identity provider round trip so the
+      // user lands back where they were; main.js replays it via consumeReturnTo().
+      async login() {
+        try {
+          await auth.login(route.fullPath);
+        } catch (err) {
+          console.error('Login redirect failed', err);
+        }
+      },
+      async logout() {
+        try {
+          await auth.logout();
+        } catch (err) {
+          console.error('Logout redirect failed', err);
+        }
+      },
+    };
+  },
+}
 </script>

@@ -141,11 +141,34 @@
                 prepend-icon="mdi-arrow-right-circle"
                 :to=getPipelineLink(item.ID)></v-btn>
             </template>
+            <!-- A pipeline which had nothing to change reports a success even when the
+                 change it would have made is already waiting in a pull request nobody
+                 merged. The badge is what tells those apart from the genuinely up to
+                 date ones, which the result glyph alone cannot do. -->
             <template v-slot:item.Result="{ item }">
-              <v-icon
-                :icon=getStatusIcon(item.Result)
-                :color=getStatusColor(item.Result)
-                ></v-icon>
+              <v-tooltip :text="getResultTooltipText(item)">
+                <template v-slot:activator="{ props }">
+                  <v-badge
+                    v-if="hasOpenAction(item)"
+                    :icon="openActionIcon"
+                    :color="openActionColor"
+                    offset-x="-1"
+                    offset-y="-1"
+                    v-bind="props"
+                  >
+                    <v-icon
+                      :icon=getStatusIcon(item.Result)
+                      :color=getStatusColor(item.Result)
+                      ></v-icon>
+                  </v-badge>
+                  <v-icon
+                    v-else
+                    :icon=getStatusIcon(item.Result)
+                    :color=getStatusColor(item.Result)
+                    v-bind="props"
+                    ></v-icon>
+                </template>
+              </v-tooltip>
             </template>
             <template v-slot:item.Name="{ item }">
               <span style="min-width: 400px; display: inline-block;">{{ item.Name || 'Unnamed Report' }}</span>
@@ -179,11 +202,10 @@
 </template>
 
 <script>
-import { getStatusColor, getStatusIcon } from '@/composables/status';
+import { getStatusColor, getStatusIcon, getStatusText, OPEN_ACTION_ICON, OPEN_ACTION_COLOR } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git'
 import { toLocalDate } from '@/composables/date'
-import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled } from '@/composables/runtime';
+import { apiFetch } from '@/composables/api';
 
 export default {
   name: 'PipelinesTable',
@@ -194,6 +216,8 @@ export default {
 
   data: () => ({
     actionURLs: [], // Changed from {} to []
+    openActionIcon: OPEN_ACTION_ICON,
+    openActionColor: OPEN_ACTION_COLOR,
     sortBy: [{
       key: 'UpdatedAt',
       order: 'desc'
@@ -262,6 +286,26 @@ export default {
       return `${action.title} - Open ${action.url}`
     },
 
+    // hasOpenAction reports whether a pipeline left a pull request open. Updatecli only
+    // fills actionUrl from an open one and clears it once it is closed, so its presence
+    // is what says "a pull request is waiting right now" rather than "there was one".
+    hasOpenAction(pipeline){
+      return this.getActionsURL(pipeline).length > 0
+    },
+
+    getResultTooltipText(pipeline){
+      const status = getStatusText(pipeline.Result)
+      if (!this.hasOpenAction(pipeline)) {
+        return status
+      }
+
+      if (pipeline.Result === '✔') {
+        return `${status} - nothing to change, the change is already waiting in an open pull request`
+      }
+
+      return `${status} - a pull request is still open`
+    },
+
     getActionsURL(pipeline){
       let actionURLs = []
       if (pipeline.Report.Actions) {
@@ -301,7 +345,6 @@ export default {
 
     async getReportsData(page =1 ) {
       this.$emit('loaded', false)
-      const queryURL = `${getApiBaseURL()}/pipeline/reports/search`
 
       const requestBody = {
         limit: this.itemsPerPage,
@@ -349,33 +392,24 @@ export default {
         }
       }
 
+      // Results has to be filtered server side: this table is paginated by the API,
+      // so dropping rows once they arrive would leave short pages and a total count
+      // counting reports the reader was never shown.
+      if (Array.isArray(this.filter?.results) && this.filter.results.length > 0) {
+        requestBody.results = this.filter.results
+      }
+
+      // Same reason as the results above, and the value is a tri-state: an unset filter
+      // has to stay absent from the body rather than be sent as false.
+      if (typeof this.filter?.openAction === 'boolean') {
+        requestBody.open_action = this.filter.openAction
+      }
+
       try {
-        let response;
-        if (isAuthEnabled) {
-          const token = await this.$auth0.getAccessTokenSilently();
-          response = await fetch(queryURL, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-          });
-        } else {
-          response = await fetch(queryURL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-          });
-        }
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await apiFetch('/pipeline/reports/search', {
+          method: 'POST',
+          body: requestBody,
+        });
 
         this.pipelines = data.data || data.reports || [];
         this.getPipelinesActionsURL()

@@ -94,8 +94,7 @@ import { toYAML } from '@/composables/yaml'
 import GitRepositorySection from './GitRepositorySection.vue'
 import ReportCard from './ReportCard.vue'
 
-import { getApiBaseURL } from '@/composables/api';
-import { isAuthEnabled } from '@/composables/runtime';
+import { apiFetch } from '@/composables/api';
 import { getStartTimeFromStorage, getEndTimeFromStorage } from '@/composables/date';
 
 export default {
@@ -334,27 +333,10 @@ export default {
       this.$emit('loaded', false)
 
       try {
-        const queryURL = `${getApiBaseURL()}/pipeline/config/${this.configType}s/search`;
-
-        const jsonReqBody = { id: this.configID }
-        const headers = { 'Content-Type': 'application/json' }
-
-        if (isAuthEnabled) {
-          const token = await this.$auth0.getAccessTokenSilently()
-          headers.Authorization = `Bearer ${token}`
-        }
-
-        const response = await fetch(queryURL, {
-          body: JSON.stringify(jsonReqBody),
+        const data = await apiFetch(`/pipeline/config/${this.configType}s/search`, {
           method: 'POST',
-          headers
+          body: { id: this.configID }
         })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
 
         if (data.configs?.length > 0) {
           this.configData = data.configs[0]
@@ -375,8 +357,6 @@ export default {
       }
 
       try {
-        const queryURL = `${getApiBaseURL()}/pipeline/reports/search`
-
         const jsonReqBody = {
           latest: true
         }
@@ -402,23 +382,11 @@ export default {
 
         jsonReqBody[field] = this.configID
 
-        const headers = { 'Content-Type': 'application/json' }
-        if (isAuthEnabled) {
-          const token = await this.$auth0.getAccessTokenSilently()
-          headers.Authorization = `Bearer ${token}`
-        }
-
-        const response = await fetch(queryURL, {
+        const data = await apiFetch('/pipeline/reports/search', {
           method: 'POST',
-          body: JSON.stringify(jsonReqBody),
-          headers
+          body: jsonReqBody
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
         this.reportsData = data.data || []
 
         // Remove current pipeline ID from reportsData if pipelineUUID prop is provided

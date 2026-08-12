@@ -1,170 +1,159 @@
 <template>
-  <v-app>
-    <HeadNavigation/>
-    <SideNavigation/>
-
-    <v-main>
-      <v-overlay
-        :model-value="isLoading"
-        class="align-center justify-center"
-        :disabled=true
-        :eager=true
-        :no-click-animation=true
-        :persistent=true
-        :opacity="0"
+  <v-overlay
+    :model-value="isLoading"
+    class="align-center justify-center"
+    :disabled=true
+    :eager=true
+    :no-click-animation=true
+    :persistent=true
+    :opacity="0"
+  >
+    <v-progress-circular
+      color="black"
+      indeterminate
+      size="64"
+    ></v-progress-circular>
+  </v-overlay>
+  <v-container>
+    <v-row>
+      <v-col
+        class="text-right"
+        cols="auto"
+        lg="8"
+        md="8"
+        sm="12"
       >
-        <v-progress-circular
-          color="black"
-          indeterminate
-          size="64"
-        ></v-progress-circular>
-      </v-overlay>
-      <v-container>
-        <v-row>
-          <v-col
-            class="text-right"
-            cols="auto"
-            lg="8"
-            md="8"
-            sm="12"
-          >
-          <h1>
-            Reports <v-icon icon="mdi-book-open-variant"></v-icon>
-          </h1>
-          </v-col>
-        </v-row>
-      </v-container>
-      <v-container>
-        <v-row>
-          <v-col
-            cols="auto"
-            lg="12"
-            md="12"
-            sm="12"
-          >
-            <!-- Add explanatory header for filter -->
-            <div class="mb-3">
-              <h3 class="text-h6 d-flex align-items-center">
-                Filter Reports
-                <v-tooltip text="Search and filter pipeline reports by repository, branch, or status. Use the dropdown to select specific repositories or search by keywords.">
-                  <template v-slot:activator="{ props }">
-                    <v-icon
-                      v-bind="props"
-                      size="small"
-                      class="ml-2"
-                      color="grey-darken-1"
-                    >
-                      mdi-information-outline
-                    </v-icon>
-                  </template>
-                </v-tooltip>
-              </h3>
-              <p class="text-caption text-grey-darken-1 mb-0">
-                Search repositories, branches, or filter by status
-              </p>
-            </div>
+      <h1>
+        Reports <v-icon icon="mdi-book-open-variant"></v-icon>
+      </h1>
+      </v-col>
+    </v-row>
+  </v-container>
+  <v-container>
+    <v-row>
+      <v-col
+        cols="auto"
+        lg="12"
+        md="12"
+        sm="12"
+      >
+        <!-- Add explanatory header for filter -->
+        <div class="mb-3">
+          <h3 class="text-h6 d-flex align-items-center">
+            Filter Reports
+            <v-tooltip text="Search and filter pipeline reports by repository, branch, or status. Use the dropdown to select specific repositories or search by keywords.">
+              <template v-slot:activator="{ props }">
+                <v-icon
+                  v-bind="props"
+                  size="small"
+                  class="ml-2"
+                  color="grey-darken-1"
+                >
+                  mdi-information-outline
+                </v-icon>
+              </template>
+            </v-tooltip>
+          </h3>
+          <p class="text-caption text-grey-darken-1 mb-0">
+            Search repositories, branches, or filter by status
+          </p>
+        </div>
 
-            <PipelineSCMFilter
-              :filter="filter"
-              :show-repository-branch="true"
-              @update-filter="updateFilter"
-              @loaded="setFilterLoaded"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col
-            cols="auto"
-            lg="12"
-            md="12"
-            sm="12"
-          >
-            <!-- Add explanatory header -->
-            <div class="mb-3">
-              <h3 class="text-h6 d-flex align-items-center">
-                Latest Status Overview
-                <v-tooltip text="Shows the status summary from the most recent pipeline reports for the current repository branch">
-                  <template v-slot:activator="{ props }">
-                    <v-icon
-                      v-bind="props"
-                      size="small"
-                      class="ml-2"
-                      color="grey-darken-1"
-                    >
-                      mdi-information-outline
-                    </v-icon>
-                  </template>
-                </v-tooltip>
-              </h3>
-              <p class="text-caption text-grey-darken-1 mb-0">
-                Current status from latest pipeline runs
-              </p>
-            </div>
+        <PipelineSCMFilter
+          ref="scmFilter"
+          :filter="filter"
+          :show-repository-branch="true"
+          @update-filter="updateFilter"
+          @loaded="setFilterLoaded"
+        />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col
+        cols="auto"
+        lg="12"
+        md="12"
+        sm="12"
+      >
+        <!-- Add explanatory header -->
+        <div class="mb-3">
+          <h3 class="text-h6 d-flex align-items-center">
+            Latest Status Overview
+            <v-tooltip text="Shows the status summary from the most recent pipeline reports for the current repository branch">
+              <template v-slot:activator="{ props }">
+                <v-icon
+                  v-bind="props"
+                  size="small"
+                  class="ml-2"
+                  color="grey-darken-1"
+                >
+                  mdi-information-outline
+                </v-icon>
+              </template>
+            </v-tooltip>
+          </h3>
+          <p class="text-caption text-grey-darken-1 mb-0">
+            Current status from latest pipeline runs
+          </p>
+        </div>
 
-            <PipelineSCMSummary
-              v-if="isFilterLoaded"
-              :hideButton=true
-              :filter="filter"
-              :fullWidth=true
-              :disableLinks=true
-              :hideRepositoryTitle=true
-              @update-filter="updateFilter"
-              @loaded="setSummaryLoaded"
-              class="align-center justify-center"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col
-            cols="auto"
-            lg="12"
-            md="12"
-            sm="12"
-          >
-            <!-- Add explanatory header for pipeline reports -->
-            <div class="mb-3">
-              <h3 class="text-h6 d-flex align-items-center">
-                Detailed Reports
-                <v-tooltip text="Complete list of pipeline reports with detailed information including timestamps, status, and actions. Click on any report to view its configuration or access related resources like pull requests.">
-                  <template v-slot:activator="{ props }">
-                    <v-icon
-                      v-bind="props"
-                      size="small"
-                      class="ml-2"
-                      color="grey-darken-1"
-                    >
-                      mdi-information-outline
-                    </v-icon>
-                  </template>
-                </v-tooltip>
-              </h3>
-              <p class="text-caption text-grey-darken-1 mb-0">
-                Historical pipeline execution data with full details
-              </p>
-            </div>
+        <PipelineSCMSummary
+          v-if="isFilterLoaded"
+          :hideButton=true
+          :filter="filter"
+          :fullWidth=true
+          :disableLinks=true
+          :hideRepositoryTitle=true
+          @update-filter="updateFilter"
+          @toggle-result="toggleResult"
+          @loaded="setSummaryLoaded"
+          class="align-center justify-center"
+        />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col
+        cols="auto"
+        lg="12"
+        md="12"
+        sm="12"
+      >
+        <!-- Add explanatory header for pipeline reports -->
+        <div class="mb-3">
+          <h3 class="text-h6 d-flex align-items-center">
+            Detailed Reports
+            <v-tooltip text="Complete list of pipeline reports with detailed information including timestamps, status, and actions. Click on any report to view its configuration or access related resources like pull requests.">
+              <template v-slot:activator="{ props }">
+                <v-icon
+                  v-bind="props"
+                  size="small"
+                  class="ml-2"
+                  color="grey-darken-1"
+                >
+                  mdi-information-outline
+                </v-icon>
+              </template>
+            </v-tooltip>
+          </h3>
+          <p class="text-caption text-grey-darken-1 mb-0">
+            Historical pipeline execution data with full details
+          </p>
+        </div>
 
-            <PipelineReports
-              v-if="isFilterLoaded"
-              :filter="filter"
-              @update-filter="updateFilter"
-              @loaded="setReportsLoaded"
-            />
-          </v-col>
-        </v-row>
+        <PipelineReports
+          v-if="isFilterLoaded"
+          :filter="filter"
+          @update-filter="updateFilter"
+          @loaded="setReportsLoaded"
+        />
+      </v-col>
+    </v-row>
 
-      </v-container>
-
-    </v-main>
-
-    <ReleaseFooter/>
-  </v-app>
+  </v-container>
 </template>
 
 <script>
 
-import ReleaseFooter from '../../components/ReleaseFooter.vue';
-import SideNavigation from '../../components/SideNavigation.vue';
-import HeadNavigation from '../../components/HeadNavigation.vue';
 import PipelineReports from '../../components/pipeline/reports.vue';
 
 import PipelineSCMSummary from '../../components/scm/_summary.vue';
@@ -176,9 +165,6 @@ export default {
     this.cancelAutoUpdate();
   },
   components: {
-    ReleaseFooter,
-    SideNavigation,
-    HeadNavigation,
     PipelineReports,
     PipelineSCMFilter,
     PipelineSCMSummary
@@ -240,6 +226,22 @@ export default {
     },
     updateFilter: function(filter) {
       this.filter = filter;
+    },
+    // The summary doughnuts narrow the filter rather than filtering themselves, so
+    // they keep showing the whole breakdown of the branch while the reports below
+    // shrink to the result which was clicked. The filter owns that state, hence the
+    // hand off rather than a second copy of it here.
+    //
+    // openAction is set only by the segments standing for one half of a result split on
+    // whether a pull request is still open. Both dimensions are then handed over
+    // together, so the reports below never show a half applied filter.
+    toggleResult: function(result, openAction) {
+      if (openAction === undefined) {
+        this.$refs.scmFilter?.toggleResult(result);
+        return;
+      }
+
+      this.$refs.scmFilter?.toggleResultWithOpenAction(result, openAction ? 'open' : 'none');
     },
     isAllComponentsLoaded: function() {
       if (this.isFilterLoaded && this.isSummaryLoaded && this.isReportsLoaded) {

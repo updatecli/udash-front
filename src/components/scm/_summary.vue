@@ -115,7 +115,7 @@
                                                                     <div class="flex-grow-1">
                                                                         <div class="font-weight-medium">{{ branch }}</div>
                                                                         <div class="text-caption text-grey-darken-1">
-                                                                            {{ branchData.total_result || 0 }} reports
+                                                                            {{ branchData.total_result || 0 }} {{ (branchData.total_result || 0) === 1 ? 'pipeline' : 'pipelines' }}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -169,7 +169,7 @@
                                                     <div class="chart-container" v-if="hasDoughnutData(url, branch)">
                                                         <SCMDoughnut
                                                             :chartData="getDoughnutData(url, branch)"
-                                                            :chartOptions="miniDoughnutOptions"
+                                                            :chartOptions="doughnutOptionsFor(url, branch, branchData)"
                                                             :centerText="branchData.total_result"
                                                             size="small"
                                                         />
@@ -193,7 +193,7 @@
                                                                 <div class="flex-grow-1">
                                                                     <div class="font-weight-medium">{{ branch }}</div>
                                                                     <div class="text-caption text-grey-darken-1">
-                                                                        {{ branchData.total_result || 0 }} reports
+                                                                        {{ branchData.total_result || 0 }} {{ (branchData.total_result || 0) === 1 ? 'pipeline' : 'pipelines' }}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -241,7 +241,7 @@
                                                         <div class="chart-container" v-if="hasDoughnutData(url, branch)">
                                                             <SCMDoughnut
                                                                 :chartData="getDoughnutData(url, branch)"
-                                                                :chartOptions="miniDoughnutOptions"
+                                                                :chartOptions="doughnutOptionsFor(url, branch, branchData)"
                                                                 :centerText="branchData.total_result"
                                                                 size="small"
                                                             />
@@ -249,6 +249,36 @@
                                                     </v-col>
                                                 </v-row>
                                             </div>
+                                        </div>
+
+                                        <!-- Reports received on this branch. It sits
+                                             outside the link above so hovering the bars
+                                             does not read as navigation, and it only
+                                             mounts once a repository is expanded, so a
+                                             collapsed page costs nothing.
+
+                                             It follows the filter's window: the bucket
+                                             size is derived from that window, so the
+                                             last day now reads as hours rather than
+                                             collapsing into a single bar. Every card
+                                             shares the one window, which is what keeps
+                                             the branches comparable to each other. It
+                                             falls back to the full history when no
+                                             range is set. -->
+                                        <div class="branch-activity px-4 pb-2">
+                                            <ActivityChart
+                                                mode="volume"
+                                                granularity="auto"
+                                                height="44px"
+                                                compact
+                                                :start-time="filter.startTime || ''"
+                                                :end-time="filter.endTime || ''"
+                                                :days="maxHistoryDays"
+                                                :scmid="branchData.id"
+                                                :labels="filter.labels"
+                                                :results="filter.results"
+                                                :open-action="filter.openAction ?? null"
+                                            />
                                         </div>
 
                                         <v-divider
@@ -322,19 +352,44 @@ import {
 import router from '../../router'
 
 import SCMDoughnut from './_scmDoughnut.vue'
+import ActivityChart from '../pipeline/activityChart.vue'
 
-import { getApiBaseURL } from '@/composables/api';
+import { apiFetch } from '@/composables/api';
 import { extractGitURLInfo } from '@/composables/git';
-import { isAuthEnabled, getStorageKey } from '@/composables/runtime';
+import { getStorageKey, getMaxHistoryDays } from '@/composables/runtime';
+import { encodeFilterState, decodeFilterState } from '@/composables/filter';
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
 
 const EMPTY_DONUT_DATA = Object.freeze({ labels: [], datasets: [] });
+
+// DOUGHNUT_SEGMENTS ties every slice to the pipeline result it counts, so the chart
+// and the click handler reading a slice back cannot drift apart. The last one has no
+// result: it counts whatever Updatecli did not report as one, so there is nothing to
+// filter on, and clicking it does nothing.
+//
+// The wording follows PIPELINE_RESULTS rather than getStatusText: at pipeline level
+// "⚠" is Updatecli reporting that it changed something, which "Warning" reads as the
+// opposite of.
+//
+// Success is split in two, matching RESULT_SERIES in activityChart.vue. A pipeline which
+// had nothing to change reports a success even when the change is already waiting in a
+// pull request nobody merged, and those are the ones worth looking at: without the split
+// they are indistinguishable from the branches which are genuinely up to date.
+const DOUGHNUT_SEGMENTS = Object.freeze([
+    { result: '✔', openAction: true, label: '✔ Waiting to be merged', color: 'rgba(59, 130, 246, 0.7)' }, // Blue
+    { result: '✔', openAction: false, label: '✔ Success', color: 'rgba(16, 185, 129, 0.7)' },  // Green
+    { result: '⚠', label: '⚠ Changed', color: 'rgba(245, 158, 11, 0.7)' },  // Amber
+    { result: '✗', label: '✗ Failed', color: 'rgba(220, 38, 38, 0.7)' },    // Red
+    { result: '-', label: '- Skipped', color: 'rgba(107, 114, 128, 0.7)' }, // Gray
+    { result: null, label: '? Unknown', color: 'rgba(139, 92, 246, 0.7)' }, // Purple
+]);
 const COLLAPSE_STORAGE_KEY = getStorageKey('scm.summary.collapse.v1');
 
 export default {
     components: {
         SCMDoughnut,
+        ActivityChart,
     },
     name: "SCMDashboard",
     props: {
@@ -390,6 +445,12 @@ export default {
     }),
 
     computed: {
+        // The per-branch activity strips span whatever history this instance is
+        // configured to serve, so they narrow along with MAX_HISTORY_DAYS.
+        maxHistoryDays() {
+            return getMaxHistoryDays();
+        },
+
         loadedScmBranchCount() {
             return this.countLoadedScmBranches(this.data);
         },
@@ -632,7 +693,6 @@ export default {
             this.$emit('loaded', false)
 
             try {
-                const auth_enabled = isAuthEnabled;
                 const restrictedSCM = router.currentRoute.value.query.filter?.scmid;
 
                 const requestBody = {
@@ -667,34 +727,21 @@ export default {
                     }
                 }
 
-                const query = `${getApiBaseURL()}/pipeline/scms/search`;
-
-                let response;
-                if (auth_enabled) {
-                    const token = await this.$auth0.getAccessTokenSilently();
-                    response = await fetch(query, {
-                        method: 'POST',
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(requestBody),
-                    });
-                } else {
-                    response = await fetch(query, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(requestBody),
-                    });
+                if (Array.isArray(this.filter?.results) && this.filter.results.length > 0) {
+                    requestBody.results = this.filter.results;
                 }
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                // Tri-state: an unset filter has to stay absent from the body rather than
+                // be sent as false, which would drop every pipeline with an open pull
+                // request.
+                if (typeof this.filter?.openAction === 'boolean') {
+                    requestBody.open_action = this.filter.openAction;
                 }
 
-                const responseData = await response.json();
+                const responseData = await apiFetch('/pipeline/scms/search', {
+                    method: 'POST',
+                    body: requestBody,
+                });
 
                 // Discard stale results if the filter changed while fetching
                 if (requestId !== this.currentRequestId) return;
@@ -832,56 +879,124 @@ export default {
         },
 
         buildDoughnutData(branchData) {
-            const labels = [
-                '✔ Success',
-                '⚠ Warning',
-                '✗ Error',
-                '- Skipped',
-                '? Unknown',
-            ];
-            const labelColors = [
-               'rgba(16, 185, 129, 0.7)',  // Green
-               'rgba(245, 158, 11, 0.7)',  // Amber
-               'rgba(220, 38, 38, 0.7)',   // Red
-               'rgba(107, 114, 128, 0.7)', // Gray
-               'rgba(139, 92, 246, 0.7)',  // Purple
-            ];
-
             if (!branchData || branchData.total_result === undefined) {
                 return EMPTY_DONUT_DATA;
             }
 
             const resultsByType = branchData.total_result_by_type || {};
-
-            let successResults = 0;
-            let warningResults = 0;
-            let errorResults = 0;
-            let skippedResults = 0;
-            let otherResults = 0;
+            // total_open_action_by_result is a breakdown of total_result_by_type rather
+            // than an addition to it, so a split result contributes to both of its
+            // segments and the doughnut still totals total_result.
+            const openActionsByType = branchData.total_open_action_by_result || {};
+            const counts = DOUGHNUT_SEGMENTS.map(() => 0);
 
             for (let result in resultsByType) {
-                if (result === '✔') {
-                    successResults = resultsByType[result];
-                } else if (result === '✗') {
-                    errorResults = resultsByType[result];
-                } else if (result === '⚠') {
-                    warningResults = resultsByType[result];
-                } else if (result === '-') {
-                    skippedResults = resultsByType[result];
-                } else {
-                    otherResults += resultsByType[result];
+                const open = openActionsByType[result] || 0;
+
+                const openIndex = DOUGHNUT_SEGMENTS.findIndex(
+                    (segment) => segment.result === result && segment.openAction === true);
+                const index = DOUGHNUT_SEGMENTS.findIndex(
+                    (segment) => segment.result === result && segment.openAction !== true);
+
+                if (openIndex !== -1) {
+                    counts[openIndex] += open;
                 }
+
+                // Anything which is not an Updatecli result lands in the last segment,
+                // which is the one carrying no result and so the one not filtering. A
+                // result without a split segment keeps its whole count, so an open action
+                // on it is still counted, just not called out.
+                counts[index === -1 ? DOUGHNUT_SEGMENTS.length - 1 : index] +=
+                    openIndex === -1 ? resultsByType[result] : resultsByType[result] - open;
             }
 
             return {
-                labels,
+                labels: DOUGHNUT_SEGMENTS.map((segment) => segment.label),
                 datasets: [
                     {
-                        data: [successResults, warningResults, errorResults, skippedResults, otherResults],
-                        backgroundColor: labelColors,
+                        data: counts,
+                        backgroundColor: DOUGHNUT_SEGMENTS.map((segment) => segment.color),
                     }
                 ]
             };
+        },
+
+        // doughnutOptionsFor gives every doughnut its own options so the click handler
+        // knows which branch it belongs to. They are cached outside the reactive state:
+        // handing the chart a fresh options object on each render would have it
+        // reinitialise itself, and writing to reactive data while rendering would loop.
+        doughnutOptionsFor(url, branch, branchData) {
+            const key = JSON.stringify([url, branch]);
+
+            if (!this.doughnutOptionsCache[key]) {
+                const scmID = branchData.id;
+
+                this.doughnutOptionsCache[key] = {
+                    ...this.miniDoughnutOptions,
+                    onHover: (event, elements) => {
+                        const target = event?.native?.target;
+                        if (target) {
+                            target.style.cursor = this.isFilterableSegment(elements) ? 'pointer' : 'default';
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (!this.isFilterableSegment(elements)) {
+                            return;
+                        }
+
+                        // On the dashboard the whole card is a link to this branch's
+                        // reports, and the canvas sits inside it. Stop the click there
+                        // so picking a segment does not also follow the link, losing
+                        // the result on the way.
+                        event?.native?.preventDefault();
+                        event?.native?.stopPropagation();
+
+                        const segment = DOUGHNUT_SEGMENTS[elements[0].index];
+                        this.selectResult(segment.result, scmID, segment.openAction);
+                    },
+                };
+            }
+
+            return this.doughnutOptionsCache[key];
+        },
+
+        // isFilterableSegment answers whether a click landed on a segment standing for
+        // a single result. The unknown one counts everything Updatecli did not report
+        // as a result, which is not something the search API can be asked for.
+        isFilterableSegment(elements) {
+            if (!Array.isArray(elements) || elements.length === 0) {
+                return false;
+            }
+
+            return !!DOUGHNUT_SEGMENTS[elements[0].index]?.result;
+        },
+
+        // openAction is undefined for the segments counting a result whole, and true or
+        // false for the two halves of a split one, which have to carry both dimensions
+        // so the reader lands on the pipelines the slice actually stood for.
+        selectResult(result, scmID, openAction) {
+            if (this.hideButton) {
+                // The reports for this branch are already on screen, so narrowing the
+                // filter in place is enough; navigating would only lose the reader's
+                // position on the page.
+                this.$emit('toggle-result', result, openAction);
+                return;
+            }
+
+            // The card already links to this branch's reports, so a segment click goes
+            // to that same place with the result carried over rather than somewhere
+            // new. The current filter travels along, keeping the date range and the
+            // labels the reader had set here.
+            const query = { ...router.currentRoute.value.query, scmid: scmID };
+            const state = decodeFilterState(query.filter) || {};
+
+            state.selectedResults = [result];
+            if (openAction !== undefined) {
+                state.selectedOpenAction = openAction ? 'open' : 'none';
+            }
+            query.filter = encodeFilterState(state);
+
+            router.push({ path: '/pipeline/reports', query }).catch(() => {});
         },
 
         updateDoughnutDataForScmData(scmData) {
@@ -923,6 +1038,10 @@ export default {
         },
     },
     async created() {
+        // Kept off the reactive state on purpose: it only holds the per-doughnut
+        // options objects, which have to keep their identity across renders.
+        this.doughnutOptionsCache = {};
+
         this.loadPersistedCollapseState();
         this.resetPagination();
         await this.loadNextPage();

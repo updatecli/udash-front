@@ -10,13 +10,13 @@
     "lint": "eslint --fix src/"
   },
   "dependencies": {
-    "@auth0/auth0-vue": "^2.9.0",
     "@mdi/font": "^7.4.47",
     "axios": "^1.19.0",
     "chart.js": "^4.5.1",
     "core-js": "^3.49.0",
     "highlight.js": "^11.11.1",
     "js-yaml": "^5.2.3",
+    "oidc-client-ts": "^3.5.0",
     "roboto-fontface": "^0.10.0",
     "vue": "^3.5.40",
     "vue-chartjs": "^5.3.4",
