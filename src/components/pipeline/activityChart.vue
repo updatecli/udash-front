@@ -86,16 +86,16 @@ const RESULT_SERIES = Object.freeze([
 // results rather than an addition to it, so the plain success segment is what is left once
 // the ones waiting on a pull request are taken out, and the two together still add up to
 // the success count the API reported.
-function seriesCount(entry, serie) {
-    const total = entry?.results?.[serie.result || serie.key] || 0;
+function seriesCount(entry, resultSeries) {
+    const total = entry?.results?.[resultSeries.result || resultSeries.key] || 0;
 
-    if (serie.openAction === undefined) {
+    if (resultSeries.openAction === undefined) {
         return total;
     }
 
-    const open = entry?.open_actions?.[serie.result] || 0;
+    const open = entry?.open_actions?.[resultSeries.result] || 0;
 
-    return serie.openAction ? open : Math.max(total - open, 0);
+    return resultSeries.openAction ? open : Math.max(total - open, 0);
 }
 
 // VOLUME_COLOR is pinned rather than read from the theme. It is the light theme's
@@ -319,7 +319,7 @@ export default {
         // key rather than to a position, so dropping one never repaints the others.
         activeSeries() {
             return RESULT_SERIES.filter(
-                (serie) => this.entries.some((entry) => seriesCount(entry, serie) > 0)
+                (resultSeries) => this.entries.some((entry) => seriesCount(entry, resultSeries) > 0)
             );
         },
 
@@ -369,10 +369,10 @@ export default {
 
             return {
                 labels,
-                datasets: series.map((serie, index) => ({
-                    label: serie.label,
-                    data: this.entries.map((entry) => seriesCount(entry, serie)),
-                    backgroundColor: serie.color,
+                datasets: series.map((resultSeries, index) => ({
+                    label: resultSeries.label,
+                    data: this.entries.map((entry) => seriesCount(entry, resultSeries)),
+                    backgroundColor: resultSeries.color,
                     stack: 'results',
                     // A 2px slice of the surface separates the segments instead of a
                     // border drawn around them.
@@ -455,8 +455,8 @@ export default {
                                 if (!entry) return '';
 
                                 const parts = RESULT_SERIES
-                                    .filter((serie) => seriesCount(entry, serie) > 0)
-                                    .map((serie) => `${serie.key} ${seriesCount(entry, serie)}`);
+                                    .filter((resultSeries) => seriesCount(entry, resultSeries) > 0)
+                                    .map((resultSeries) => `${resultSeries.key} ${seriesCount(entry, resultSeries)}`);
 
                                 return parts.length ? parts.join('  ') : '';
                             },
