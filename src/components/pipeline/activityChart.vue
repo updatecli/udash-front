@@ -257,6 +257,10 @@ export default {
         },
     },
 
+    // loaded carries a status object rather than a nullable summary, so a host can tell
+    // "this instance has never reported" from "the request was refused": the two look
+    // identical from here but call for opposite pages, one onboarding and one not.
+    //   { hasData: Boolean, summary: Object|null, error: String|null }
     emits: ['loaded'],
 
     data: () => ({
@@ -655,18 +659,24 @@ export default {
                 if (requestId !== this.currentRequestId) return;
 
                 this.summary = responseData;
-                this.$emit('loaded', this.hasData ? responseData : null);
+                this.$emit('loaded', {
+                    hasData: this.hasData,
+                    summary: this.hasData ? responseData : null,
+                    error: null,
+                });
             } catch (error) {
                 if (requestId !== this.currentRequestId) return;
 
                 // A summary is still supporting information, so the host keeps rendering
                 // and is told there is no data. The reason is shown in place of the plot
                 // rather than only logged: a blank strip reads as "no activity", which is
-                // the wrong conclusion when the window was simply refused.
+                // the wrong conclusion when the window was simply refused. It travels in
+                // the event too, so a host drawing its own conclusions from an empty
+                // chart can hold them when the window never actually arrived.
                 console.error('fetching pipeline reports summary:', error);
                 this.error = error.message || 'summary unavailable';
                 this.summary = null;
-                this.$emit('loaded', null);
+                this.$emit('loaded', { hasData: false, summary: null, error: this.error });
             } finally {
                 if (requestId === this.currentRequestId) {
                     this.loading = false;
