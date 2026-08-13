@@ -26,8 +26,12 @@
          nothing until it has reports: an instance that has never reported keeps the
          onboarding page it needs, without a chart of empty days. Gating the section
          rather than its heading is what keeps a signed-out visitor from firing a
-         request the API will refuse. -->
-    <section v-if="isAuthenticated" class="px-6" :class="hasActivity ? 'pt-0 pb-8' : ''">
+         request the API will refuse.
+
+         The section keeps its spacing for as long as the chart is drawing something —
+         a spinner and a refusal both occupy the band — and gives it up only once the
+         summary has confirmed there is nothing to plot. -->
+    <section v-if="isAuthenticated" class="px-6" :class="isKnownEmpty ? '' : 'pt-0 pb-8'">
       <template v-if="hasActivity">
         <h2 class="text-h4 font-weight-bold mb-2">Pipeline activity</h2>
         <p class="text-medium-emphasis mb-6">
@@ -40,9 +44,12 @@
 
     <!-- Get Started Section
 
-         Shown in full only while there is nothing to report yet. Once reports
+         Shown in full only once the summary has come back and confirmed there is
+         nothing to report yet. Telling a busy instance to connect its first runner is
+         the one mistake worth holding the layout back for, so neither this block nor
+         its collapsed form is drawn while the answer is still in flight. Once reports
          are flowing it moves below the feature cards as a collapsed panel. -->
-    <section v-if="isAuthenticated && !hasActivity" class="py-8">
+    <section v-if="isAuthenticated && isKnownEmpty" class="py-8">
       <v-card flat color="background" class="pa-6">
         <v-card-title class="text-h4 font-weight-bold px-0 mb-2">Get Started</v-card-title>
         <p class="text-medium-emphasis mb-8">
@@ -82,8 +89,10 @@
     </section>
 
     <!-- Setup steps, demoted to reference material once this instance is
-         already reporting: at that point they are only needed to add a runner. -->
-    <section v-if="hasActivity" class="pt-0 pb-8 px-6">
+         already reporting: at that point they are only needed to add a runner. A
+         refused summary lands here too — the steps stay reachable, without the page
+         claiming an instance it could not read is a new one. -->
+    <section v-if="showSetupPanel" class="pt-0 pb-8 px-6">
       <v-expansion-panels variant="accordion" flat="true">
         <v-expansion-panel title="Connect another runner">
           <v-expansion-panel-text>
@@ -129,10 +138,11 @@ export default {
     }
   },
   data: () => ({
-    // hasActivity stays false while the summary is loading and whenever it could
-    // not be retrieved, so the page falls back to its onboarding layout instead of
-    // showing a broken widget to a first-time visitor.
-    hasActivity: false,
+    // activity holds the last status ActivityChart reported, and stays null until the
+    // summary settles. Keeping "not known yet" and "the request was refused" apart from
+    // "this instance has never reported" is what the layout below turns on: only the
+    // last of the three is evidence that onboarding is what the viewer needs.
+    activity: null,
 
     features: [
       {
@@ -156,11 +166,27 @@ export default {
     // serve, so lowering MAX_HISTORY_DAYS narrows the chart along with the filter.
     maxHistoryDays() {
       return getMaxHistoryDays()
+    },
+
+    hasActivity() {
+      return this.activity?.hasData === true
+    },
+
+    // isKnownEmpty is the only state the onboarding layout may claim: the summary came
+    // back, and it carried no report at all.
+    isKnownEmpty() {
+      return this.activity !== null && !this.activity.error && !this.activity.hasData
+    },
+
+    // A refused summary leaves activity unknown, so the steps stay available as
+    // reference material rather than as a first-run instruction.
+    showSetupPanel() {
+      return this.hasActivity || Boolean(this.activity?.error)
     }
   },
   methods: {
-    onSummaryLoaded(summary) {
-      this.hasActivity = Boolean(summary)
+    onSummaryLoaded(status) {
+      this.activity = status
     }
   }
 }
