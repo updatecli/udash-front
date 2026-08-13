@@ -1,6 +1,11 @@
 <template>
+  <!-- No horizontal padding below sm. Both views already mount this inside their own
+       v-container and v-col, so px-6 here is a second helping of gutters: it costs 48
+       of the 360px a phone has, on top of the nav rail's 56 and the expansion panel's
+       48, which is what squeezed the date labels onto two lines and stacked the slider
+       ticks on top of each other. -->
   <v-container
-      class="py-8 px-6"
+      class="py-8 px-0 px-sm-6"
       fluid
   >
     <v-form
@@ -145,30 +150,12 @@
                      back, so the second entry is the one that starts the range. -->
                 <v-row class="mb-0">
                   <v-col cols="6" class="text-left">
-                    <v-text-field
-                      :model-value="stepToHumanDate(dateRange[1])"
-                      :hint="describeRelativeStep(dateRange[1])"
-                      persistent-hint
-                      readonly
-                      density="compact"
-                      variant="solo"
-                      :flat="true"
-                      hide-details="auto"
-                      class="date-range-field text-center"
-                    />
+                    <div class="date-range-value">{{ stepToHumanDate(dateRange[1]) }}</div>
+                    <div class="date-range-hint text-medium-emphasis">{{ describeRelativeStep(dateRange[1]) }}</div>
                   </v-col>
                   <v-col cols="6" class="text-right">
-                    <v-text-field
-                      :model-value="stepToHumanDate(dateRange[0])"
-                      :hint="describeRelativeStep(dateRange[0])"
-                      persistent-hint
-                      readonly
-                      density="compact"
-                      variant="solo"
-                      :flat="true"
-                      hide-details="auto"
-                      class="date-range-field text-center"
-                    />
+                    <div class="date-range-value">{{ stepToHumanDate(dateRange[0]) }}</div>
+                    <div class="date-range-hint text-medium-emphasis">{{ describeRelativeStep(dateRange[0]) }}</div>
                   </v-col>
                 </v-row>
                 <!-- Date Range Slider -->
@@ -224,7 +211,7 @@ import router from '../../router'
 
 import { apiFetch } from '@/composables/api';
 import { getMaxHistoryDays } from '@/composables/runtime';
-import { FILTER_STORAGE_KEY, stepToISO, formatToLayoutWithoutTimezone } from '@/composables/date';
+import { FILTER_STORAGE_KEY, stepToISO } from '@/composables/date';
 import { PIPELINE_RESULTS, PIPELINE_RESULT_VALUES, OPEN_ACTION_OPTIONS, OPEN_ACTION_VALUES, openActionToQuery } from '@/composables/status';
 import { encodeFilterState, decodeFilterState } from '@/composables/filter';
 
@@ -239,19 +226,13 @@ export default {
   name: 'PipelineSCMS',
 
   props: {
-    filter: {
-      type: Object,
-      default: () => ({
-        scmid: "",
-        startTime: "",
-        endTime: "",
-      }),
-    },
     showRepositoryBranch: {
       type: Boolean,
       default: true,
     },
   },
+
+  emits: ['loaded', 'update-filter'],
 
   data: () => ({
     filterForm: false,
@@ -285,15 +266,43 @@ export default {
       return this.selectedLabels.some(label => label.key !== null) || this.selectedResults.length > 0 || this.selectedOpenAction !== null
     },
 
+    // isCompactDisplay marks the width below which the endpoint labels have to give
+    // something up. It is Vuetify's xs breakpoint, the same 600px the scoped media query
+    // uses, so the CSS and the JS never disagree about what counts as a small screen.
+    isCompactDisplay() {
+      return this.$vuetify.display.xs
+    },
+
+    // The ticks give up sooner than the endpoint labels do, and at a different width.
+    // Crossing out of xs restores this container's px-6, so the track is briefly
+    // narrower at 600px than it was at 599; measured, the full anchor set only stops
+    // colliding around 768. Hence smAndDown here against xs above.
+    hasCrowdedTicks() {
+      return this.$vuetify.display.smAndDown
+    },
+
     // sliderTicks marks a handful of anchors along the slider so the scale is
     // readable. Labelling every step is unusable once the range spans weeks, and the
-    // exact instants either side are already spelled out in the two fields above it.
+    // exact instants either side are already spelled out in the two labels above it.
     //
     // Anchors follow the same mapping as stepToDate: below 24 a step is an hour, and
     // the step for D days back is D + DAY_STEP_OFFSET.
     sliderTicks() {
       const ticks = {}
       const maxDays = getMaxHistoryDays()
+
+      // Vuetify positions every tick label absolutely and skips none, so anchors falling
+      // close together overprint into an unreadable pile rather than dropping out. A
+      // phone leaves the track about 190px, room for the two ends and one anchor
+      // between them; the instants either side are spelled out above it either way.
+      // The middle anchor is worth keeping: the scale is not linear, an hour and a day
+      // being the same step apart, so two ends alone would misread.
+      if (this.hasCrowdedTicks) {
+        ticks[this.toSliderValue(maxDays + DAY_STEP_OFFSET)] = `${maxDays} days`
+        ticks[this.toSliderValue(DAY_STEP_OFFSET + 1)] = '1 day'
+        ticks[this.toSliderValue(0)] = 'now'
+        return ticks
+      }
 
       const hourAnchors = { 0: 'now', 6: '6h', 12: '12h', 18: '18h' }
       Object.entries(hourAnchors).forEach(([step, label]) => {
@@ -793,13 +802,12 @@ export default {
       return date
     },
 
-    stepToISOWithoutTimezone(step) {
-      return formatToLayoutWithoutTimezone(this.stepToDate(step))
-    },
-
+    // The weekday goes first when room runs out: it is the one part of a range boundary
+    // the date next to it already implies, and it costs about five characters of a line
+    // a phone can barely fit.
     formatHumanDate(date) {
       return new Intl.DateTimeFormat(undefined, {
-        weekday: 'short',
+        ...(this.isCompactDisplay ? {} : { weekday: 'short' }),
         month: 'short',
         day: 'numeric',
         hour: 'numeric',
@@ -920,11 +928,6 @@ export default {
           return
         }
 
-        // Emit only if valid (not equal). The furthest step back starts the range.
-        const startTime = stepToISO(val[1])
-        const endTime = stepToISO(val[0])
-        this.$emit('date-range-changed', { startTime, endTime })
-
         // Debounce label refresh to avoid an API call on every slider tick
         clearTimeout(this.debounceTimer)
         this.debounceTimer = setTimeout(() => {
@@ -992,18 +995,36 @@ export default {
 </script>
 
 <style scoped>
-.date-range-field {
-  width: 100%;
-}
-
-.date-range-field :deep(input) {
-  text-align: center;
+/* Plain text rather than a readonly text field: a solo variant spends about 32px a side
+   on input padding, which is most of the room a phone has to spell out a date, and the
+   box it buys stands for something the reader can never type into. Text also wraps
+   where an input clips, so a longer locale format loses a line rather than its end. */
+.date-range-value {
   font-size: 0.85rem;
+  line-height: 1.25;
 }
 
+.date-range-hint {
+  font-size: 0.7rem;
+  line-height: 1.25;
+}
+
+/* Kept in step with isCompactDisplay, which drops the weekday at the same width. */
 @media (max-width: 600px) {
-  .date-range-field :deep(input) {
+  .date-range-value {
     font-size: 0.75rem;
+  }
+
+  .date-range-hint {
+    font-size: 0.65rem;
+  }
+}
+
+/* The tick labels keep their default size on a wide track and shrink on a narrow one,
+   which buys the three surviving anchors enough room to clear each other at 320px. */
+@media (max-width: 960px) {
+  .v-slider :deep(.v-slider-track__tick-label) {
+    font-size: 0.7rem;
   }
 }
 </style>
