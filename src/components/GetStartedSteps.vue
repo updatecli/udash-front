@@ -4,6 +4,14 @@
       <h3 class="text-h6 mb-2">{{ index + 1 }}. {{ step.title }}</h3>
       <div class="mb-3" v-html="step.description"></div>
 
+      <!-- Both authentication methods need a token, and until now this page asked
+           for one without saying where to get it. -->
+      <p v-if="step.needsToken && isAuthEnabled" class="mb-3 text-medium-emphasis">
+        Both methods use an API token.
+        <router-link class="text-info" to="/profile/tokens">Create one here</router-link>
+        if you have not already — it is shown only once.
+      </p>
+
       <!-- Step with mutually-exclusive methods (Authenticate) -->
       <template v-if="step.methods">
         <v-tabs v-model="authMethod" density="comfortable" class="mb-4">
@@ -54,7 +62,7 @@
 </template>
 
 <script>
-import { getDashboardUrl } from '@/composables/runtime';
+import { getDashboardUrl, isAuthEnabled } from '@/composables/runtime';
 import { getApiBaseUrl } from '@/composables/api';
 
 export default {
@@ -72,16 +80,17 @@ export default {
       {
         title: "Authenticate",
         description: "Connect Updatecli to Udash. Pick the method that fits your environment — you only need one.",
+        needsToken: true,
         methods: [
           {
             label: "Method A – Config file",
-            description: "Stores the token locally — convenient and secure for local development.",
+            description: "Stores the token locally — convenient and secure for local development. Updatecli prompts for the token, or takes it with --token.",
             code: (apiUrl, dashUrl) => `updatecli udash login --experimental --api-url "${apiUrl}" "${dashUrl}"`
           },
           {
             label: "Method B – Environment variables",
             description: "Better for CI/CD pipelines and containers.",
-            code: (apiUrl, dashUrl) => `export UPDATECLI_UDASH_API_URL="${apiUrl}"\nexport UPDATECLI_UDASH_URL="${dashUrl}"\nexport UPDATECLI_UDASH_ACCESS_TOKEN="your_token_here"  # Only if required by your Udash instance`
+            code: (apiUrl, dashUrl) => `export UPDATECLI_UDASH_API_URL="${apiUrl}"\nexport UPDATECLI_UDASH_URL="${dashUrl}"\nexport UPDATECLI_UDASH_ACCESS_TOKEN="udash_pat_..."  # Only if required by your Udash instance`
           }
         ]
       },
@@ -98,6 +107,10 @@ export default {
     },
     dashboardUrl() {
       return getDashboardUrl()
+    },
+    // A module level constant, so it has to be exposed for the template to see it.
+    isAuthEnabled() {
+      return isAuthEnabled
     }
   },
   methods: {
