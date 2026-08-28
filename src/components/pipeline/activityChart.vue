@@ -98,11 +98,23 @@ function seriesCount(entry, resultSeries) {
     return resultSeries.openAction ? open : Math.max(total - open, 0);
 }
 
-// VOLUME_COLOR is pinned rather than read from the theme. It is the light theme's
-// primary, and it is the one step that clears every check against *both* chart
-// surfaces; the dark theme's own primary (#39FFB6) passes contrast but is far too
-// light to carry a large filled mark without glowing.
-const VOLUME_COLOR = '#0E9F6E';
+// VOLUME_COLOR paints the total-reports bar, and is deliberately a hue no result owns.
+// The bar counts every report in its bucket whatever that report said, so wearing a
+// result's colour makes it claim something it does not know — green in particular read
+// as "these all passed" on a day where half of them failed. The claim is worse where
+// this chart sits beside the doughnut in _summary.vue, whose legend names green as
+// "✔ Success" a few pixels away.
+//
+// A neutral grey would be the natural mark for a plain quantity, but the greys that
+// clear 3:1 against both themes' surfaces all land within a hair of the grey already
+// meaning "- Skipped" (0.17 relative luminance). Red, amber, blue, green, grey and
+// purple being spoken for by RESULT_SERIES, teal is what is left.
+//
+// It stays pinned rather than read from the theme: at 0.15 relative luminance it clears
+// 3:1 against #FFFFFF, #F4F9FF, #0F1624 and #070B12 alike, and sitting that much darker
+// than the "✔ waiting to be merged" blue keeps the two apart on lightness as well as
+// hue, which is what survives deuteranopia.
+const VOLUME_COLOR = '#0E7490';
 
 // MIN_PLOT_BUCKETS is how many buckets a window must cover before the bars are worth
 // drawing. Below it there is no shape to read — two columns are a comparison, not a
