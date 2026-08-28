@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import PipelineReportsView from '../views/pipeline/ReportsView.vue'
 import PipelineReportView from '../views/pipeline/ReportView.vue'
 import ProfileView from "../views/ProfileView.vue";
+import TokensView from "../views/TokensView.vue";
 import Dashboard from "../views/Dashboard.vue";
 import { authGuard } from "@/composables/auth";
 import { getAppBasePath, isAuthEnabled } from '@/composables/runtime'
@@ -38,6 +39,14 @@ if (isAuthEnabled) {
       path: "/profile",
       name: "profile",
       component: ProfileView
+    },
+    // Only registered when auth is enabled: API tokens exist to stand in for a
+    // login, so they mean nothing on an open instance.
+    {
+      beforeEnter: authGuard,
+      path: "/profile/tokens",
+      name: "tokens",
+      component: TokensView
     },
     {
       beforeEnter: authGuard,
