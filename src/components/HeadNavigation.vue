@@ -3,8 +3,19 @@
     <v-app-bar-title>Udash</v-app-bar-title>
 
     <template v-slot:append>
-      <v-btn v-if="!isAuthenticated && !isLoading && isAuthEnabled" variant="tonal" @click.prevent="login">
-        Login
+      <ThemeSwitcher />
+      <!-- Same icon-button footprint as the account menu below, so the app bar's
+           right edge does not jump when the auth state resolves. -->
+      <v-btn
+        v-if="!isAuthenticated && isAuthEnabled"
+        icon
+        aria-label="Log in"
+        :loading="isLoading"
+        :disabled="isLoading"
+        @click.prevent="login"
+      >
+        <v-icon icon="mdi-login-variant"></v-icon>
+        <v-tooltip activator="parent" text="Log in"></v-tooltip>
       </v-btn>
 
       <v-menu v-if="isAuthenticated && isAuthEnabled">
@@ -23,7 +34,6 @@
           <v-list-item prepend-icon="mdi-logout" title="Logout" value="logout" @click.prevent="logout"></v-list-item>
         </v-list>
       </v-menu>
-      <ThemeSwitcher />
     </template>
   </v-app-bar>
 </template>
