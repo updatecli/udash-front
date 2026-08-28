@@ -10,7 +10,7 @@
       </v-card-title>
       <v-card-text>
         <v-expansion-panel
-            class="text-body-1"
+            class="text-body-large"
             tag="pre"
             elevation="0"
         >

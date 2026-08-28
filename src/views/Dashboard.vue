@@ -1,8 +1,5 @@
 <template>
-  <v-container
-    class="py-8 px-6"
-    fluid
-  >
+  <v-container class="page-shell">
     <v-overlay
       :model-value="isLoading"
       class="align-center justify-center"
@@ -18,17 +15,10 @@
         size="64"
       ></v-progress-circular>
     </v-overlay>
-    <v-row>
-      <v-col
-        class="text-right"
-        cols="auto"
-        lg="8"
-        md="8"
-        sm="12"
-      >
-        <h1>Git Dashboard<v-icon icon="mdi-view-dashboard"> </v-icon></h1>
-      </v-col>
-    </v-row>
+    <PageTitle
+      title="Git Dashboard"
+      icon="mdi-view-dashboard"
+    />
     <v-row>
       <v-col
         cols="auto"
@@ -63,12 +53,14 @@
 
 <script>
 import SCMSDashboard from '../components/scm/_summary.vue';
+import PageTitle from '../components/PageTitle.vue';
 
 import PipelineSCMFilter from '../components/scm/_filter.vue';
 
 export default {
   name: 'DashboardView',
   components: {
+    PageTitle,
     PipelineSCMFilter,
     PipelineSCMSSummary: SCMSDashboard,
   },

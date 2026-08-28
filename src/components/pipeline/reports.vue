@@ -1,25 +1,18 @@
 <template>
 
-  <v-container
-      class="py-8 px-6"
-      fluid
-  >
-    <v-container
-      v-if="pipelines.length === 0"
-    >
+  <v-container class="pa-0" fluid>
+    <v-container class="pa-0" v-if="pipelines.length === 0">
       <v-row class="text-center pa-12">
         <v-col>
           <div class="empty-state">
             <v-icon size="96" color="grey-lighten-2">mdi-alert-decagram-outline</v-icon>
-            <h3 class="text-h5 mt-6 mb-2 font-weight-medium">No Reports Found</h3>
+            <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No Reports Found</h3>
           </div>
         </v-col>
       </v-row>
     </v-container>
 
-    <v-container
-      v-if="pipelines.length > 0"
-    >
+    <v-container class="pa-0" v-if="pipelines.length > 0">
       <v-row>
         <v-col
             cols="auto"
@@ -29,7 +22,7 @@
             v-if="actionURLs && actionURLs.length > 0"
           >
           <div class="mb-3">
-            <h4 class="d-flex align-items-center mb-2">
+            <h4 class="d-flex align-center mb-2">
               Quick Actions
               <v-tooltip text="Actions extracted from your pipeline reports that may require follow-up, such as pull requests.">
                 <template v-slot:activator="{ props }">
@@ -44,7 +37,7 @@
                 </template>
               </v-tooltip>
             </h4>
-            <p class="text-caption text-grey-darken-1 mb-0">
+            <p class="text-body-small text-grey-darken-1 mb-0">
               {{ actionURLs.length }} action{{ actionURLs.length !== 1 ? 's' : '' }} found across your pipeline reports
             </p>
           </div>
@@ -72,11 +65,11 @@
                     </v-avatar>
                   </template>
 
-                  <v-list-item-title class="text-body-2 font-weight-medium">
+                  <v-list-item-title class="text-body-medium font-weight-medium">
                     {{ action.title }}
                   </v-list-item-title>
 
-                  <v-list-item-subtitle class="text-caption">
+                  <v-list-item-subtitle class="text-body-small">
                     {{ getProviderName(action.url) }}
                   </v-list-item-subtitle>
 
@@ -106,10 +99,10 @@
           >
           <!-- Add header for reports table -->
           <div class="mb-3">
-            <h4 class="d-flex align-items-center mb-2">
+            <h4 class="d-flex align-center mb-2">
               Pipeline Reports
             </h4>
-            <p class="text-caption text-grey-darken-1 mb-0">
+            <p class="text-body-small text-grey-darken-1 mb-0">
               Detailed execution history and status information
             </p>
           </div>

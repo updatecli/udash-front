@@ -1,43 +1,27 @@
 <template>
-  <v-container class="page-container">
-    <section class="pt-0 pb-8 px-6">
-      <div class="d-flex align-center flex-wrap ga-4 mb-4">
-        <h2 class="text-h5 font-weight-bold d-flex align-center">
-          <v-icon icon="mdi-key" class="mr-2"></v-icon>
-          API tokens
-          <v-tooltip location="right">
-            <template v-slot:activator="{ props }">
-              <v-icon
-                icon="mdi-information-outline"
-                size="small"
-                class="ml-2"
-                v-bind="props"
-              ></v-icon>
-            </template>
-            <span>
-              API tokens let Updatecli publish reports without signing in. Unlike a
-              login session they do not expire, so a pipeline can keep one for as
-              long as it runs unattended.
-            </span>
-          </v-tooltip>
-        </h2>
+  <v-container class="page-shell">
+    <section class="pb-8">
+      <PageTitle
+        title="API tokens"
+        icon="mdi-key"
+        tooltip="API tokens let Updatecli publish reports without signing in. Unlike a login session they do not expire, so a pipeline can keep one for as long as it runs unattended."
+      >
+        <template v-slot:actions>
+          <v-btn
+            v-if="canCreate"
+            color="primary"
+            prepend-icon="mdi-plus"
+            @click="openCreateDialog"
+          >
+            New token
+          </v-btn>
+        </template>
 
-        <v-spacer></v-spacer>
-
-        <v-btn
-          v-if="canCreate"
-          color="primary"
-          prepend-icon="mdi-plus"
-          @click="openCreateDialog"
-        >
-          New token
-        </v-btn>
-      </div>
-
-      <p class="text-caption text-grey-darken-1 mb-4">
-        Use a token with <code>UPDATECLI_UDASH_ACCESS_TOKEN</code>, or run
-        <code>updatecli udash login</code> and paste it when prompted.
-      </p>
+        <template v-slot:subtitle>
+          Use a token with <code>UPDATECLI_UDASH_ACCESS_TOKEN</code>, or run
+          <code>updatecli udash login</code> and paste it when prompted.
+        </template>
+      </PageTitle>
 
       <!-- The token is shown once and cannot be recovered afterwards, so this has to
            be impossible to miss and must not disappear on its own. -->
@@ -50,7 +34,7 @@
         @click:close="createdToken = null"
       >
         <div class="font-weight-medium mb-1">Copy your token now</div>
-        <div class="text-body-2 mb-3">
+        <div class="text-body-medium mb-3">
           This is the only time it is shown. Once you leave this page it cannot be
           recovered, only replaced.
         </div>
@@ -78,8 +62,8 @@
 
         <div v-else-if="tokens.length === 0" class="text-center py-8">
           <v-icon size="96" color="grey-lighten-2">mdi-key-outline</v-icon>
-          <h3 class="text-h5 mt-6 mb-2 font-weight-medium">No Tokens Yet</h3>
-          <p class="text-body-2 text-grey-darken-1">
+          <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No Tokens Yet</h3>
+          <p class="text-body-medium text-grey-darken-1">
             <template v-if="canCreate">
               Create one to let Updatecli publish reports from your pipelines.
             </template>
@@ -150,7 +134,7 @@
             class="mb-4"
           ></v-text-field>
 
-          <div class="text-subtitle-2 mb-1">Permissions</div>
+          <div class="text-label-large mb-1">Permissions</div>
           <v-checkbox
             v-for="scope in availableScopes"
             :key="scope.value"
@@ -209,9 +193,13 @@
 <script>
 import { apiFetch } from '@/composables/api';
 import { toLocalDate } from '@/composables/date';
+import PageTitle from '@/components/PageTitle.vue';
 
 export default {
   name: 'TokensView',
+  components: {
+    PageTitle,
+  },
   data: () => ({
     tokens: [],
     loading: true,

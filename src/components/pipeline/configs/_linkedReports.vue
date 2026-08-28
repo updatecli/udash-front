@@ -3,7 +3,7 @@
     <!-- Loading Overlay -->
     <v-overlay v-model="isLoading" class="align-center justify-center">
       <v-progress-circular color="grey-darken-3" indeterminate size="64"></v-progress-circular>
-      <div class="mt-4 text-h6">Loading configuration...</div>
+      <div class="mt-4 text-body-large">Loading configuration...</div>
     </v-overlay>
 
     <div v-if="isLinkedReports && !isLoading">
@@ -41,7 +41,7 @@
             <v-card-text>
               <!-- Git-based Reports -->
               <div v-if="Object.keys(gitReportsData).length > 0">
-                <h3 class="text-h6 mb-4 d-flex align-center">
+                <h3 class="text-title-large mb-4 d-flex align-center">
                   <v-icon class="mr-2">mdi-git</v-icon>
                   Git Repositories
                 </h3>
@@ -57,7 +57,7 @@
 
               <!-- Local Reports -->
               <div v-if="localReportsData.length > 0" :class="{ 'mt-6': Object.keys(gitReportsData).length > 0 }">
-                <h3 class="text-h6 mb-4 d-flex align-center">
+                <h3 class="text-title-large mb-4 d-flex align-center">
                   <v-icon class="mr-2">mdi-laptop</v-icon>
                   Local Reports
                   <v-chip class="ml-2" size="small" variant="outlined">

@@ -1,10 +1,10 @@
 <template>
-    <v-container>
+    <v-container class="pa-0">
         <v-row v-if="isNoData()" class="text-center pa-12">
           <v-col>
             <div class="empty-state">
               <v-icon size="96" color="grey-lighten-2">mdi-alert-decagram-outline</v-icon>
-              <h3 class="text-h5 mt-6 mb-2 font-weight-medium">No Dashboard Found</h3>
+              <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No Dashboard Found</h3>
             </div>
           </v-col>
         </v-row>
@@ -82,7 +82,7 @@
                             >
                                 <div
                                     v-if="isRepoCollapsed(url)"
-                                    class="pa-4 text-caption text-grey-darken-1"
+                                    class="pa-4 text-body-small text-grey-darken-1"
                                 >
                                     Branches are hidden. Click Show to expand on the right.
                                 </div>
@@ -114,7 +114,7 @@
                                                                     </v-icon>
                                                                     <div class="flex-grow-1">
                                                                         <div class="font-weight-medium">{{ branch }}</div>
-                                                                        <div class="text-caption text-grey-darken-1">
+                                                                        <div class="text-body-small text-grey-darken-1">
                                                                             {{ branchData.total_result || 0 }} {{ (branchData.total_result || 0) === 1 ? 'pipeline' : 'pipelines' }}
                                                                         </div>
                                                                     </div>
@@ -192,7 +192,7 @@
                                                                 </v-icon>
                                                                 <div class="flex-grow-1">
                                                                     <div class="font-weight-medium">{{ branch }}</div>
-                                                                    <div class="text-caption text-grey-darken-1">
+                                                                    <div class="text-body-small text-grey-darken-1">
                                                                         {{ branchData.total_result || 0 }} {{ (branchData.total_result || 0) === 1 ? 'pipeline' : 'pipelines' }}
                                                                     </div>
                                                                 </div>

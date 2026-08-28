@@ -1,12 +1,13 @@
 <template>
-  <v-container class="page-container">
+  <v-container class="page-shell">
 
     <!-- Hero Section -->
-    <section class="py-8 px-6">
-      <h1 class="text-h1 font-weight-bold mb-4">Udash</h1>
-      <p class="text-h6 text-medium-emphasis mb-0">
-        The Updatecli dashboard for tracking automated updates across your Git repositories.
-      </p>
+    <section class="pb-8">
+      <PageTitle
+        hero
+        title="Udash"
+        subtitle="The Updatecli dashboard for tracking automated updates across your Git repositories."
+      />
 
       <!-- On an authenticated instance every panel below needs a session, so an
            anonymous visitor is given the one action that leads anywhere. It sits in
@@ -31,9 +32,9 @@
          The section keeps its spacing for as long as the chart is drawing something —
          a spinner and a refusal both occupy the band — and gives it up only once the
          summary has confirmed there is nothing to plot. -->
-    <section v-if="isAuthenticated" class="px-6" :class="isKnownEmpty ? '' : 'pt-0 pb-8'">
+    <section v-if="isAuthenticated" :class="isKnownEmpty ? '' : 'pt-0 pb-8'">
       <template v-if="hasActivity">
-        <h2 class="text-h4 font-weight-bold mb-2">Pipeline activity</h2>
+        <h2 class="text-headline-medium font-weight-bold mb-2">Pipeline activity</h2>
         <p class="text-medium-emphasis mb-6">
           Reports received over the last {{ maxHistoryDays }} days
         </p>
@@ -49,9 +50,9 @@
          the one mistake worth holding the layout back for, so neither this block nor
          its collapsed form is drawn while the answer is still in flight. Once reports
          are flowing it moves below the feature cards as a collapsed panel. -->
-    <section v-if="isAuthenticated && isKnownEmpty" class="py-8">
+    <section v-if="isAuthenticated && isKnownEmpty" class="pb-8">
       <v-card flat color="background" class="pa-6">
-        <v-card-title class="text-h4 font-weight-bold px-0 mb-2">Get Started</v-card-title>
+        <v-card-title class="text-headline-medium font-weight-bold px-0 mb-2">Get Started</v-card-title>
         <p class="text-medium-emphasis mb-8">
           Connect your Updatecli runner to Udash in a few steps
         </p>
@@ -61,7 +62,7 @@
     </section>
 
     <!-- Features Section -->
-    <section v-if="isAuthenticated" class="pt-0 pb-8 px-6">
+    <section v-if="isAuthenticated" class="pb-8">
       <v-row>
         <v-col
           v-for="feature in features"
@@ -77,7 +78,7 @@
             class="pa-4 d-flex flex-column"
           >
             <v-icon :icon="feature.icon" size="48" class="mb-4"></v-icon>
-            <v-card-title class="text-h6 px-0 mb-2">{{ feature.title }}</v-card-title>
+            <v-card-title class="text-title-large px-0 mb-2">{{ feature.title }}</v-card-title>
             <v-card-text class="px-0">{{ feature.description }}</v-card-text>
             <v-card-actions class="px-0 mt-auto text-info">
               <span class="font-weight-medium">{{ feature.cta }}</span>
@@ -92,7 +93,7 @@
          already reporting: at that point they are only needed to add a runner. A
          refused summary lands here too — the steps stay reachable, without the page
          claiming an instance it could not read is a new one. -->
-    <section v-if="showSetupPanel" class="pt-0 pb-8 px-6">
+    <section v-if="showSetupPanel" class="pb-8">
       <v-expansion-panels variant="accordion" flat="true">
         <v-expansion-panel title="Connect another runner">
           <v-expansion-panel-text>
@@ -107,6 +108,7 @@
 
 <script>
 import GetStartedSteps from '../components/GetStartedSteps.vue';
+import PageTitle from '../components/PageTitle.vue';
 import ActivityChart from '../components/pipeline/activityChart.vue';
 import { getMaxHistoryDays, isAuthEnabled } from '@/composables/runtime';
 import { useAuth } from '@/composables/auth';
@@ -115,6 +117,7 @@ export default {
   name: 'HomeView',
   components: {
     GetStartedSteps,
+    PageTitle,
     ActivityChart,
   },
   // Everything below the hero needs a session to be worth showing, so the page follows
@@ -192,10 +195,3 @@ export default {
 }
 </script>
 
-<style scoped>
-/* Single shared wrapper so the hero, Get Started, and card row share one
-   left/right edge (Vuetify's default v-container maxes out much wider). */
-.page-container {
-  max-width: 1100px;
-}
-</style>

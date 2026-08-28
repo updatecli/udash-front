@@ -9,7 +9,7 @@
             <div class="font-weight-medium">
               {{ getRepositoryDisplayName(scmUrl) }}
             </div>
-            <div class="text-caption text-medium-emphasis">
+            <div class="text-body-small text-medium-emphasis">
               {{ Object.keys(scmData).length }} branch(es)
             </div>
           </div>
