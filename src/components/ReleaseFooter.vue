@@ -1,15 +1,17 @@
 <template>
     <v-footer
-        class="text-center d-flex flex-column"
+        class="d-flex align-center justify-center ga-2"
         app
-        bottom
-        fixed
-        padless
+        height="48"
         color="background"
     >
-        <div>
-            <v-btn class="mx-4" icon="mdi-github"  variant="text" href="https://github.com/updatecli"></v-btn>
-        </div>
+        <v-btn
+            icon="mdi-github"
+            aria-label="Updatecli on GitHub"
+            variant="text"
+            size="small"
+            href="https://github.com/updatecli"
+        ></v-btn>
         <div>
             {{ new Date().getFullYear() }} — <strong>© Updatecli Project</strong>
         </div>
