@@ -1,30 +1,31 @@
 <template>
-  <v-system-bar color="background" window class="mr-2">
+  <v-app-bar density="comfortable" color="surface" border="b" flat>
+    <v-app-bar-title>Udash</v-app-bar-title>
 
-    <v-spacer></v-spacer>
-    <v-btn v-if="!isAuthenticated && !isLoading && isAuthEnabled" density="compact" variant="flat"
-      @click.prevent="login">
-      Login
-    </v-btn>
+    <template v-slot:append>
+      <v-btn v-if="!isAuthenticated && !isLoading && isAuthEnabled" variant="tonal" @click.prevent="login">
+        Login
+      </v-btn>
 
-    <v-menu v-if="isAuthenticated && isAuthEnabled">
-      <template v-slot:activator="{ props }">
-        <v-btn density="compact" variant="flat" icon="mdi-account" aria-label="Account menu" v-bind="props"></v-btn>
-      </template>
-      <v-list>
-        <v-list-item>
-          <v-avatar size="50" color="surface-variant" class="d-block mx-auto">
-            <v-img v-if="user?.picture" :src="user.picture" alt="User's profile picture" cover></v-img>
-            <v-icon v-else icon="mdi-account"></v-icon>
-          </v-avatar>
-        </v-list-item>
-        <v-list-item prepend-icon="mdi-account" title="Profile" to="/profile" value="profile"></v-list-item>
-        <v-list-item prepend-icon="mdi-key" title="Tokens" to="/profile/tokens" value="tokens"></v-list-item>
-        <v-list-item prepend-icon="mdi-logout" title="Logout" value="logout" @click.prevent="logout"></v-list-item>
-      </v-list>
-    </v-menu>
-    <ThemeSwitcher />
-  </v-system-bar>
+      <v-menu v-if="isAuthenticated && isAuthEnabled">
+        <template v-slot:activator="{ props }">
+          <v-btn icon="mdi-account" aria-label="Account menu" v-bind="props"></v-btn>
+        </template>
+        <v-list>
+          <v-list-item>
+            <v-avatar size="50" color="surface-variant" class="d-block mx-auto">
+              <v-img v-if="user?.picture" :src="user.picture" alt="User's profile picture" cover></v-img>
+              <v-icon v-else icon="mdi-account"></v-icon>
+            </v-avatar>
+          </v-list-item>
+          <v-list-item prepend-icon="mdi-account" title="Profile" to="/profile" value="profile"></v-list-item>
+          <v-list-item prepend-icon="mdi-key" title="Tokens" to="/profile/tokens" value="tokens"></v-list-item>
+          <v-list-item prepend-icon="mdi-logout" title="Logout" value="logout" @click.prevent="logout"></v-list-item>
+        </v-list>
+      </v-menu>
+      <ThemeSwitcher />
+    </template>
+  </v-app-bar>
 </template>
 
 <script>

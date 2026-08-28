@@ -1,7 +1,7 @@
 <template>
   <v-menu>
     <template #activator="{ props }">
-      <v-btn icon="mdi-theme-light-dark" v-bind="props" variant="flat" density="compact" />
+      <v-btn icon="mdi-theme-light-dark" aria-label="Change theme" v-bind="props" />
     </template>
 
     <v-list>
