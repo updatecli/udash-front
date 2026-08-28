@@ -58,22 +58,22 @@
         <v-row>
             <v-col cols="12" lg="8" md="8" sm="12">
                 <v-card v-if="data.Scm.URL" variant="flat" class="mb-4">
-                    <v-card-title class="d-flex align-items-center pb-2">
+                    <v-card-title class="d-flex align-center pb-2">
                         <v-icon class="mr-2">mdi-git</v-icon>
                         Source Control
                     </v-card-title>
                     <v-card-text class="pt-0">
                         <v-row>
                             <v-col cols="12" md="8">
-                                <div class="d-flex align-items-center">
+                                <div class="d-flex align-center">
                                     <v-icon size="small" class="mr-2" color="grey-darken-1">mdi-link</v-icon>
-                                    <span class="text-body-2">{{ data.Scm.URL }}</span>
+                                    <span class="text-body-medium">{{ data.Scm.URL }}</span>
                                 </div>
                             </v-col>
                             <v-col cols="12" md="4">
-                                <div class="d-flex align-items-center">
+                                <div class="d-flex align-center">
                                     <v-icon size="small" class="mr-2" color="grey-darken-1">mdi-source-branch</v-icon>
-                                    <span class="text-body-2">{{ data.Scm.Branch.Source }}</span>
+                                    <span class="text-body-medium">{{ data.Scm.Branch.Source }}</span>
                                 </div>
                             </v-col>
                         </v-row>
@@ -81,19 +81,19 @@
                 </v-card>
 
                 <v-card variant="flat">
-                    <v-card-title class="d-flex align-items-center">
+                    <v-card-title class="d-flex align-center">
                         <v-icon class="mr-2">mdi-text</v-icon>
                         Description
                     </v-card-title>
                     <v-card-text>
-                        <p class="text-body-1">{{ data.Description || 'No description available' }}</p>
+                        <p class="text-body-large">{{ data.Description || 'No description available' }}</p>
                     </v-card-text>
 
                     <v-card-actions v-if="data.Information">
                         <v-expansion-panels variant="accordion" elevation="0" class="w-100">
                             <v-expansion-panel>
                                 <v-expansion-panel-title>
-                                    <div class="d-flex align-items-center">
+                                    <div class="d-flex align-center">
                                         <v-icon class="mr-2" size="small">mdi-information-outline</v-icon>
                                         Additional Information
                                         <v-chip size="x-small" variant="outlined" class="ml-2">
@@ -114,16 +114,16 @@
 
             <v-col cols="12" lg="4" md="4" sm="12">
                 <v-card flat>
-                    <v-card-title class="d-flex align-items-center">
+                    <v-card-title class="d-flex align-center">
                         <v-icon class="mr-2">mdi-cog</v-icon>
                         Configuration
                     </v-card-title>
 
                     <v-card-text>
                         <div v-if="data.Config?.Spec" class="mb-4">
-                            <div class="d-flex align-items-center mb-2">
+                            <div class="d-flex align-center mb-2">
                                 <v-icon size="small" class="mr-2">mdi-file-code</v-icon>
-                                <h5 class="text-subtitle-2 font-weight-medium">Specification</h5>
+                                <h5 class="text-label-large font-weight-medium">Specification</h5>
                             </div>
                             <v-card variant="outlined" class="pa-2">
                                 <div class="yaml-container">
@@ -133,9 +133,9 @@
                         </div>
 
                         <div v-if="data.Config?.Transformers" class="mb-4">
-                            <div class="d-flex align-items-center mb-2">
+                            <div class="d-flex align-center mb-2">
                                 <v-icon size="small" class="mr-2">mdi-transform</v-icon>
-                                <h5 class="text-subtitle-2 font-weight-medium">Transformers</h5>
+                                <h5 class="text-label-large font-weight-medium">Transformers</h5>
                             </div>
                             <v-card variant="outlined" class="pa-2">
                                 <div class="yaml-container">

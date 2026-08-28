@@ -1,5 +1,9 @@
 <template>
-  <v-container>
+  <v-container class="page-shell">
+    <PageTitle
+      title="Profile"
+      icon="mdi-account"
+    />
     <v-row>
       <v-col cols="12">
         <!-- The userinfo fetch is intentionally non-fatal, so without this a failure
@@ -25,10 +29,9 @@
             <v-icon v-else icon="mdi-account" size="64"></v-icon>
           </v-avatar>
 
-          <v-card-title>
-              Profile
-          </v-card-title>
-          <v-card-text>
+          <!-- The card used to be titled "Profile"; the page heading now says that, so
+               repeating it here would label the card with its own page name. -->
+          <v-card-text class="pt-6">
             <v-text-field
               label="Username"
               :model-value="user?.preferred_username"
@@ -56,9 +59,13 @@
 
 <script>
   import { useAuth } from '@/composables/auth';
+  import PageTitle from '@/components/PageTitle.vue';
 
   export default {
     name: "ProfileView",
+    components: {
+      PageTitle,
+    },
     setup() {
       const auth = useAuth();
 

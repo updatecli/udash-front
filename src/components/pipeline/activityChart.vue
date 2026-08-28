@@ -12,7 +12,7 @@
   <!-- Nothing is rendered when the request failed or returned no report at all:
        a host page stays exactly as it would be without this component. -->
   <div v-else-if="hasData" class="activity-chart" :class="{ 'activity-chart--refreshing': loading }">
-    <p v-if="showStats" class="text-body-2 text-medium-emphasis mb-3">
+    <p v-if="showStats" class="text-body-medium text-medium-emphasis mb-3">
       <span class="font-weight-medium text-high-emphasis">{{ formatCount(stats.total) }}</span>
       {{ stats.total === 1 ? 'report' : 'reports' }}
       &middot;
@@ -31,7 +31,7 @@
   <!-- A refused request is reported where the plot would be. Everything else still
        renders nothing, so a host page stays exactly as it would be without this
        component. -->
-  <p v-else-if="error" class="text-caption text-medium-emphasis mb-0">
+  <p v-else-if="error" class="text-body-small text-medium-emphasis mb-0">
     {{ error }}
   </p>
 </template>

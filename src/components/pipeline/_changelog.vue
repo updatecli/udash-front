@@ -15,7 +15,7 @@
           v-for="(changelog, index) in data"
           :key="index"
           tag="pre"
-          class="text-body-1"
+          class="text-body-large"
           inset
           elevation="0"
         >
@@ -32,13 +32,13 @@
               >Published at {{ changelog.PublishedAt }}</v-card-subtitle>
               <v-divider thickness="5"></v-divider>
               <v-card-text
-                class="text-body-1"
+                class="text-body-large"
                 v-if="changelog.Body"
               >
                 {{  changelog.Body }}
               </v-card-text>
               <v-card-text
-                class="text-body-1"
+                class="text-body-large"
                 v-else
               >
                 No changelog description detected

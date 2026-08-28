@@ -2,7 +2,7 @@
   <!-- The report is on its way. -->
   <v-container
     v-if="isLoading"
-    class="d-flex justify-center align-center loading-container"
+    class="page-shell d-flex justify-center align-center loading-container"
   >
     <v-progress-circular
       color="primary"
@@ -13,7 +13,7 @@
 
   <!-- The request never came back with a report. Saying so beats an empty page: the
        reader otherwise has no way to tell a broken API from a report with no content. -->
-  <v-container v-else-if="loadError">
+  <v-container v-else-if="loadError" class="page-shell">
     <v-card variant="outlined">
       <v-card-title>
         <v-icon
@@ -41,7 +41,7 @@
   </v-container>
 
   <!-- The API answered fine, it just has nothing under that id. -->
-  <v-container v-else-if="!pipeline">
+  <v-container v-else-if="!pipeline" class="page-shell">
     <v-card variant="outlined">
       <v-card-title>
         <v-icon
@@ -72,30 +72,21 @@
   </v-container>
 
   <template v-else>
-    <v-container>
-      <v-row>
-        <v-col
-          class="text-right"
-          cols="auto"
-          lg="8"
-          md="8"
-          sm="12"
-        >
-          <h1>
-            Report <v-icon icon="mdi-book-open-variant"></v-icon>
-          </h1>
-        </v-col>
-        <v-col class="text-center">
-
+    <v-container class="page-shell">
+      <PageTitle
+        title="Report"
+        icon="mdi-book-open-variant"
+      >
+        <template v-slot:actions>
           <v-icon
             :icon="getStatusIcon(pipeline.Pipeline.Result)"
             :color="getStatusColor(pipeline.Pipeline.Result)"
             size="80"
-            ></v-icon>
-        </v-col>
-      </v-row>
+          ></v-icon>
+        </template>
+      </PageTitle>
     </v-container>
-    <v-container>
+    <v-container class="page-shell pt-0">
       <!-- Show metadata -->
       <v-row>
         <v-col>
@@ -140,7 +131,7 @@
                       </span>
                       <span
                         v-if="hasMultiplePipelineURLs"
-                        class="text-warning text-caption ci-warning"
+                        class="text-warning text-body-small ci-warning"
                       >
                         Multiple CI URLs detected. Using the first one.
                       </span>
@@ -374,6 +365,7 @@ import TargetComponent from './_target.vue';
 import PipelineGraphComponent from './_graph.vue';
 
 import LinkedReports from './configs/_linkedReports.vue';
+import PageTitle from '@/components/PageTitle.vue';
 
 import { getStatusColor, getStatusIcon, getStatusText } from '@/composables/status';
 import { toLocalDate } from '@/composables/date';
@@ -392,6 +384,7 @@ export default {
   name: 'PipelineReport',
 
   components: {
+    PageTitle,
     ActionComponent,
     SourceComponent,
     ConditionComponent,

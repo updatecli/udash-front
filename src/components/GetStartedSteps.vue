@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-for="(step, index) in configSteps" :key="index" class="mb-8">
-      <h3 class="text-h6 mb-2">{{ index + 1 }}. {{ step.title }}</h3>
+      <h3 class="text-title-large mb-2">{{ index + 1 }}. {{ step.title }}</h3>
       <div class="mb-3" v-html="step.description"></div>
 
       <!-- Both authentication methods need a token, and until now this page asked

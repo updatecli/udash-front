@@ -14,22 +14,11 @@
       size="64"
     ></v-progress-circular>
   </v-overlay>
-  <v-container>
-    <v-row>
-      <v-col
-        class="text-right"
-        cols="auto"
-        lg="8"
-        md="8"
-        sm="12"
-      >
-      <h1>
-        Reports <v-icon icon="mdi-book-open-variant"></v-icon>
-      </h1>
-      </v-col>
-    </v-row>
-  </v-container>
-  <v-container>
+  <v-container class="page-shell">
+    <PageTitle
+      title="Reports"
+      icon="mdi-book-open-variant"
+    />
     <v-row>
       <v-col
         cols="auto"
@@ -39,7 +28,7 @@
       >
         <!-- Add explanatory header for filter -->
         <div class="mb-3">
-          <h3 class="text-h6 d-flex align-items-center">
+          <h3 class="text-title-large d-flex align-center">
             Filter Reports
             <v-tooltip text="Search and filter pipeline reports by repository, branch, or status. Use the dropdown to select specific repositories or search by keywords.">
               <template v-slot:activator="{ props }">
@@ -54,7 +43,7 @@
               </template>
             </v-tooltip>
           </h3>
-          <p class="text-caption text-grey-darken-1 mb-0">
+          <p class="text-body-small text-grey-darken-1 mb-0">
             Search repositories, branches, or filter by status
           </p>
         </div>
@@ -76,7 +65,7 @@
       >
         <!-- Add explanatory header -->
         <div class="mb-3">
-          <h3 class="text-h6 d-flex align-items-center">
+          <h3 class="text-title-large d-flex align-center">
             Latest Status Overview
             <v-tooltip text="Shows the status summary from the most recent pipeline reports for the current repository branch">
               <template v-slot:activator="{ props }">
@@ -91,7 +80,7 @@
               </template>
             </v-tooltip>
           </h3>
-          <p class="text-caption text-grey-darken-1 mb-0">
+          <p class="text-body-small text-grey-darken-1 mb-0">
             Current status from latest pipeline runs
           </p>
         </div>
@@ -119,7 +108,7 @@
       >
         <!-- Add explanatory header for pipeline reports -->
         <div class="mb-3">
-          <h3 class="text-h6 d-flex align-items-center">
+          <h3 class="text-title-large d-flex align-center">
             Detailed Reports
             <v-tooltip text="Complete list of pipeline reports with detailed information including timestamps, status, and actions. Click on any report to view its configuration or access related resources like pull requests.">
               <template v-slot:activator="{ props }">
@@ -134,7 +123,7 @@
               </template>
             </v-tooltip>
           </h3>
-          <p class="text-caption text-grey-darken-1 mb-0">
+          <p class="text-body-small text-grey-darken-1 mb-0">
             Historical pipeline execution data with full details
           </p>
         </div>
@@ -154,6 +143,7 @@
 <script>
 
 import PipelineReports from '../../components/pipeline/reports.vue';
+import PageTitle from '../../components/PageTitle.vue';
 
 import PipelineSCMSummary from '../../components/scm/_summary.vue';
 import PipelineSCMFilter from '../../components/scm/_filter.vue';
@@ -164,6 +154,7 @@ export default {
     this.cancelAutoUpdate();
   },
   components: {
+    PageTitle,
     PipelineReports,
     PipelineSCMFilter,
     PipelineSCMSummary
