@@ -58,7 +58,7 @@ const allRoutes = [
 
 // A route which always needs a session cannot exist on an instance with no login: a
 // profile is a property of one, and API tokens exist to stand in for one. `requiresAuth`
-// is therefore also what marks a route as unregisterable, rather than a second flag
+// is therefore also what marks a route as unregistrable, rather than a second flag
 // naming the same two routes.
 const routes = allRoutes.filter((route) => isAuthEnabled || !route.meta?.requiresAuth)
 
