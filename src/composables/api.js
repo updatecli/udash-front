@@ -1,5 +1,5 @@
 
-import { getAccessToken } from '@/composables/auth'
+import { getAccessToken, handleUnauthorized } from '@/composables/auth'
 import { getRuntimeConfig, isAuthEnabled } from '@/composables/runtime'
 
 // getApiBaseURL returns the base URL for API requests with no trailing slash.
@@ -23,8 +23,9 @@ export function getApiBaseUrl() {
 }
 
 // apiFetch calls the udash API at `path`, which is relative to the API base URL, and
-// returns the decoded JSON body. The bearer token is attached whenever auth is enabled,
-// so no caller has to know whether this instance runs with authentication or without.
+// returns the decoded JSON body. The bearer token is attached whenever a session exists,
+// so no caller has to know whether this instance runs with authentication or without —
+// nor, on an authenticated one, whether its API serves this request anonymously.
 //
 // It throws on anything but a 2xx, preferring the sentence the API puts in the body over
 // the bare status code: that sentence is usually the only thing telling the reader why a
@@ -59,6 +60,13 @@ export async function apiFetch(path, { method = 'GET', body, signal } = {}) {
 
     const error = new Error(detail || `HTTP error! status: ${response.status}`)
     error.status = response.status
+
+    // A 401 with no session means the API is stricter than this frontend was told it
+    // would be; offering the login is the only thing that can unblock the page.
+    if (response.status === 401) {
+      handleUnauthorized()
+    }
+
     throw error
   }
 

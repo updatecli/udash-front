@@ -25,15 +25,17 @@
             title="Home"
             to="/"
             value="home"></v-list-item>
+          <!-- Data pages, so they follow canReadData rather than the session: an open or
+               public instance shows them to anonymous visitors, a private one does not. -->
           <v-list-item
-            v-if="isAuthenticated"
+            v-if="canReadData"
             prepend-icon="mdi-view-dashboard"
             title="Dashboard"
             to="/scm/dashboard"
             value="scmDashboard"></v-list-item>
           <v-list-item
             prepend-icon="mdi-book-open-variant"
-            v-if="isAuthenticated"
+            v-if="canReadData"
             title="Reports"
             to="/pipeline/reports"
             value="reports"></v-list-item>
@@ -51,25 +53,20 @@
 
 <script>
     import { useAuth } from '@/composables/auth';
-    import { isAuthEnabled } from '@/composables/runtime';
     import { getAppBaseUrl } from '@/composables/runtime';
 
     export default {
         name: 'SideNavigation',
+        // main.js settles the auth state before mounting in every mode, so useAuth() is
+        // safe to call unconditionally and canReadData already answers for an open
+        // instance without this component special-casing one.
         setup() {
-          if (isAuthEnabled) {
-            const auth = useAuth();
-            return {
-              isAuthenticated: auth.isAuthenticated,
-              isLoading: auth.isLoading,
-            }
-          }
+          const auth = useAuth();
 
           return {
-            isAuthenticated: true,
-            isLoading: false,
+            canReadData: auth.canReadData,
+            isLoading: auth.isLoading,
           }
-
         },
 
         computed: {

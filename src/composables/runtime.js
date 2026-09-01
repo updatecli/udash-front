@@ -17,6 +17,43 @@ const API_MAX_HISTORY_DAYS = 366
 // body runs.
 export const isAuthEnabled = String(runtimeConfig.AUTH_ENABLED) === 'true'
 
+// AUTH_VISIBILITY mirrors the API's own `server.auth.visibility`, and only carries
+// meaning when AUTH_ENABLED is true — an instance with no login is readable by everyone
+// whatever it says here.
+//
+// It defaults to "private" where the API defaults to "public". The mismatch is
+// deliberate: this is the value that decides whether an existing deployment starts
+// serving its data to anonymous visitors, and that must never happen because someone
+// upgraded without editing a config file. An unknown value falls back the same way, so a
+// typo cannot open an instance either.
+const VISIBILITY_PUBLIC = 'public'
+const VISIBILITY_PRIVATE = 'private'
+
+function readAuthVisibility() {
+  const configured = String(runtimeConfig.AUTH_VISIBILITY ?? '').trim().toLowerCase()
+
+  if (configured === VISIBILITY_PUBLIC || configured === VISIBILITY_PRIVATE) {
+    return configured
+  }
+
+  if (configured !== '') {
+    console.warn(
+      `Unknown AUTH_VISIBILITY ${JSON.stringify(runtimeConfig.AUTH_VISIBILITY)}, ` +
+      `accepted values are "${VISIBILITY_PUBLIC}" and "${VISIBILITY_PRIVATE}". ` +
+      `Falling back to "${VISIBILITY_PRIVATE}".`
+    )
+  }
+
+  return VISIBILITY_PRIVATE
+}
+
+const authVisibility = isAuthEnabled ? readAuthVisibility() : VISIBILITY_PUBLIC
+
+// requiresLoginToRead answers one question: does browsing pipeline data need a session?
+// It is false on an open instance and on a public one. The account pages — the profile
+// and the API tokens — have their own rule and never consult it.
+export const requiresLoginToRead = isAuthEnabled && authVisibility === VISIBILITY_PRIVATE
+
 export function getRuntimeConfig() {
   return runtimeConfig
 }

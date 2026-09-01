@@ -9,14 +9,15 @@
         subtitle="The Updatecli dashboard for tracking automated updates across your Git repositories."
       />
 
-      <!-- On an authenticated instance every panel below needs a session, so an
-           anonymous visitor is given the one action that leads anywhere. It sits in
-           the hero rather than in a panel of its own: on a signed-out page it is the
-           only content, so a border would be separating it from nothing. -->
-      <div v-if="!isAuthenticated" class="d-flex align-center flex-wrap ga-4 mt-8">
+      <!-- The row sits in the hero rather than in a panel of its own: on a private
+           instance it is the only content a signed-out page has, so a border would be
+           separating it from nothing. What signing in buys differs by visibility, so the
+           copy has to as well. On a public instance the panels below are already there
+           and the row must not promise access it is not granting. -->
+      <div v-if="isAuthEnabled && !isAuthenticated" class="d-flex align-center flex-wrap ga-4 mt-8">
         <v-btn color="primary" @click="login">Sign in</v-btn>
         <span class="text-medium-emphasis">
-          Pipeline activity and reports need an account.
+          {{ signInHint }}
         </span>
       </div>
     </section>
@@ -32,7 +33,7 @@
          The section keeps its spacing for as long as the chart is drawing something —
          a spinner and a refusal both occupy the band — and gives it up only once the
          summary has confirmed there is nothing to plot. -->
-    <section v-if="isAuthenticated" :class="isKnownEmpty ? '' : 'pt-0 pb-8'">
+    <section v-if="canReadData" :class="isKnownEmpty ? '' : 'pt-0 pb-8'">
       <template v-if="hasActivity">
         <h2 class="text-headline-medium font-weight-bold mb-2">Pipeline activity</h2>
         <p class="text-medium-emphasis mb-6">
@@ -50,7 +51,7 @@
          the one mistake worth holding the layout back for, so neither this block nor
          its collapsed form is drawn while the answer is still in flight. Once reports
          are flowing it moves below the feature cards as a collapsed panel. -->
-    <section v-if="isAuthenticated && isKnownEmpty" class="pb-8">
+    <section v-if="canReadData && isKnownEmpty" class="pb-8">
       <v-card flat color="background" class="pa-6">
         <v-card-title class="text-headline-medium font-weight-bold px-0 mb-2">Get Started</v-card-title>
         <p class="text-medium-emphasis mb-8">
@@ -62,7 +63,7 @@
     </section>
 
     <!-- Features Section -->
-    <section v-if="isAuthenticated" class="pb-8">
+    <section v-if="canReadData" class="pb-8">
       <v-row>
         <v-col
           v-for="feature in features"
@@ -110,7 +111,7 @@
 import GetStartedSteps from '../components/GetStartedSteps.vue';
 import PageTitle from '../components/PageTitle.vue';
 import ActivityChart from '../components/pipeline/activityChart.vue';
-import { getMaxHistoryDays, isAuthEnabled } from '@/composables/runtime';
+import { getMaxHistoryDays, isAuthEnabled, requiresLoginToRead } from '@/composables/runtime';
 import { useAuth } from '@/composables/auth';
 
 export default {
@@ -120,24 +121,20 @@ export default {
     PageTitle,
     ActivityChart,
   },
-  // Everything below the hero needs a session to be worth showing, so the page follows
-  // the auth state the way SideNavigation does. main.js resolves auth before mounting,
-  // which is why there is no loading state to hold: it is already settled here.
+  // The panels below follow canReadData the way SideNavigation does, while the hero
+  // follows the session: those are the same thing only on a private instance. main.js
+  // resolves auth before mounting, which is why there is no loading state to hold: it is
+  // already settled here.
   setup() {
-    if (isAuthEnabled) {
-      const auth = useAuth();
+    const auth = useAuth();
 
-      return {
-        isAuthenticated: auth.isAuthenticated,
-        login() {
-          auth.login();
-        }
-      }
-    }
-
-    // An open instance has no sign-in step, so every visitor is treated as one.
     return {
-      isAuthenticated: true,
+      isAuthEnabled,
+      isAuthenticated: auth.isAuthenticated,
+      canReadData: auth.canReadData,
+      login() {
+        auth.login();
+      }
     }
   },
   data: () => ({
@@ -165,6 +162,14 @@ export default {
     ],
   }),
   computed: {
+    // What a signed-out visitor gains by signing in: the data on a private instance, the
+    // account pages on a public one, where the data is already in front of them.
+    signInHint() {
+      return requiresLoginToRead
+        ? 'Pipeline activity and reports need an account.'
+        : 'Sign in to manage your profile and API tokens.'
+    },
+
     // The activity band never looks further back than the instance is configured to
     // serve, so lowering MAX_HISTORY_DAYS narrows the chart along with the filter.
     maxHistoryDays() {
