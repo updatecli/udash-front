@@ -1,6 +1,12 @@
-import { reactive, toRefs } from 'vue'
+import { computed, reactive, toRefs } from 'vue'
 import { UserManager, WebStorageStateStore } from 'oidc-client-ts'
-import { getRuntimeConfig, getAppBaseUrl, isAuthEnabled } from '@/composables/runtime'
+import {
+  getRuntimeConfig,
+  getAppBasePath,
+  getAppBaseUrl,
+  isAuthEnabled,
+  requiresLoginToRead,
+} from '@/composables/runtime'
 
 // Provider-agnostic OIDC auth layer (Authorization Code + PKCE).
 // Backed by oidc-client-ts, configured from the runtime config.json so any
@@ -15,6 +21,13 @@ const state = reactive({
   user: null,
   error: null,
 })
+
+// canReadData separates "may see pipeline data" from "has a session", which used to be
+// the same flag. On a public instance an anonymous visitor reads everything the API
+// serves anonymously, and signing in adds the profile and the API tokens rather than the
+// data. It stays reactive so a visitor who signs in mid-session sees the panels appear
+// without reloading.
+export const canReadData = computed(() => !requiresLoginToRead || state.isAuthenticated)
 
 let userManager = null
 let initPromise = null
@@ -175,10 +188,21 @@ export function consumeReturnTo() {
   return target
 }
 
-// authGuard protects routes: authenticated users pass, others are redirected to
-// the identity provider with the target route remembered.
+// routeNeedsSession decides, for one route, whether a session is required:
+//   - `requiresAuth`: an account page. Always needs one, whatever the visibility.
+//   - `requiresRead`: a page of pipeline data. Needs one only where the API is private.
+// A route with neither is open to everyone.
+function routeNeedsSession(to) {
+  return to.meta?.requiresAuth === true ||
+    (to.meta?.requiresRead === true && requiresLoginToRead)
+}
+
+// authGuard is registered once as the router's global guard. It replaces the per-route
+// `beforeEnter`, which could not express "needed here, but only on a private instance".
+// Authenticated users pass, others are redirected to the identity provider with the
+// target route remembered.
 export async function authGuard(to) {
-  if (!isAuthEnabled) {
+  if (!isAuthEnabled || !routeNeedsSession(to)) {
     return true
   }
 
@@ -193,6 +217,38 @@ export async function authGuard(to) {
   return false
 }
 
+// currentReturnTo rebuilds the router path from the address bar. The stashed value is
+// replayed through router.replace(), so the APP_BASE_PATH prefix has to come off.
+function currentReturnTo() {
+  const base = getAppBasePath()
+  const path = window.location.pathname
+  const relative = path.startsWith(base) ? path.slice(base.length - 1) : path
+
+  return relative + window.location.search + window.location.hash
+}
+
+// handleUnauthorized turns an API refusal into the login the viewer was never offered.
+// It fires only for a viewer with no session: on an instance configured public while its
+// API is private, every data request comes back 401 and the pages would otherwise render
+// silently empty. A 401 for someone already signed in is a different fault — an expired
+// token, a missing role, the wrong audience — and bouncing them to the provider would
+// loop.
+let unauthorizedRedirect = false
+
+export function handleUnauthorized() {
+  if (!isAuthEnabled || state.isAuthenticated || unauthorizedRedirect) {
+    return
+  }
+
+  // A page fires several requests at once; they must not queue several redirects.
+  unauthorizedRedirect = true
+
+  login(currentReturnTo()).catch((err) => {
+    state.error = err
+    unauthorizedRedirect = false
+  })
+}
+
 // useAuth exposes reactive auth state and actions to components.
 export function useAuth() {
   const { isAuthenticated, isLoading, user, error } = toRefs(state)
@@ -202,6 +258,7 @@ export function useAuth() {
     isLoading,
     user,
     error,
+    canReadData,
     login,
     logout,
     getToken: getAccessToken,

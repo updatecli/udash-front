@@ -50,12 +50,9 @@ export default {
     ThemeSwitcher,
   },
   setup() {
-    // With auth disabled neither the login button nor the account menu renders,
-    // so there is no auth state for the template to read.
-    if (!isAuthEnabled) {
-      return { isAuthEnabled };
-    }
-
+    // Both the login button and the account menu are gated on isAuthEnabled, so with
+    // auth disabled neither renders whatever the auth state says. main.js settles that
+    // state before mounting in every mode, so useAuth() is safe to call here regardless.
     const auth = useAuth();
     const route = useRoute();
 

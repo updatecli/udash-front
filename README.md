@@ -35,6 +35,7 @@ Set it in the runtime config files to mount the SPA below a subpath such as `/ud
 ```
 {
    "AUTH_ENABLED": false,
+   "AUTH_VISIBILITY": "private",
    "OAUTH_DOMAIN": "https://your-instance.zitadel.cloud",
    "OAUTH_CLIENTID": "xxx",
    "OAUTH_SCOPE": "openid profile email offline_access urn:zitadel:iam:org:project:id:PROJECT_ID:aud",
@@ -64,6 +65,13 @@ It is toggled and configured entirely at runtime through `config.json`, so the s
 image serves both authenticated and open deployments:
 
 - `AUTH_ENABLED` — set to `true` to require authentication. Defaults to `false`.
+- `AUTH_VISIBILITY` — `public` or `private`. Only read when `AUTH_ENABLED` is `true`.
+  Defaults to `private`.
+  - `private` — reports, the SCM dashboard and the home page activity chart all require
+    a session. Signing in is the price of admission.
+  - `public` — anyone may browse reports, the dashboard and the activity chart without an
+    account. Signing in adds the profile and the API tokens page, and is what a runner
+    needs to publish reports.
 - `OAUTH_DOMAIN` — the provider's issuer URL (e.g. `https://your-instance.zitadel.cloud`).
 - `OAUTH_CLIENTID` — the SPA application's client ID.
 - `OAUTH_SCOPE` — requested scopes. Include `openid profile email offline_access`
@@ -71,6 +79,15 @@ image serves both authenticated and open deployments:
   audience scope `urn:zitadel:iam:org:project:id:<PROJECT_ID>:aud` so the access
   token is accepted by the API. Defaults to `openid profile email offline_access`
   when omitted.
+
+`AUTH_VISIBILITY` must match the API's own `server.auth.visibility`, which takes the same
+two values. Note the defaults differ on purpose: the API defaults to `public`, this
+frontend to `private`, so that upgrading an existing instance never starts serving its
+data to anonymous visitors on its own. A stock API paired with a stock frontend therefore
+asks for a login it does not strictly need — the harmless direction. The reverse, a
+frontend set to `public` against a private API, sends anonymous requests the API refuses;
+the first refusal redirects the visitor to the identity provider, so the instance behaves
+private rather than rendering empty pages.
 
 Register the app in the provider as a **User Agent / SPA** application with
 **PKCE**, and add the app's base URL (the value of `APP_BASE_PATH` resolved
