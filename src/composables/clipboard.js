@@ -1,17 +1,12 @@
-// copyText puts text on the clipboard and resolves to whether it worked.
-//
-// navigator.clipboard only exists in a secure context, and self-hosted instances are
-// often served over plain http on an internal network, so the legacy execCommand path
-// is kept as a fallback rather than letting the copy button silently do nothing. It is
-// deprecated but still the only option there. Callers must handle false: the text has
-// to stay selectable for the reader to copy by hand.
+// copyText resolves to whether the copy worked. The execCommand fallback covers
+// instances served over plain http, where navigator.clipboard is unavailable.
 export async function copyText(text) {
   if (navigator.clipboard && window.isSecureContext) {
     try {
       await navigator.clipboard.writeText(text)
       return true
     } catch {
-      // Permission denied or document not focused: fall through to the legacy path.
+      // fall through to the legacy path
     }
   }
 

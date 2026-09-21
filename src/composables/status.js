@@ -99,9 +99,7 @@ export const OPEN_ACTION_RESULT_SEGMENTS = {
   '⚠': { label: '⚠ Changed, pull request open', subtitle: 'Updatecli applied a change and opened a pull request' },
 }
 
-// getPipelineResultText names a result at pipeline level, where "⚠" means Updatecli
-// applied a change. Use it wherever a whole pipeline's result is spelled out; getStatusText
-// stays for the source, condition and target rows, whose glyphs mean something else.
+// getPipelineResultText names a pipeline-level result, where "⚠" means "Changed".
 export function getPipelineResultText(result){
   const match = PIPELINE_RESULTS.find((entry) => entry.value === result)
   return match ? match.title.replace(/^\S+\s/, '') : 'Unknown'

@@ -12,8 +12,6 @@
       v-model="filterForm"
       @submit.prevent="applyFilter"
     >
-      <!-- Without the repository list both selectors below stay disabled, which on its
-           own reads as "this instance has no repositories". -->
       <LoadError
         v-if="scmLoadError"
         class="mb-4"

@@ -49,8 +49,6 @@
           ></v-btn>
           <pre class="overflow-x-auto"><code>{{ createdToken }}</code></pre>
         </div>
-        <!-- The token cannot be shown again, so a failed copy must be said out loud
-             while the text is still on screen to select by hand. -->
         <p v-if="copyFailed" class="text-body-medium mt-3 mb-0" role="alert">
           Copying is blocked in this browser. Select the token above and copy it by hand.
         </p>

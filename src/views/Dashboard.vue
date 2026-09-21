@@ -91,8 +91,6 @@ export default {
     ]
   }),
   watch: {
-    // The overlay gives up after ten seconds so a stalled request never leaves the
-    // page covered; the timer is cleared on leave so it cannot fire into a dead view.
     isLoading: function (val) {
       clearTimeout(this.loadingTimer)
       if (val) {
