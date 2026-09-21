@@ -1,8 +1,5 @@
 <template>
     <v-container class="pa-0">
-        <!-- A refused or unreachable search leaves nothing to draw, but it is not an empty
-             instance either, and saying "nothing found" would send the reader looking in
-             the wrong place. -->
         <LoadError
             v-if="loadError && !hasLoadedData"
             title="Git repositories could not be loaded"
@@ -213,9 +210,6 @@
                                                                 </div>
                                                             </div>
                                                             <div class="status-summary">
-                                                                <!-- The same narrowing the doughnut offers on click,
-                                                                     reachable from the keyboard: a canvas segment
-                                                                     cannot take focus, a chip can. -->
                                                                 <v-chip
                                                                     v-for="(count, status) in branchData.total_result_by_type"
                                                                     :key="status"
@@ -287,7 +281,7 @@
                                              the branches comparable to each other. It
                                              falls back to the full history when no
                                              range is set. -->
-                                        <div class="branch-activity px-4 pb-2">
+                                        <v-lazy class="branch-activity px-4 pb-2" min-height="44">
                                             <ActivityChart
                                                 mode="volume"
                                                 granularity="auto"
@@ -301,7 +295,7 @@
                                                 :results="filter.results"
                                                 :open-action="filter.openAction ?? null"
                                             />
-                                        </div>
+                                        </v-lazy>
 
                                         <v-divider
                                             v-if="index < getVisibleBranchEntries(url, scmData).length - 1"
@@ -541,15 +535,11 @@ export default {
             return this.hasSearched && this.totalCount == 0 && !this.isLoading && !this.loadError;
         },
 
-        // retryLoad starts over rather than resuming: the failure happened on the first
-        // page, so there is nothing loaded worth keeping.
         async retryLoad() {
             this.resetPagination();
             await this.loadNextPage();
         },
 
-        // isFilterableResult answers whether a result can be handed to the search API,
-        // which only knows the four Updatecli results.
         isFilterableResult(status) {
             return PIPELINE_RESULT_VALUES.includes(status);
         },

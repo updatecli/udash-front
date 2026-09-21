@@ -350,7 +350,6 @@ import ActionComponent from './_action.vue';
 import SourceComponent from './_source.vue';
 import ConditionComponent from './_condition.vue';
 import TargetComponent from './_target.vue';
-import PipelineGraphComponent from './_graph.vue';
 
 import LinkedReports from './configs/_linkedReports.vue';
 import PageTitle from '@/components/PageTitle.vue';
@@ -359,6 +358,9 @@ import { getStatusColor, getStatusIcon, getPipelineResultText } from '@/composab
 import { toLocalDate } from '@/composables/date';
 import { apiFetch, describeLoadError } from '@/composables/api';
 import LoadError from '@/components/LoadError.vue';
+import { defineAsyncComponent } from 'vue';
+
+const PipelineGraphComponent = defineAsyncComponent(() => import('./_graph.vue'));
 
 // CONFIG_ID_KEYS names, per resource stage, the field of the report holding the mapping
 // from a config UUID to the resource it belongs to. Actions are absent on purpose: they

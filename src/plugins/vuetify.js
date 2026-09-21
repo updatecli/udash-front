@@ -1,11 +1,10 @@
 // Styles
-import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
+import { icons } from './icons'
 
 // Vuetify
+// Components and directives are auto-imported by vite-plugin-vuetify; don't register them here.
 import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
 
 const darkTheme = {
   dark: true,
@@ -40,8 +39,7 @@ const lightTheme = {
 }
 
 export default createVuetify({
-  components,
-  directives,
+  icons,
   theme: {
     defaultTheme: "system",
     themes: {

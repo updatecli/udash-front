@@ -1,10 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import PipelineReportsView from '../views/pipeline/ReportsView.vue'
-import PipelineReportView from '../views/pipeline/ReportView.vue'
-import ProfileView from "../views/ProfileView.vue";
-import TokensView from "../views/TokensView.vue";
-import Dashboard from "../views/Dashboard.vue";
 import { authGuard } from "@/composables/auth";
 import { getAppBasePath, isAuthEnabled } from '@/composables/runtime'
 
@@ -27,31 +22,31 @@ const allRoutes = [
   {
     path: '/pipeline/reports',
     name: 'pipelineReports',
-    component: PipelineReportsView,
+    component: () => import('../views/pipeline/ReportsView.vue'),
     meta: { requiresRead: true }
   },
   {
     path: '/pipeline/reports/:id',
     name: 'pipelineReport',
-    component: PipelineReportView,
+    component: () => import('../views/pipeline/ReportView.vue'),
     meta: { requiresRead: true }
   },
   {
     path: "/scm/dashboard",
     name: "scmDashboard",
-    component: Dashboard,
+    component: () => import('../views/Dashboard.vue'),
     meta: { requiresRead: true }
   },
   {
     path: "/profile",
     name: "profile",
-    component: ProfileView,
+    component: () => import('../views/ProfileView.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: "/profile/tokens",
     name: "tokens",
-    component: TokensView,
+    component: () => import('../views/TokensView.vue'),
     meta: { requiresAuth: true }
   }
 ]
