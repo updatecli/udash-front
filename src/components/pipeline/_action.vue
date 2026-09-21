@@ -12,7 +12,6 @@
         </v-toolbar-title>
 
         <v-toolbar-items>
-            <!-- The resource id is a reference to read or copy, not an action. -->
             <span class="resource-id text-body-medium text-medium-emphasis">{{ id }}</span>
         </v-toolbar-items>
     </v-toolbar>

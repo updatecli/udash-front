@@ -16,8 +16,6 @@
           <v-icon v-if="icon" :icon="icon" class="mr-2"></v-icon>
           {{ title }}
           <v-tooltip v-if="tooltip" location="right">
-            <!-- A button rather than a bare icon so keyboard and touch readers can
-                 reach the tooltip too; a hover-only hint is invisible to them. -->
             <template v-slot:activator="{ props }">
               <v-btn
                 icon="mdi-information-outline"

@@ -12,7 +12,6 @@
         </v-toolbar-title>
 
         <v-toolbar-items>
-            <!-- The resource id is a reference to read or copy, not an action. -->
             <span class="resource-id text-body-medium text-medium-emphasis">{{ id }}</span>
         </v-toolbar-items>
     </v-toolbar>
@@ -252,8 +251,6 @@ export default {
     white-space: pre-wrap;
     word-break: break-word;
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
-    /* Tinted from the theme's own ink so the block reads on both surfaces; a fixed
-       light grey left the dark theme's near-white text on a near-white box. */
     background-color: rgba(var(--v-theme-on-surface), 0.05);
     color: rgb(var(--v-theme-on-surface));
     padding: 12px;

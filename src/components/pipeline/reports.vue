@@ -1,8 +1,6 @@
 <template>
 
   <v-container class="pa-0" fluid>
-    <!-- A failed search is reported as such: an empty table here would read as "no
-         report matches", which sends the reader off changing a filter that was fine. -->
     <LoadError
       v-if="loadError"
       title="Reports could not be loaded"
@@ -150,9 +148,6 @@
                  change it would have made is already waiting in a pull request nobody
                  merged. The badge is what tells those apart from the genuinely up to
                  date ones, which the result glyph alone cannot do. -->
-            <!-- The icon is the only thing in this cell, so it carries the result as
-                 an image with a name. tabindex lets keyboard readers reach the tooltip,
-                 which is the only place the open pull request is spelled out. -->
             <template v-slot:item.Result="{ item }">
               <v-tooltip :text="getResultTooltipText(item)">
                 <template v-slot:activator="{ props }">
@@ -368,8 +363,6 @@ export default {
     },
 
     async getReportsData(page =1 ) {
-      // Pages and filters can change faster than the API answers; only the latest
-      // request may write the table, or an older answer lands on top of a newer one.
       this.requestId += 1
       const requestId = this.requestId
 
