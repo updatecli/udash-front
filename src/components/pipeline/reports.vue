@@ -32,22 +32,10 @@
           >
           <div class="mb-3">
             <h4 class="d-flex align-center mb-2">
-              Quick Actions
-              <v-tooltip text="Actions extracted from your pipeline reports that may require follow-up, such as pull requests.">
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    icon="mdi-information-outline"
-                    size="x-small"
-                    variant="text"
-                    class="ml-1 text-medium-emphasis"
-                    aria-label="About quick actions"
-                  ></v-btn>
-                </template>
-              </v-tooltip>
+              Open pull requests
             </h4>
             <p class="text-body-small text-medium-emphasis mb-0">
-              {{ actionURLs.length }} action{{ actionURLs.length !== 1 ? 's' : '' }} found across your pipeline reports
+              {{ actionURLs.length === 1 ? 'Opened by these pipelines and still waiting to be merged.' : `${actionURLs.length} opened by these pipelines and still waiting to be merged.` }}
             </p>
           </div>
 
@@ -106,16 +94,6 @@
             md="12"
             sm="12"
           >
-          <!-- Add header for reports table -->
-          <div class="mb-3">
-            <h4 class="d-flex align-center mb-2">
-              Pipeline Reports
-            </h4>
-            <p class="text-body-small text-medium-emphasis mb-0">
-              Detailed execution history and status information
-            </p>
-          </div>
-
           <v-pagination
             v-model="currentPage"
             :length="Math.ceil(totalItems / itemsPerPage)"
@@ -124,7 +102,7 @@
           ></v-pagination>
 
           <div class="text-center mt-2">
-            <small>Total: {{ totalItems }} reports</small>
+            <small>{{ totalItems.toLocaleString() }} {{ totalItems === 1 ? 'report' : 'reports' }}</small>
           </div>
 
           <v-data-table-virtual
@@ -238,9 +216,9 @@ export default {
       order: 'desc'
     }],
     pipelinesHeaders: [
-      { title: "State", align: "start", key:'Result', width: '80px'},
+      { title: "Result", align: "start", key:'Result', width: '80px'},
       { title: "Time", key:'UpdatedAt', width: '200px'},
-      { title: "Action", key: 'Action', align:'start', width: '200px'},
+      { title: "Pull request", key: 'Action', align:'start', width: '200px'},
       {
         title: "Name",
         align: 'start',
@@ -302,7 +280,7 @@ export default {
     },
 
     getActionTooltipText(action) {
-      return `${action.title} - Open ${action.url}`
+      return `${action.title} (${action.url})`
     },
 
     // hasOpenAction reports whether a pipeline left a pull request open. Updatecli only
@@ -319,10 +297,10 @@ export default {
       }
 
       if (pipeline.Result === '✔') {
-        return `${status} - nothing to change, the change is already waiting in an open pull request`
+        return `${status}: nothing to change, the change is already waiting in an open pull request`
       }
 
-      return `${status} - a pull request is still open`
+      return `${status}: a pull request is still open`
     },
 
     getActionsURL(pipeline){

@@ -58,7 +58,7 @@
           <v-expansion-panel>
             <v-expansion-panel-title>
               <v-icon class="mr-2">mdi-filter-outline</v-icon>
-              Advanced Filter
+              Advanced filter
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <!-- Label Key and Value Selection -->
@@ -67,7 +67,7 @@
                   <v-col cols="12" sm="5">
                     <v-select
                       variant="outlined"
-                      label="Label Key (Optional)"
+                      label="Label"
                       :items="labelKeys"
                       prepend-inner-icon="mdi-label"
                       v-model="label.key"
@@ -78,7 +78,7 @@
                   <v-col cols="12" sm="6">
                     <v-select
                       variant="outlined"
-                      label="Label Value (Optional)"
+                      label="Value"
                       :items="getLabelValuesForIndex(index)"
                       prepend-inner-icon="mdi-label-multiple"
                       v-model="label.value"
@@ -124,7 +124,7 @@
                   <v-col cols="12" md="6">
                     <v-select
                       variant="outlined"
-                      label="Pipeline Result (Optional)"
+                      label="Pipeline result"
                       :items="pipelineResults"
                       :item-props="true"
                       item-value="value"
@@ -141,7 +141,7 @@
                   <v-col cols="12" md="6">
                     <v-select
                       variant="outlined"
-                      label="Open Pull Request (Optional)"
+                      label="Open pull request"
                       :items="openActionOptions"
                       :item-props="true"
                       item-value="value"
@@ -202,14 +202,14 @@
             :disabled="showRepositoryBranch && (!isRepositoriesData() && !isRepositoryBranchesData())"
             class="pr-4"
             @click="applyFilter"
-          >Search</v-btn>
+          >Apply filter</v-btn>
 
           <v-btn
             v-if="isRestrictedSCM()"
             @click="resetRestrictedSCM"
             justify-center
             class="pl-4"
-          >Reset</v-btn>
+          >Show all repositories</v-btn>
 
         </div>
     </v-form>

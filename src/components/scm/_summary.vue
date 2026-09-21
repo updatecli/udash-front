@@ -27,7 +27,7 @@
                     class="mr-2"
                     @click="toggleAllRepos"
                 >
-                    {{ areAllReposCollapsed() ? 'Show all SCMs' : 'Hide all SCMs' }}
+                    {{ areAllReposCollapsed() ? 'Expand all repositories' : 'Collapse all repositories' }}
                 </v-btn>
                 <v-btn
                     v-if="hasEmptyEntries"
@@ -35,7 +35,7 @@
                     variant="outlined"
                     @click="toggleHideEmpty"
                 >
-                    {{ hideEmpty ? 'Show empty' : 'Hide empty' }}
+                    {{ hideEmpty ? 'Show empty branches' : 'Hide empty branches' }}
                 </v-btn>
             </v-col>
         </v-row>
@@ -311,7 +311,7 @@
                                             variant="outlined"
                                             @click="loadMoreBranches(url)"
                                         >
-                                            Load More Branches
+                                            Show more branches
                                         </v-btn>
                                     </div>
                                 </template>
@@ -355,7 +355,7 @@
                             @click="loadMoreData"
                             :loading="isLoading"
                         >
-                            Load More
+                            Load more
                         </v-btn>
                     </v-card-text>
                 </v-card>
@@ -489,7 +489,7 @@ export default {
         },
 
         scmLabel() {
-            return this.totalScmCount === 1 ? 'SCM branch' : 'SCM branches';
+            return this.totalScmCount === 1 ? 'branch' : 'branches';
         },
 
         progressPercentage() {
@@ -921,10 +921,12 @@ export default {
             const shortLabel = this.getActionShortLabel(url);
 
             if (count > 0) {
-                return `${count} open ${shortLabel} requires attention`;
+                return count === 1
+                    ? `1 open ${shortLabel} needs attention`
+                    : `${count} open ${shortLabel}s need attention`;
             }
 
-            return `No open ${shortLabel} requires attention`;
+            return `No open ${shortLabel}s`;
         },
 
         buildDoughnutData(branchData) {

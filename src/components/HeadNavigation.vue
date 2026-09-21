@@ -28,8 +28,8 @@
             </v-avatar>
           </v-list-item>
           <v-list-item prepend-icon="mdi-account" title="Profile" to="/profile" value="profile"></v-list-item>
-          <v-list-item prepend-icon="mdi-key" title="Tokens" to="/profile/tokens" value="tokens"></v-list-item>
-          <v-list-item prepend-icon="mdi-logout" title="Logout" value="logout" @click.prevent="logout"></v-list-item>
+          <v-list-item prepend-icon="mdi-key" title="API tokens" to="/profile/tokens" value="tokens"></v-list-item>
+          <v-list-item prepend-icon="mdi-logout" title="Log out" value="logout" @click.prevent="logout"></v-list-item>
         </v-list>
       </v-menu>
     </template>
