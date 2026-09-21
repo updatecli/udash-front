@@ -220,7 +220,6 @@ export default {
 .yaml-container {
     max-height: 300px;
     overflow-y: auto;
-    background-color: #f5f5f5;
     border-radius: 4px;
 }
 

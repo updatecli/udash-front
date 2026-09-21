@@ -404,12 +404,12 @@ const EMPTY_DONUT_DATA = Object.freeze({ labels: [], datasets: [] });
 // pull request nobody merged, and those are the ones worth looking at: without the split
 // they are indistinguishable from the branches which are genuinely up to date.
 const DOUGHNUT_SEGMENTS = Object.freeze([
-    { result: '✔', openAction: true, label: '✔ Waiting to be merged', color: 'rgba(59, 130, 246, 0.7)' }, // Blue
-    { result: '✔', openAction: false, label: '✔ Success', color: 'rgba(16, 185, 129, 0.7)' },  // Green
-    { result: '⚠', label: '⚠ Changed', color: 'rgba(245, 158, 11, 0.7)' },  // Amber
-    { result: '✗', label: '✗ Failed', color: 'rgba(220, 38, 38, 0.7)' },    // Red
-    { result: '-', label: '- Skipped', color: 'rgba(107, 114, 128, 0.7)' }, // Gray
-    { result: null, label: '? Unknown', color: 'rgba(139, 92, 246, 0.7)' }, // Purple
+    { result: '✔', openAction: true, label: '✔ Waiting to be merged', color: 'result-waiting' },
+    { result: '✔', openAction: false, label: '✔ Success', color: 'success' },
+    { result: '⚠', label: '⚠ Changed', color: 'warning' },
+    { result: '✗', label: '✗ Failed', color: 'error' },
+    { result: '-', label: '- Skipped', color: 'result-skipped' },
+    { result: null, label: '? Unknown', color: 'result-unknown' },
 ]);
 const COLLAPSE_STORAGE_KEY = getStorageKey('scm.summary.collapse.v1');
 
@@ -885,7 +885,26 @@ export default {
                         return EMPTY_DONUT_DATA;
                     }
 
-                    return d;
+                    // Segments carry theme colour names; resolve them per theme, cached so
+                    // the chart only redraws when the data or the theme changes.
+                    const theme = this.$vuetify.theme.current;
+                    let themed = this.themedDoughnutCache.get(d);
+                    if (!themed || themed.theme !== theme) {
+                        themed = {
+                            theme,
+                            data: {
+                                ...d,
+                                datasets: d.datasets.map((dataset) => ({
+                                    ...dataset,
+                                    backgroundColor: dataset.backgroundColor.map((name) => theme.colors[name]),
+                                    borderColor: theme.colors.surface,
+                                })),
+                            },
+                        };
+                        this.themedDoughnutCache.set(d, themed);
+                    }
+
+                    return themed.data;
         },
 
         hasDoughnutData(url, branch) {
@@ -1072,8 +1091,8 @@ export default {
                 case '✔': return 'success';
                 case '⚠': return 'warning';
                 case '✗': return 'error';
-                case '-': return 'grey';
-                default: return 'purple';
+                case '-': return 'result-skipped';
+                default: return 'result-unknown';
             }
         },
 
@@ -1092,6 +1111,7 @@ export default {
         // Kept off the reactive state on purpose: it only holds the per-doughnut
         // options objects, which have to keep their identity across renders.
         this.doughnutOptionsCache = {};
+        this.themedDoughnutCache = new WeakMap();
 
         this.loadPersistedCollapseState();
         this.resetPagination();
@@ -1107,8 +1127,7 @@ export default {
 }
 
 .repo-side {
-    border-right: 1px solid rgba(0, 0, 0, 0.08);
-    background: rgba(0, 0, 0, 0.01);
+    border-right: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .branch-side {
@@ -1124,7 +1143,7 @@ export default {
 }
 
 .branch-item:hover {
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .chart-container {
@@ -1192,7 +1211,7 @@ export default {
 @media (max-width: 959px) {
     .repo-side {
         border-right: 0;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
     }
 }
 </style>

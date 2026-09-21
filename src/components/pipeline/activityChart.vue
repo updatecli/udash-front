@@ -84,12 +84,12 @@ ChartJS.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip,
 // other results worth acting on, in the blue forges use for an open pull request — a hue
 // none of the other segments occupies.
 const RESULT_SERIES = Object.freeze([
-    { key: '✗',       label: '✗ Error',   color: '#dc2626' }, // Red
-    { key: '⚠',       label: '⚠ Changed', color: '#f59e0b' }, // Amber
-    { key: '✔:open',  label: '✔ Waiting to be merged', color: '#3b82f6', result: '✔', openAction: true }, // Blue
-    { key: '✔',       label: '✔ Success', color: '#10b981', result: '✔', openAction: false }, // Green
-    { key: '-',       label: '- Skipped', color: '#6b7280' }, // Gray
-    { key: 'unknown', label: '? Unknown', color: '#8b5cf6' }, // Purple
+    { key: '✗',       label: '✗ Error',   color: 'error' },
+    { key: '⚠',       label: '⚠ Changed', color: 'warning' },
+    { key: '✔:open',  label: '✔ Waiting to be merged', color: 'result-waiting', result: '✔', openAction: true },
+    { key: '✔',       label: '✔ Success', color: 'success', result: '✔', openAction: false },
+    { key: '-',       label: '- Skipped', color: 'result-skipped' },
+    { key: 'unknown', label: '? Unknown', color: 'result-unknown' },
 ]);
 
 // seriesCount reads what a series contributes to a bucket. open_actions is a breakdown of
@@ -399,7 +399,7 @@ export default {
                 datasets: series.map((resultSeries, index) => ({
                     label: resultSeries.label,
                     data: this.entries.map((entry) => seriesCount(entry, resultSeries)),
-                    backgroundColor: resultSeries.color,
+                    backgroundColor: this.$vuetify.theme.current.colors[resultSeries.color],
                     stack: 'results',
                     // A 2px slice of the surface separates the segments instead of a
                     // border drawn around them.

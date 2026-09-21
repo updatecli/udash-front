@@ -3,13 +3,13 @@ export function getStatusColor(input){
         case "✔":
           return "success"
         case "✗":
-          return "red"
+          return "error"
         case "⚠":
-          return "orange"
+          return "warning"
         case "-":
-          return "grey"
+          return "result-skipped"
         default:
-          return "yellow"
+          return "result-unknown"
       }
     }
 

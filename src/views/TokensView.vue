@@ -64,9 +64,9 @@
         </div>
 
         <div v-else-if="tokens.length === 0" class="text-center py-8">
-          <v-icon size="96" color="grey-lighten-2">mdi-key-outline</v-icon>
+          <v-icon size="96" class="text-medium-emphasis" aria-hidden="true">mdi-key-outline</v-icon>
           <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No tokens yet</h3>
-          <p class="text-body-medium text-grey-darken-1">
+          <p class="text-body-medium text-medium-emphasis">
             <template v-if="canCreate">
               Create one to let Updatecli publish reports from your pipelines.
             </template>
