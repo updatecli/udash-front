@@ -1,8 +1,4 @@
 <template>
-  <!-- Shown wherever a request for data failed, in place of the data. An empty state in
-       that position would claim there is nothing to show, which the reader cannot tell
-       apart from a broken API; this says what failed and offers the one way forward.
-       role="alert" announces it, since it usually replaces a spinner nobody is watching. -->
   <v-alert
     type="error"
     variant="tonal"
@@ -10,19 +6,17 @@
     :title="title"
     role="alert"
   >
-    <p class="mb-0">{{ message }}</p>
+    <p class="mb-3">{{ message }}</p>
 
-    <template v-slot:append>
-      <v-btn
-        variant="outlined"
-        size="small"
-        prepend-icon="mdi-refresh"
-        :loading="retrying"
-        @click="$emit('retry')"
-      >
-        Try again
-      </v-btn>
-    </template>
+    <v-btn
+      variant="outlined"
+      size="small"
+      prepend-icon="mdi-refresh"
+      :loading="retrying"
+      @click="$emit('retry')"
+    >
+      Try again
+    </v-btn>
   </v-alert>
 </template>
 

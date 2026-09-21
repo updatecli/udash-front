@@ -73,10 +73,6 @@ export async function apiFetch(path, { method = 'GET', body, signal } = {}) {
   return response.json()
 }
 
-// describeLoadError turns a failed apiFetch into a sentence naming what could not be
-// loaded and what the reader can do about it. The API's own sentence is kept whenever it
-// sent one, since it is the most specific answer available; a bare status code or a
-// browser network error is not something a reader can act on.
 export function describeLoadError(error, what) {
   const status = error?.status
 
@@ -84,7 +80,17 @@ export function describeLoadError(error, what) {
     return `Could not reach the Udash API to load ${what}. Check your connection, then try again.`
   }
 
+  // A gateway error means the proxy is up but the API behind it is not.
+  if (status === 502 || status === 503 || status === 504) {
+    return 'The Udash API is unavailable right now. Try again in a moment.'
+  }
+
   const detail = error.message && !error.message.startsWith('HTTP error!') ? ` ${error.message}` : ''
+
+  // Without a JSON error body, a 404 comes from the web server rather than the API.
+  if (status === 404 && !detail) {
+    return `No Udash API answered at ${getApiBaseUrl()}. Check API_BASE_URL in config.json.`
+  }
 
   if (status === 401) {
     return `You need to sign in to see ${what}.`

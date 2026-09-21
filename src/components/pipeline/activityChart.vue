@@ -31,9 +31,18 @@
   <!-- A refused request is reported where the plot would be. Everything else still
        renders nothing, so a host page stays exactly as it would be without this
        component. -->
-  <p v-else-if="error" class="text-body-small text-medium-emphasis mb-0">
+  <p v-else-if="error && compact" class="text-body-small text-medium-emphasis mb-0">
     {{ error }}
   </p>
+
+  <LoadError
+    v-else-if="error"
+    compact
+    title="Pipeline activity could not be loaded"
+    :message="error"
+    :retrying="loading"
+    @retry="fetchSummary"
+  />
 </template>
 
 <script>
@@ -49,7 +58,8 @@ import {
   Legend,
 } from 'chart.js'
 
-import { apiFetch } from '@/composables/api';
+import { apiFetch, describeLoadError } from '@/composables/api';
+import LoadError from '@/components/LoadError.vue';
 
 // Register chart parts and plugin
 ChartJS.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
@@ -171,6 +181,7 @@ export default {
 
     components: {
         Bar,
+        LoadError,
     },
 
     props: {
@@ -686,7 +697,7 @@ export default {
                 // the event too, so a host drawing its own conclusions from an empty
                 // chart can hold them when the window never actually arrived.
                 console.error('fetching pipeline reports summary:', error);
-                this.error = error.message || 'summary unavailable';
+                this.error = describeLoadError(error, 'the pipeline activity');
                 this.summary = null;
                 this.$emit('loaded', { hasData: false, summary: null, error: this.error });
             } finally {
