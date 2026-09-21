@@ -41,7 +41,7 @@
                 class="text-body-large"
                 v-else
               >
-                No changelog description detected
+                No changelog provided
               </v-card-text>
 
               <v-divider thickness="5"></v-divider>

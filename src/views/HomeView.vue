@@ -50,7 +50,7 @@
          are flowing it moves below the feature cards as a collapsed panel. -->
     <section v-if="canReadData && isKnownEmpty" class="pb-8">
       <v-card flat color="background" class="pa-6">
-        <v-card-title class="text-headline-medium font-weight-bold px-0 mb-2">Get Started</v-card-title>
+        <v-card-title class="text-headline-medium font-weight-bold px-0 mb-2">Get started</v-card-title>
         <p class="text-medium-emphasis mb-8">
           Connect your Updatecli runner to Udash in a few steps
         </p>
@@ -147,16 +147,16 @@ export default {
       {
         title: "Dashboard",
         icon: "mdi-view-dashboard",
-        description: "Visualize update status by Git repository with visual overviews.",
+        description: "See the latest results for every Git repository and branch.",
         to: "/scm/dashboard",
-        cta: "Open Dashboard"
+        cta: "Open dashboard"
       },
       {
         title: "Reports",
         icon: "mdi-book-open-variant",
-        description: "Search pipelines by Git repository and branch for audit or debugging purposes.",
+        description: "Browse every pipeline report for a repository and branch.",
         to: "/pipeline/reports",
-        cta: "View Reports"
+        cta: "View reports"
       },
     ],
   }),

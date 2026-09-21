@@ -16,7 +16,7 @@
       ></v-progress-circular>
     </v-overlay>
     <PageTitle
-      title="Git Dashboard"
+      title="Dashboard"
       icon="mdi-view-dashboard"
     />
     <v-row>

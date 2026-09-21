@@ -55,7 +55,7 @@
   <template v-else>
     <v-container class="page-shell">
       <PageTitle
-        title="Report"
+        :title="pipeline.Pipeline.Name || 'Report'"
         icon="mdi-book-open-variant"
       >
         <template v-slot:actions>
@@ -79,8 +79,8 @@
               <v-table density="compact">
                 <thead>
                   <tr>
-                    <th>Status</th>
-                    <th>Executed</th>
+                    <th>Result</th>
+                    <th>Reported</th>
                     <th>Pipeline</th>
                     <th>CI</th>
                   </tr>
@@ -109,13 +109,13 @@
                         v-else
                         class="text-medium-emphasis"
                       >
-                        N/A
+                        None
                       </span>
                       <span
                         v-if="hasMultiplePipelineURLs"
                         class="text-warning text-body-small ci-warning"
                       >
-                        Multiple CI URLs detected. Using the first one.
+                        This report lists several CI jobs; the link opens the first.
                       </span>
                     </td>
                   </tr>
@@ -174,12 +174,12 @@
             variant="outlined"
           >
             <v-card-title>
-              Newer report detected
+              A newer report exists for this pipeline
             </v-card-title>
 
             <v-card-text>
               <p>
-                Updated at {{ formatDate(latestReportByID.Updated_at) }}
+                Reported {{ formatDate(latestReportByID.Updated_at) }}
               </p>
                 <v-icon
                   :icon="getStatusIcon(latestReportByID.Pipeline.Result)"

@@ -31,7 +31,7 @@
       <v-card variant="flat" class="pa-4 pa-sm-6">
         <h2 class="text-headline-small font-weight-bold d-flex align-center mb-4">
           <v-icon icon="mdi-heart" color="error" class="mr-2" aria-hidden="true"></v-icon>
-          Join The Community
+          Join the community
         </h2>
         <v-row>
           <v-col v-for="link in communityLinks" :key="link.name" cols="12" sm="6" md="3">
@@ -50,7 +50,7 @@
         <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-4">
           <h2 class="text-headline-small font-weight-bold d-flex align-center">
             <v-icon icon="mdi-scale-balance" class="mr-2" aria-hidden="true"></v-icon>
-            License Information
+            License
           </h2>
           <v-chip color="success" variant="tonal">
             AGPL v3
@@ -77,7 +77,7 @@
         <div class="d-flex ga-2 flex-wrap">
           <v-btn href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank" rel="noopener noreferrer"
             variant="outlined" prepend-icon="mdi-open-in-new" size="small">
-            Read License Summary
+            Read the license summary
           </v-btn>
           <v-btn href="https://github.com/updatecli/udash/blob/main/LICENSE" target="_blank"
             rel="noopener noreferrer" variant="outlined" prepend-icon="mdi-github" size="small">

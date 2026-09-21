@@ -3,7 +3,7 @@
     <!-- Loading Overlay -->
     <v-overlay v-model="isLoading" class="align-center justify-center">
       <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
-      <div class="mt-4 text-body-large">Loading configuration...</div>
+      <div class="mt-4 text-body-large">Loading related reports…</div>
     </v-overlay>
 
     <div v-if="isLinkedReports && !isLoading">

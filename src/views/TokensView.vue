@@ -4,7 +4,7 @@
       <PageTitle
         title="API tokens"
         icon="mdi-key"
-        tooltip="API tokens let Updatecli publish reports without signing in. Unlike a login session they do not expire, so a pipeline can keep one for as long as it runs unattended."
+        tooltip="API tokens let Updatecli publish reports without logging in. Unlike a session they do not expire, so a pipeline can keep one for as long as it runs unattended."
       >
         <template v-slot:actions>
           <v-btn
@@ -65,7 +65,7 @@
 
         <div v-else-if="tokens.length === 0" class="text-center py-8">
           <v-icon size="96" color="grey-lighten-2">mdi-key-outline</v-icon>
-          <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No Tokens Yet</h3>
+          <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No tokens yet</h3>
           <p class="text-body-medium text-grey-darken-1">
             <template v-if="canCreate">
               Create one to let Updatecli publish reports from your pipelines.

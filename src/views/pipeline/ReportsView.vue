@@ -29,23 +29,8 @@
         <!-- Add explanatory header for filter -->
         <div class="mb-3">
           <h3 class="text-title-large d-flex align-center">
-            Filter Reports
-            <v-tooltip text="Search and filter pipeline reports by repository, branch, or status. Use the dropdown to select specific repositories or search by keywords.">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  icon="mdi-information-outline"
-                  size="x-small"
-                  variant="text"
-                  class="ml-1 text-medium-emphasis"
-                  aria-label="About the report filter"
-                ></v-btn>
-              </template>
-            </v-tooltip>
+            Filter
           </h3>
-          <p class="text-body-small text-medium-emphasis mb-0">
-            Search repositories, branches, or filter by status
-          </p>
         </div>
 
         <PipelineSCMFilter
@@ -66,22 +51,10 @@
         <!-- Add explanatory header -->
         <div class="mb-3">
           <h3 class="text-title-large d-flex align-center">
-            Latest Status Overview
-            <v-tooltip text="Shows the status summary from the most recent pipeline reports for the current repository branch">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  icon="mdi-information-outline"
-                  size="x-small"
-                  variant="text"
-                  class="ml-1 text-medium-emphasis"
-                  aria-label="About the status overview"
-                ></v-btn>
-              </template>
-            </v-tooltip>
+            Latest results
           </h3>
           <p class="text-body-small text-medium-emphasis mb-0">
-            Current status from latest pipeline runs
+            Result of the most recent run of each pipeline on this branch. Select a result to filter the reports below.
           </p>
         </div>
 
@@ -109,23 +82,8 @@
         <!-- Add explanatory header for pipeline reports -->
         <div class="mb-3">
           <h3 class="text-title-large d-flex align-center">
-            Detailed Reports
-            <v-tooltip text="Complete list of pipeline reports with detailed information including timestamps, status, and actions. Click on any report to view its configuration or access related resources like pull requests.">
-              <template v-slot:activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  icon="mdi-information-outline"
-                  size="x-small"
-                  variant="text"
-                  class="ml-1 text-medium-emphasis"
-                  aria-label="About the detailed reports"
-                ></v-btn>
-              </template>
-            </v-tooltip>
+            All reports
           </h3>
-          <p class="text-body-small text-medium-emphasis mb-0">
-            Historical pipeline execution data with full details
-          </p>
         </div>
 
         <PipelineReports
