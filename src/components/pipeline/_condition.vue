@@ -1,56 +1,45 @@
 <template>
-    <v-toolbar
-        density="compact"
-        color="surface"
-    >
-        <v-toolbar-title>
-            <v-icon
-                :icon="getStatusIcon(data.Result)"
-                :color="getStatusColor(data.Result)"
-                aria-hidden="true"
-            ></v-icon>  {{ data.Name }}
-        </v-toolbar-title>
-
-        <v-toolbar-items>
-            <span class="resource-id text-body-medium text-medium-emphasis">{{ id }}</span>
-        </v-toolbar-items>
-    </v-toolbar>
+    <div class="stage-header">
+        <v-icon class="stage-header__icon" :icon="getStatusIcon(data.Result)" :color="getStatusColor(data.Result)" aria-hidden="true"></v-icon>
+        <h3 class="stage-header__name text-title-large">{{ data.Name }}</h3>
+        <span class="resource-id text-body-medium text-medium-emphasis">{{ id }}</span>
+    </div>
 
     <v-container fluid class="px-0 px-sm-4">
         <v-row class="mb-4">
             <v-col cols="12">
                 <v-card flat class="pa-3">
-                    <v-table>
-                        <thead>
-                            <tr>
-                                <th style="width: 25%;">ID</th>
-                                <th style="width: 25%;">Status</th>
-                                <th style="width: 75%;">Kind</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="font-weight-medium">{{ id }}</td>
-                                <td>
-                                    <v-chip
-                                        :color="getStatusColor(data.Result)"
-                                        size="small"
-                                        variant="flat"
-                                    >
-                                        <v-icon size="x-small" class="mr-1">
-                                            {{ getStatusIcon(data.Result) }}
-                                        </v-icon>
-                                        {{ getStatusText(data.Result) }}
-                                    </v-chip>
-                                </td>
-                                <td>
-                                    <v-chip variant="outlined" size="small">
-                                        {{ data.Config?.Kind || 'N/A' }}
-                                    </v-chip>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </v-table>
+                    <dl class="meta-grid">
+                    <div>
+                        <dt>ID</dt>
+                        <dd>
+                            {{ id }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Status</dt>
+                        <dd>
+                            <v-chip
+                                :color="getStatusColor(data.Result)"
+                                size="small"
+                                variant="flat"
+                            >
+                                <v-icon size="x-small" class="mr-1">
+                                    {{ getStatusIcon(data.Result) }}
+                                </v-icon>
+                                {{ getStatusText(data.Result) }}
+                            </v-chip>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Kind</dt>
+                        <dd>
+                            <v-chip variant="outlined" size="small">
+                                {{ data.Config?.Kind || 'N/A' }}
+                            </v-chip>
+                        </dd>
+                    </div>
+                    </dl>
                 </v-card>
             </v-col>
         </v-row>
@@ -60,14 +49,14 @@
                 <v-card v-if="data.Scm?.URL" variant="flat" class="mb-4">
                     <v-card-title class="d-flex align-center pb-2">
                         <v-icon class="mr-2">mdi-git</v-icon>
-                        Source Control
+                        Source control
                     </v-card-title>
                     <v-card-text class="pt-0">
                         <v-row>
                             <v-col cols="12" md="8">
                                 <div class="d-flex align-center">
                                     <v-icon size="small" class="mr-2 text-medium-emphasis" aria-hidden="true">mdi-link</v-icon>
-                                    <span class="text-body-medium">{{ data.Scm.URL }}</span>
+                                    <span class="text-body-medium text-break">{{ data.Scm.URL }}</span>
                                 </div>
                             </v-col>
                             <v-col cols="12" md="4">
@@ -86,7 +75,7 @@
                         Description
                     </v-card-title>
                     <v-card-text>
-                        <p class="text-body-large">{{ data.Description || 'No description available' }}</p>
+                        <p class="text-body-large">{{ data.Description || 'No description' }}</p>
                     </v-card-text>
 
                     <v-card-actions v-if="data.Information">
@@ -95,7 +84,7 @@
                                 <v-expansion-panel-title>
                                     <div class="d-flex align-center">
                                         <v-icon class="mr-2" size="small">mdi-information-outline</v-icon>
-                                        Additional Information
+                                        Additional information
                                         <v-chip size="x-small" variant="outlined" class="ml-2">
                                             {{ Math.ceil(data.Information.length / 100) * 100 }} chars
                                         </v-chip>
@@ -209,9 +198,23 @@ export default {
 </script>
 
 <style scoped>
+.stage-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 12px 16px;
+    background: rgb(var(--v-theme-surface));
+}
+
+.stage-header__name {
+    flex: 1 1 16rem;
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
 .resource-id {
-    align-self: center;
-    padding-inline: 16px;
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
     overflow-wrap: anywhere;
 }

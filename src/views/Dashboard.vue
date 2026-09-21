@@ -63,26 +63,6 @@ export default {
     isLoading: true,
     isFilterLoaded: false,
     filter: {},
-    host: window.location.protocol + "//" + window.location.host,
-    externalLinks:[
-      {
-        name: "Updatecli",
-        to: "https://www.updatecli.io",
-        icon: "mdi-web",
-      },
-      {
-        name: "GitHub",
-        to: "https://github.com/updatecli/updatecli",
-        icon: "mdi-github",
-      },
-    ],
-    links:[
-      {
-        name: "Reports",
-        to: "/pipeline/reports",
-        icon: "mdi-view-dashboard",
-      },
-    ]
   }),
   watch: {
     isLoading: function (val) {

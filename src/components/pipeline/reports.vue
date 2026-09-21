@@ -203,10 +203,6 @@ export default {
     actionURLs: [], // Changed from {} to []
     openActionIcon: OPEN_ACTION_ICON,
     openActionColor: OPEN_ACTION_COLOR,
-    sortBy: [{
-      key: 'UpdatedAt',
-      order: 'desc'
-    }],
     pipelinesHeaders: [
       { title: "Result", align: "start", key:'Result', width: '80px'},
       {
@@ -430,12 +426,8 @@ export default {
     },
   },
 
-  async created() {
-    try {
-      this.getReportsData(1)
-    } catch (error) {
-      console.log(error);
-    }
+  created() {
+    this.getReportsData(1)
   },
 }
 </script>

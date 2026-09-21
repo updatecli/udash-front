@@ -13,7 +13,7 @@
             <v-card-title class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <v-icon class="mr-2">mdi-link-variant</v-icon>
-                Similar Reports
+                Similar reports
               </div>
               <v-chip variant="outlined" size="small">
                 {{ getTotalReportsCount() }} reports
@@ -42,7 +42,7 @@
               <div v-if="Object.keys(gitReportsData).length > 0">
                 <h3 class="text-title-large mb-4 d-flex align-center">
                   <v-icon class="mr-2">mdi-git</v-icon>
-                  Git Repositories
+                  Git repositories
                 </h3>
 
                 <GitRepositorySection
@@ -54,11 +54,11 @@
                 />
               </div>
 
-              <!-- Local Reports -->
+              <!-- Local reports -->
               <div v-if="localReportsData.length > 0" :class="{ 'mt-6': Object.keys(gitReportsData).length > 0 }">
                 <h3 class="text-title-large mb-4 d-flex align-center">
                   <v-icon class="mr-2">mdi-laptop</v-icon>
-                  Local Reports
+                  Local reports
                   <v-chip class="ml-2" size="small" variant="outlined">
                     {{ localReportsData.length }}
                   </v-chip>
@@ -329,8 +329,6 @@ export default {
 
         if (data.configs?.length > 0) {
           this.configData = data.configs[0]
-        } else {
-          console.log("No configs found")
         }
       } catch (error) {
         console.error('Error fetching config data:', error)

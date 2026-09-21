@@ -78,7 +78,7 @@
             <v-card-text>
               <!-- A wrapping list rather than a table: four columns cannot fit a phone,
                    and the pipeline name already titles the page. -->
-              <dl class="report-meta">
+              <dl class="meta-grid">
                 <div>
                   <dt>Result</dt>
                   <dd>{{ getPipelineResultText(pipeline.Pipeline.Result) }}</dd>
@@ -99,7 +99,7 @@
                       variant="outlined"
                       prepend-icon="mdi-open-in-new"
                     >
-                      View Job
+                      View job
                     </v-btn>
                     <span v-else class="text-medium-emphasis">None</span>
                     <span
@@ -560,23 +560,6 @@ export default {
 <style scoped>
 .loading-container {
   min-height: 50vh;
-}
-
-.report-meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 1rem 2rem;
-  margin: 0;
-}
-
-.report-meta dt {
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.report-meta dd {
-  margin: 0;
 }
 
 .ci-warning {

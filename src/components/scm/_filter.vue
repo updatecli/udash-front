@@ -25,7 +25,7 @@
         <v-col cols="12" md="6">
           <v-select
             variant="outlined"
-            label="Git Repository"
+            label="Git repository"
             :items="repositories"
             :rules="[v => !!v || 'Git repository is required']"
             item-value="id"
@@ -38,7 +38,7 @@
         <v-col cols="12" md="6">
           <v-select
             variant="outlined"
-            label="Git Branch"
+            label="Git branch"
             :items="branches"
             :rules="[v => !!v || 'Git branch is required']"
             prepend-inner-icon="mdi-source-branch"
@@ -1006,7 +1006,7 @@ export default {
           this.$emit('loaded', true)
         }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   },
 }

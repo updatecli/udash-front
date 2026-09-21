@@ -66,7 +66,7 @@
             block
             :to="getReportLink(report.ID)"
           >
-            View Details
+            View details
           </v-btn>
         </v-card-actions>
       </v-expansion-panel-text>

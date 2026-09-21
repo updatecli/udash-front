@@ -26,6 +26,34 @@
     padding: 2rem 1.5rem;
   }
 }
+
+/* Label/value pairs that wrap into as many columns as fit, from one on a phone. */
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem 2rem;
+  margin: 0;
+}
+
+.meta-grid dt {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.meta-grid dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Small icon buttons are fine for a mouse but too small for a finger. */
+@media (pointer: coarse) {
+  .v-btn.v-btn--icon.v-btn--size-x-small,
+  .v-btn.v-btn--icon.v-btn--size-small {
+    width: 44px;
+    height: 44px;
+  }
+}
 </style>
 
 <script>
