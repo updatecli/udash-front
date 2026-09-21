@@ -75,7 +75,7 @@ ChartJS.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip,
 // none of the other segments occupies.
 const RESULT_SERIES = Object.freeze([
     { key: '✗',       label: '✗ Error',   color: '#dc2626' }, // Red
-    { key: '⚠',       label: '⚠ Warning', color: '#f59e0b' }, // Amber
+    { key: '⚠',       label: '⚠ Changed', color: '#f59e0b' }, // Amber
     { key: '✔:open',  label: '✔ Waiting to be merged', color: '#3b82f6', result: '✔', openAction: true }, // Blue
     { key: '✔',       label: '✔ Success', color: '#10b981', result: '✔', openAction: false }, // Green
     { key: '-',       label: '- Skipped', color: '#6b7280' }, // Gray

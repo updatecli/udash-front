@@ -2,7 +2,7 @@
   <v-container fluid>
     <!-- Loading Overlay -->
     <v-overlay v-model="isLoading" class="align-center justify-center">
-      <v-progress-circular color="grey-darken-3" indeterminate size="64"></v-progress-circular>
+      <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
       <div class="mt-4 text-body-large">Loading configuration...</div>
     </v-overlay>
 

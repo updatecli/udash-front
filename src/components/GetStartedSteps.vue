@@ -36,11 +36,14 @@
                 :icon="copiedKey === `auth-${mIndex}` ? 'mdi-check' : 'mdi-content-copy'"
                 size="small"
                 variant="text"
-                :aria-label="`Copy ${method.label} command`"
+                :aria-label="copiedKey === `auth-${mIndex}` ? 'Copied' : `Copy ${method.label} command`"
                 @click="copyCode(methodCode(method), `auth-${mIndex}`)"
               ></v-btn>
               <pre class="overflow-x-auto"><code v-highlight class="language-bash">{{ methodCode(method) }}</code></pre>
             </div>
+            <p v-if="failedKey === `auth-${mIndex}`" class="text-body-medium mb-3" role="alert">
+              Copying is blocked in this browser. Select the command and copy it by hand.
+            </p>
           </v-window-item>
         </v-window>
       </template>
@@ -52,11 +55,14 @@
           :icon="copiedKey === `step-${index}` ? 'mdi-check' : 'mdi-content-copy'"
           size="small"
           variant="text"
-          :aria-label="`Copy ${step.title} command`"
+          :aria-label="copiedKey === `step-${index}` ? 'Copied' : `Copy ${step.title} command`"
           @click="copyCode(getStepCode(step), `step-${index}`)"
         ></v-btn>
         <pre class="overflow-x-auto"><code v-highlight class="language-bash">{{ getStepCode(step) }}</code></pre>
       </div>
+      <p v-if="failedKey === `step-${index}`" class="text-body-medium mb-3" role="alert">
+        Copying is blocked in this browser. Select the command and copy it by hand.
+      </p>
     </div>
   </div>
 </template>
@@ -64,12 +70,14 @@
 <script>
 import { getDashboardUrl, isAuthEnabled } from '@/composables/runtime';
 import { getApiBaseUrl } from '@/composables/api';
+import { copyText } from '@/composables/clipboard';
 
 export default {
   name: 'GetStartedSteps',
   data: () => ({
     authMethod: 0,
     copiedKey: null,
+    failedKey: null,
 
     configSteps: [
       {
@@ -126,18 +134,19 @@ export default {
       }
       return method.code || ''
     },
-    copyCode(text, key) {
-      if (!navigator.clipboard) {
+    async copyCode(text, key) {
+      if (!(await copyText(text))) {
+        this.failedKey = key
         return
       }
-      navigator.clipboard.writeText(text).then(() => {
-        this.copiedKey = key
-        setTimeout(() => {
-          if (this.copiedKey === key) {
-            this.copiedKey = null
-          }
-        }, 1500)
-      })
+
+      this.failedKey = null
+      this.copiedKey = key
+      setTimeout(() => {
+        if (this.copiedKey === key) {
+          this.copiedKey = null
+        }
+      }, 1500)
     }
   }
 }

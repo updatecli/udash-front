@@ -72,3 +72,35 @@ export async function apiFetch(path, { method = 'GET', body, signal } = {}) {
 
   return response.json()
 }
+
+// describeLoadError turns a failed apiFetch into a sentence naming what could not be
+// loaded and what the reader can do about it. The API's own sentence is kept whenever it
+// sent one, since it is the most specific answer available; a bare status code or a
+// browser network error is not something a reader can act on.
+export function describeLoadError(error, what) {
+  const status = error?.status
+
+  if (!status) {
+    return `Could not reach the Udash API to load ${what}. Check your connection, then try again.`
+  }
+
+  const detail = error.message && !error.message.startsWith('HTTP error!') ? ` ${error.message}` : ''
+
+  if (status === 401) {
+    return `You need to sign in to see ${what}.`
+  }
+
+  if (status === 403) {
+    return `Your account is not allowed to see ${what}.${detail}`
+  }
+
+  if (status === 429) {
+    return `The Udash API is receiving too many requests. Wait a moment, then try loading ${what} again.`
+  }
+
+  if (status >= 500) {
+    return `The Udash API failed while loading ${what} (HTTP ${status}). Try again in a moment.${detail}`
+  }
+
+  return `Could not load ${what} (HTTP ${status}).${detail}`
+}

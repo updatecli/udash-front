@@ -14,30 +14,11 @@
   <!-- The request never came back with a report. Saying so beats an empty page: the
        reader otherwise has no way to tell a broken API from a report with no content. -->
   <v-container v-else-if="loadError" class="page-shell">
-    <v-card variant="outlined">
-      <v-card-title>
-        <v-icon
-          icon="mdi-alert-circle"
-          color="error"
-          class="mr-2"
-        ></v-icon>
-        Could not load this report
-      </v-card-title>
-
-      <v-card-text>
-        <p>{{ loadError }}</p>
-      </v-card-text>
-
-      <v-card-actions>
-        <v-btn
-          variant="flat"
-          prepend-icon="mdi-refresh"
-          @click="getPipelineReportData"
-        >
-          Retry
-        </v-btn>
-      </v-card-actions>
-    </v-card>
+    <LoadError
+      title="Could not load this report"
+      :message="loadError"
+      @retry="getPipelineReportData"
+    />
   </v-container>
 
   <!-- The API answered fine, it just has nothing under that id. -->
@@ -46,8 +27,8 @@
       <v-card-title>
         <v-icon
           icon="mdi-help-circle"
-          color="grey"
-          class="mr-2"
+          class="mr-2 text-medium-emphasis"
+          aria-hidden="true"
         ></v-icon>
         Report not found
       </v-card-title>
@@ -82,6 +63,7 @@
             :icon="getStatusIcon(pipeline.Pipeline.Result)"
             :color="getStatusColor(pipeline.Pipeline.Result)"
             size="80"
+            aria-hidden="true"
           ></v-icon>
         </template>
       </PageTitle>
@@ -106,7 +88,7 @@
                 <tbody>
                   <tr>
                     <td>
-                      {{ getStatusText(pipeline.Pipeline.Result) }}
+                      {{ getPipelineResultText(pipeline.Pipeline.Result) }}
                     </td>
                     <td>{{ formatDate(pipeline.Updated_at) }}</td>
                     <td>{{ pipeline.Pipeline.Name }}</td>
@@ -125,7 +107,7 @@
                       </template>
                       <span
                         v-else
-                        class="text-grey"
+                        class="text-medium-emphasis"
                       >
                         N/A
                       </span>
@@ -159,8 +141,8 @@
                   <div class="label-key-wrap">
                     <v-icon
                       size="18"
-                      color="grey-darken-1"
-                      class="label-icon"
+                      class="label-icon text-medium-emphasis"
+                      aria-hidden="true"
                     >
                       mdi-label-outline
                     </v-icon>
@@ -177,7 +159,7 @@
         <v-col>
           <v-card variant="flat">
             <v-card-text>
-              <p class="text-grey">No labels</p>
+              <p class="text-medium-emphasis">No labels</p>
             </v-card-text>
           </v-card>
         </v-col>
@@ -199,10 +181,16 @@
               <p>
                 Updated at {{ formatDate(latestReportByID.Updated_at) }}
               </p>
-                <v-icon :icon="getStatusIcon(latestReportByID.Pipeline.Result)" :color="getStatusColor(latestReportByID.Pipeline.Result)"></v-icon>  {{ latestReportByID.Pipeline.Name }}
+                <v-icon
+                  :icon="getStatusIcon(latestReportByID.Pipeline.Result)"
+                  :color="getStatusColor(latestReportByID.Pipeline.Result)"
+                  :aria-label="getPipelineResultText(latestReportByID.Pipeline.Result)"
+                  role="img"
+                ></v-icon>  {{ latestReportByID.Pipeline.Name }}
                 <v-btn
                   icon="mdi-arrow-right-circle"
                   variant="flat"
+                  aria-label="Open the newer report"
                   :to=getPipelineReportLink(latestReportByID.ID)>
                 </v-btn>
             <v-divider></v-divider>
@@ -367,9 +355,10 @@ import PipelineGraphComponent from './_graph.vue';
 import LinkedReports from './configs/_linkedReports.vue';
 import PageTitle from '@/components/PageTitle.vue';
 
-import { getStatusColor, getStatusIcon, getStatusText } from '@/composables/status';
+import { getStatusColor, getStatusIcon, getPipelineResultText } from '@/composables/status';
 import { toLocalDate } from '@/composables/date';
-import { apiFetch } from '@/composables/api';
+import { apiFetch, describeLoadError } from '@/composables/api';
+import LoadError from '@/components/LoadError.vue';
 
 // CONFIG_ID_KEYS names, per resource stage, the field of the report holding the mapping
 // from a config UUID to the resource it belongs to. Actions are absent on purpose: they
@@ -384,6 +373,7 @@ export default {
   name: 'PipelineReport',
 
   components: {
+    LoadError,
     PageTitle,
     ActionComponent,
     SourceComponent,
@@ -533,8 +523,8 @@ export default {
       return getStatusIcon(status);
     },
 
-    getStatusText: function(status){
-      return getStatusText(status);
+    getPipelineResultText: function(status){
+      return getPipelineResultText(status);
     },
 
     async getPipelineReportData() {
@@ -554,7 +544,7 @@ export default {
         // A 404 is how the API says the id has nothing behind it, which is not a failure
         // to report. Leaving loadError empty falls through to the "not found" state, which
         // tells the reader what happened better than the API's own "no rows in result set".
-        this.loadError = error.status === 404 ? '' : error.message
+        this.loadError = error.status === 404 ? '' : describeLoadError(error, 'this report')
       } finally {
         this.isLoading = false
       }

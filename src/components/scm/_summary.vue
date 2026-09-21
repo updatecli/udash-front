@@ -1,10 +1,22 @@
 <template>
     <v-container class="pa-0">
+        <!-- A refused or unreachable search leaves nothing to draw, but it is not an empty
+             instance either, and saying "nothing found" would send the reader looking in
+             the wrong place. -->
+        <LoadError
+            v-if="loadError && !hasLoadedData"
+            title="Git repositories could not be loaded"
+            :message="loadError"
+            :retrying="isFetching"
+            @retry="retryLoad"
+        />
+
         <v-row v-if="isNoData()" class="text-center pa-12">
           <v-col>
             <div class="empty-state">
-              <v-icon size="96" color="grey-lighten-2">mdi-alert-decagram-outline</v-icon>
-              <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No Dashboard Found</h3>
+              <v-icon size="96" class="text-medium-emphasis" aria-hidden="true">mdi-alert-decagram-outline</v-icon>
+              <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No pipeline reports match this filter</h3>
+              <p class="text-medium-emphasis mb-0">Widen the date range or clear the advanced filter.</p>
             </div>
           </v-col>
         </v-row>
@@ -55,7 +67,7 @@
                             >
                                 <div class="d-flex align-center pa-4">
                                     <v-icon class="mr-2">{{ getGitIcon(url) }}</v-icon>
-                                    <span class="text-truncate repo-title">{{ sanitizeURL(url) }}</span>
+                                    <span class="text-truncate repo-title" :title="sanitizeURL(url)">{{ sanitizeURL(url) }}</span>
                                 </div>
                                 <div class="px-4 pb-4 d-flex align-center">
                                     <v-chip
@@ -68,6 +80,8 @@
                                     <v-btn
                                         variant="text"
                                         size="small"
+                                        :aria-expanded="String(!isRepoCollapsed(url))"
+                                        :aria-label="`${isRepoCollapsed(url) ? 'Show' : 'Hide'} branches of ${sanitizeURL(url)}`"
                                         @click="toggleRepo(url)"
                                     >
                                         {{ isRepoCollapsed(url) ? 'Show' : 'Hide' }}
@@ -82,9 +96,9 @@
                             >
                                 <div
                                     v-if="isRepoCollapsed(url)"
-                                    class="pa-4 text-body-small text-grey-darken-1"
+                                    class="pa-4 text-body-small text-medium-emphasis"
                                 >
-                                    Branches are hidden. Click Show to expand on the right.
+                                    Branches hidden. Select Show to list them.
                                 </div>
 
                                 <template v-else>
@@ -107,14 +121,14 @@
                                                                 <div class="d-flex align-center mb-2">
                                                                     <v-icon
                                                                         size="small"
-                                                                        class="mr-2"
-                                                                        color="grey-darken-1"
+                                                                        class="mr-2 text-medium-emphasis"
+                                                                        aria-hidden="true"
                                                                     >
                                                                         mdi-source-branch
                                                                     </v-icon>
                                                                     <div class="flex-grow-1">
                                                                         <div class="font-weight-medium">{{ branch }}</div>
-                                                                        <div class="text-body-small text-grey-darken-1">
+                                                                        <div class="text-body-small text-medium-emphasis">
                                                                             {{ branchData.total_result || 0 }} {{ (branchData.total_result || 0) === 1 ? 'pipeline' : 'pipelines' }}
                                                                         </div>
                                                                     </div>
@@ -131,7 +145,8 @@
                                                                         size="small"
                                                                         class="status-chip"
                                                                     >
-                                                                        <span class="status-chip-status">{{ status }}</span>
+                                                                        <span class="status-chip-status" aria-hidden="true">{{ status }}</span>
+                                                                        <span class="d-sr-only">{{ getResultName(status) }}</span>
                                                                         <span class="status-chip-value">{{ getStatusPercentage(count, branchData.total_result) }}</span>
                                                                     </v-chip>
                                                                 </div>
@@ -192,20 +207,27 @@
                                                                 </v-icon>
                                                                 <div class="flex-grow-1">
                                                                     <div class="font-weight-medium">{{ branch }}</div>
-                                                                    <div class="text-body-small text-grey-darken-1">
+                                                                    <div class="text-body-small text-medium-emphasis">
                                                                         {{ branchData.total_result || 0 }} {{ (branchData.total_result || 0) === 1 ? 'pipeline' : 'pipelines' }}
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             <div class="status-summary">
+                                                                <!-- The same narrowing the doughnut offers on click,
+                                                                     reachable from the keyboard: a canvas segment
+                                                                     cannot take focus, a chip can. -->
                                                                 <v-chip
                                                                     v-for="(count, status) in branchData.total_result_by_type"
                                                                     :key="status"
                                                                     :color="getStatusColor(status)"
                                                                     size="small"
                                                                     class="status-chip"
+                                                                    :link="isFilterableResult(status)"
+                                                                    :aria-label="isFilterableResult(status) ? `${getResultName(status)} ${getStatusPercentage(count, branchData.total_result)}, filter reports by this result` : undefined"
+                                                                    @click="isFilterableResult(status) && selectResult(status, branchData.id)"
                                                                 >
-                                                                    <span class="status-chip-status">{{ status }}</span>
+                                                                    <span class="status-chip-status" aria-hidden="true">{{ status }}</span>
+                                                                    <span class="d-sr-only">{{ getResultName(status) }}</span>
                                                                     <span class="status-chip-value">{{ getStatusPercentage(count, branchData.total_result) }}</span>
                                                                 </v-chip>
                                                             </div>
@@ -324,8 +346,17 @@
                             class="mb-3"
                         ></v-progress-linear>
 
+                        <LoadError
+                            v-if="loadError && hasLoadedData"
+                            compact
+                            class="mb-3 text-start"
+                            :message="loadError"
+                            :retrying="isFetching"
+                            @retry="loadMoreData"
+                        />
+
                         <v-btn
-                            v-if="hasMoreData && !isLoading"
+                            v-else-if="hasMoreData && !isLoading"
                             variant="outlined"
                             @click="loadMoreData"
                             :loading="isLoading"
@@ -353,8 +384,10 @@ import router from '../../router'
 
 import SCMDoughnut from './_scmDoughnut.vue'
 import ActivityChart from '../pipeline/activityChart.vue'
+import LoadError from '../LoadError.vue'
 
-import { apiFetch } from '@/composables/api';
+import { apiFetch, describeLoadError } from '@/composables/api';
+import { getPipelineResultText, PIPELINE_RESULT_VALUES } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git';
 import { getStorageKey, getMaxHistoryDays } from '@/composables/runtime';
 import { encodeFilterState, decodeFilterState } from '@/composables/filter';
@@ -390,6 +423,7 @@ export default {
     components: {
         SCMDoughnut,
         ActivityChart,
+        LoadError,
     },
     name: "SCMDashboard",
     props: {
@@ -437,6 +471,7 @@ export default {
         isFetching: false,
         currentRequestId: 0,
         hasSearched: false,
+        loadError: null,
         collapseAllByDefault: true,
         collapsedRepositories: {},
         visibleBranchesByRepo: {},
@@ -480,6 +515,10 @@ export default {
             );
         },
 
+        hasLoadedData() {
+            return Object.keys(this.data).length > 0;
+        },
+
         hasEmptyEntries() {
             return Object.values(this.data).some(scmData =>
                 Object.values(scmData).some(branch => (Number(branch?.total_result) || 0) === 0)
@@ -499,7 +538,24 @@ export default {
 
     methods: {
         isNoData() {
-            return this.hasSearched && this.totalCount == 0 && !this.isLoading;
+            return this.hasSearched && this.totalCount == 0 && !this.isLoading && !this.loadError;
+        },
+
+        // retryLoad starts over rather than resuming: the failure happened on the first
+        // page, so there is nothing loaded worth keeping.
+        async retryLoad() {
+            this.resetPagination();
+            await this.loadNextPage();
+        },
+
+        // isFilterableResult answers whether a result can be handed to the search API,
+        // which only knows the four Updatecli results.
+        isFilterableResult(status) {
+            return PIPELINE_RESULT_VALUES.includes(status);
+        },
+
+        getResultName(status) {
+            return getPipelineResultText(status);
         },
 
         resetPagination() {
@@ -512,6 +568,7 @@ export default {
             this.data = {};
             this.doughnutData = {};
             this.hasSearched = true;
+            this.loadError = null;
             this.visibleBranchesByRepo = {};
         },
 
@@ -690,6 +747,7 @@ export default {
             const requestId = this.currentRequestId;
             this.isFetching = true;
             this.isLoading= true;
+            this.loadError = null;
             this.$emit('loaded', false)
 
             try {
@@ -775,6 +833,7 @@ export default {
             } catch (error) {
                 if (requestId === this.currentRequestId) {
                     console.error('Error fetching summary data:', error);
+                    this.loadError = describeLoadError(error, 'the Git repositories');
                 }
             } finally {
                 if (requestId === this.currentRequestId) {
