@@ -222,7 +222,13 @@ export async function authGuard(to) {
 function currentReturnTo() {
   const base = getAppBasePath()
   const path = window.location.pathname
-  const relative = path.startsWith(base) ? path.slice(base.length - 1) : path
+
+  let relative = path
+  if (path.startsWith(base)) {
+    relative = path.slice(base.length - 1)
+  } else if (path === base.replace(/\/$/, '')) {
+    relative = '/'
+  }
 
   return relative + window.location.search + window.location.hash
 }
