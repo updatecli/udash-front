@@ -69,7 +69,7 @@
                         Description
                     </v-card-title>
                     <v-card-text>
-                        <p class="text-body-large">{{ data.Description || 'No description' }}</p>
+                        <ResourceDescription :text="data.Description" />
                     </v-card-text>
 
                     <v-card-actions v-if="data.Information">
@@ -149,6 +149,7 @@
 
 <script>
 import ConsoleOutputComponent from './_consoleOutput.vue'
+import ResourceDescription from './ResourceDescription.vue'
 
 import { getStatusColor, getStatusIcon, getStatusText } from '@/composables/status';
 import { toYAML } from '@/composables/yaml'
@@ -158,6 +159,7 @@ export default {
 
     components: {
         ConsoleOutputComponent,
+        ResourceDescription,
     },
 
     computed: {
