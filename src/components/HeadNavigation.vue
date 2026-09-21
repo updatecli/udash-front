@@ -4,18 +4,16 @@
 
     <template v-slot:append>
       <ThemeSwitcher />
-      <!-- Same icon-button footprint as the account menu below, so the app bar's
-           right edge does not jump when the auth state resolves. -->
       <v-btn
         v-if="!isAuthenticated && isAuthEnabled"
-        icon
-        aria-label="Log in"
+        color="primary"
+        variant="flat"
+        class="mx-2"
         :loading="isLoading"
         :disabled="isLoading"
         @click.prevent="login"
       >
-        <v-icon icon="mdi-login-variant"></v-icon>
-        <v-tooltip activator="parent" text="Log in"></v-tooltip>
+        Log in
       </v-btn>
 
       <v-menu v-if="isAuthenticated && isAuthEnabled">
