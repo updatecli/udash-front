@@ -9,7 +9,7 @@
     :opacity="0"
   >
     <v-progress-circular
-      color="black"
+      color="primary"
       indeterminate
       size="64"
     ></v-progress-circular>
@@ -32,18 +32,18 @@
             Filter Reports
             <v-tooltip text="Search and filter pipeline reports by repository, branch, or status. Use the dropdown to select specific repositories or search by keywords.">
               <template v-slot:activator="{ props }">
-                <v-icon
+                <v-btn
                   v-bind="props"
-                  size="small"
-                  class="ml-2"
-                  color="grey-darken-1"
-                >
-                  mdi-information-outline
-                </v-icon>
+                  icon="mdi-information-outline"
+                  size="x-small"
+                  variant="text"
+                  class="ml-1 text-medium-emphasis"
+                  aria-label="About the report filter"
+                ></v-btn>
               </template>
             </v-tooltip>
           </h3>
-          <p class="text-body-small text-grey-darken-1 mb-0">
+          <p class="text-body-small text-medium-emphasis mb-0">
             Search repositories, branches, or filter by status
           </p>
         </div>
@@ -69,18 +69,18 @@
             Latest Status Overview
             <v-tooltip text="Shows the status summary from the most recent pipeline reports for the current repository branch">
               <template v-slot:activator="{ props }">
-                <v-icon
+                <v-btn
                   v-bind="props"
-                  size="small"
-                  class="ml-2"
-                  color="grey-darken-1"
-                >
-                  mdi-information-outline
-                </v-icon>
+                  icon="mdi-information-outline"
+                  size="x-small"
+                  variant="text"
+                  class="ml-1 text-medium-emphasis"
+                  aria-label="About the status overview"
+                ></v-btn>
               </template>
             </v-tooltip>
           </h3>
-          <p class="text-body-small text-grey-darken-1 mb-0">
+          <p class="text-body-small text-medium-emphasis mb-0">
             Current status from latest pipeline runs
           </p>
         </div>
@@ -112,18 +112,18 @@
             Detailed Reports
             <v-tooltip text="Complete list of pipeline reports with detailed information including timestamps, status, and actions. Click on any report to view its configuration or access related resources like pull requests.">
               <template v-slot:activator="{ props }">
-                <v-icon
+                <v-btn
                   v-bind="props"
-                  size="small"
-                  class="ml-2"
-                  color="grey-darken-1"
-                >
-                  mdi-information-outline
-                </v-icon>
+                  icon="mdi-information-outline"
+                  size="x-small"
+                  variant="text"
+                  class="ml-1 text-medium-emphasis"
+                  aria-label="About the detailed reports"
+                ></v-btn>
               </template>
             </v-tooltip>
           </h3>
-          <p class="text-body-small text-grey-darken-1 mb-0">
+          <p class="text-body-small text-medium-emphasis mb-0">
             Historical pipeline execution data with full details
           </p>
         </div>
@@ -185,9 +185,12 @@ export default {
       this.isLoading = !this.isAllComponentsLoaded()
     },
     isLoading: function (val) {
-      val && setTimeout(() => {
-        this.isLoading = false
-      }, 10000)
+      clearTimeout(this.loadingTimer)
+      if (val) {
+        this.loadingTimer = setTimeout(() => {
+          this.isLoading = false
+        }, 10000)
+      }
     },
     filter: function() {
       // IF the filter is changed, we need to wait for the summary and reports to be updated
@@ -202,6 +205,7 @@ export default {
     },
     cancelAutoUpdate: function() {
       clearInterval(this.timer);
+      clearTimeout(this.loadingTimer);
     },
     setFilterLoaded: function(state) {
       this.isFilterLoaded = state;

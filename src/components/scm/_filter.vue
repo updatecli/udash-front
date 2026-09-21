@@ -12,6 +12,16 @@
       v-model="filterForm"
       @submit.prevent="applyFilter"
     >
+      <!-- Without the repository list both selectors below stay disabled, which on its
+           own reads as "this instance has no repositories". -->
+      <LoadError
+        v-if="scmLoadError"
+        class="mb-4"
+        title="Git repositories could not be loaded"
+        :message="scmLoadError"
+        @retry="getSCMSData"
+      />
+
       <!-- Repository and Branch Dropdowns -->
       <v-row v-if="showRepositoryBranch">
         <v-col cols="12" md="6">
@@ -85,12 +95,14 @@
                       icon="mdi-delete"
                       size="small"
                       color="error"
+                      :aria-label="label.key ? `Remove label filter ${label.key}` : 'Remove this label filter'"
                       @click="removeLabelRow(index)"
                       v-if="selectedLabels.length > 1"
                     ></v-btn>
                     <v-btn
                       icon="mdi-plus"
                       size="small"
+                      aria-label="Add another label filter"
                       @click="addLabelRow"
                       v-if="index === selectedLabels.length - 1"
                       :disabled="!canAddNewLabelRow()"
@@ -209,7 +221,8 @@
 <script>
 import router from '../../router'
 
-import { apiFetch } from '@/composables/api';
+import { apiFetch, describeLoadError } from '@/composables/api';
+import LoadError from '../LoadError.vue';
 import { getMaxHistoryDays } from '@/composables/runtime';
 import { FILTER_STORAGE_KEY, stepToISO } from '@/composables/date';
 import { PIPELINE_RESULTS, PIPELINE_RESULT_VALUES, OPEN_ACTION_OPTIONS, OPEN_ACTION_VALUES, openActionToQuery } from '@/composables/status';
@@ -224,6 +237,10 @@ const DEFAULT_DATE_RANGE = [0, 24];
 
 export default {
   name: 'PipelineSCMS',
+
+  components: {
+    LoadError,
+  },
 
   props: {
     showRepositoryBranch: {
@@ -254,6 +271,7 @@ export default {
     nowTicker: null,
     nowRefreshKey: 0,
     expandedPanels: [],
+    scmLoadError: null,
   }),
 
   beforeUnmount() {
@@ -443,6 +461,7 @@ export default {
 
     async getSCMSData() {
       this.$emit('loaded', false)
+      this.scmLoadError = null
       try {
         let query = '/pipeline/scms';
 
@@ -483,6 +502,7 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching SCM data:', error)
+        this.scmLoadError = describeLoadError(error, 'the Git repositories')
       } finally {
         this.$emit('loaded', true)
       }

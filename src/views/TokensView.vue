@@ -44,11 +44,16 @@
             :icon="copied ? 'mdi-check' : 'mdi-content-copy'"
             size="small"
             variant="text"
-            aria-label="Copy token"
+            :aria-label="copied ? 'Token copied' : 'Copy token'"
             @click="copyToken"
           ></v-btn>
           <pre class="overflow-x-auto"><code>{{ createdToken }}</code></pre>
         </div>
+        <!-- The token cannot be shown again, so a failed copy must be said out loud
+             while the text is still on screen to select by hand. -->
+        <p v-if="copyFailed" class="text-body-medium mt-3 mb-0" role="alert">
+          Copying is blocked in this browser. Select the token above and copy it by hand.
+        </p>
       </v-alert>
 
       <v-alert v-if="error" type="error" variant="tonal" density="compact" class="mb-4">
@@ -192,6 +197,7 @@
 
 <script>
 import { apiFetch } from '@/composables/api';
+import { copyText } from '@/composables/clipboard';
 import { toLocalDate } from '@/composables/date';
 import PageTitle from '@/components/PageTitle.vue';
 
@@ -212,6 +218,7 @@ export default {
     createError: null,
     createdToken: null,
     copied: false,
+    copyFailed: false,
     form: {
       name: '',
       scopes: ['reports:write'],
@@ -253,6 +260,12 @@ export default {
   async created() {
     await Promise.all([this.getPermission(), this.getTokens()]);
   },
+  watch: {
+    createdToken() {
+      this.copyFailed = false;
+    },
+  },
+
   methods: {
     toLocalDate,
 
@@ -321,16 +334,16 @@ export default {
       this.revokingBusy = false;
     },
 
-    copyToken() {
-      if (!navigator.clipboard) {
+    async copyToken() {
+      this.copyFailed = !(await copyText(this.createdToken));
+      if (this.copyFailed) {
         return;
       }
-      navigator.clipboard.writeText(this.createdToken).then(() => {
-        this.copied = true;
-        setTimeout(() => {
-          this.copied = false;
-        }, 1500);
-      });
+
+      this.copied = true;
+      setTimeout(() => {
+        this.copied = false;
+      }, 1500);
     },
   },
 };

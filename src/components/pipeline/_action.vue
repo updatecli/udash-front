@@ -12,7 +12,8 @@
         </v-toolbar-title>
 
         <v-toolbar-items>
-            <v-btn>{{ id }}</v-btn>
+            <!-- The resource id is a reference to read or copy, not an action. -->
+            <span class="resource-id text-body-medium text-medium-emphasis">{{ id }}</span>
         </v-toolbar-items>
     </v-toolbar>
 
@@ -177,3 +178,11 @@ export default {
     }
 }
 </script>
+<style scoped>
+.resource-id {
+    align-self: center;
+    padding-inline: 16px;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    overflow-wrap: anywhere;
+}
+</style>

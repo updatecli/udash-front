@@ -1,18 +1,29 @@
 <template>
 
   <v-container class="pa-0" fluid>
-    <v-container class="pa-0" v-if="pipelines.length === 0">
+    <!-- A failed search is reported as such: an empty table here would read as "no
+         report matches", which sends the reader off changing a filter that was fine. -->
+    <LoadError
+      v-if="loadError"
+      title="Reports could not be loaded"
+      :message="loadError"
+      :retrying="isFetching"
+      @retry="getReportsData(currentPage)"
+    />
+
+    <v-container class="pa-0" v-else-if="pipelines.length === 0 && hasLoaded">
       <v-row class="text-center pa-12">
         <v-col>
           <div class="empty-state">
-            <v-icon size="96" color="grey-lighten-2">mdi-alert-decagram-outline</v-icon>
-            <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No Reports Found</h3>
+            <v-icon size="96" class="text-medium-emphasis" aria-hidden="true">mdi-alert-decagram-outline</v-icon>
+            <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No reports match this filter</h3>
+            <p class="text-medium-emphasis mb-0">Widen the date range or clear the advanced filter.</p>
           </div>
         </v-col>
       </v-row>
     </v-container>
 
-    <v-container class="pa-0" v-if="pipelines.length > 0">
+    <v-container class="pa-0" v-if="pipelines.length > 0 && !loadError">
       <v-row>
         <v-col
             cols="auto"
@@ -26,18 +37,18 @@
               Quick Actions
               <v-tooltip text="Actions extracted from your pipeline reports that may require follow-up, such as pull requests.">
                 <template v-slot:activator="{ props }">
-                  <v-icon
+                  <v-btn
                     v-bind="props"
-                    size="small"
-                    class="ml-2"
-                    color="grey-darken-1"
-                  >
-                    mdi-information-outline
-                  </v-icon>
+                    icon="mdi-information-outline"
+                    size="x-small"
+                    variant="text"
+                    class="ml-1 text-medium-emphasis"
+                    aria-label="About quick actions"
+                  ></v-btn>
                 </template>
               </v-tooltip>
             </h4>
-            <p class="text-body-small text-grey-darken-1 mb-0">
+            <p class="text-body-small text-medium-emphasis mb-0">
               {{ actionURLs.length }} action{{ actionURLs.length !== 1 ? 's' : '' }} found across your pipeline reports
             </p>
           </div>
@@ -51,7 +62,7 @@
                   :key="index"
                   :href="action.url"
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
                   class="action-list-item"
                 >
                   <template v-slot:prepend>
@@ -74,7 +85,7 @@
                   </v-list-item-subtitle>
 
                   <template v-slot:append>
-                    <v-icon size="small" color="grey-lighten-1">
+                    <v-icon size="small" class="text-medium-emphasis" aria-label="Opens in a new tab">
                       mdi-open-in-new
                     </v-icon>
                   </template>
@@ -102,7 +113,7 @@
             <h4 class="d-flex align-center mb-2">
               Pipeline Reports
             </h4>
-            <p class="text-body-small text-grey-darken-1 mb-0">
+            <p class="text-body-small text-medium-emphasis mb-0">
               Detailed execution history and status information
             </p>
           </div>
@@ -131,35 +142,45 @@
               <v-btn
                 class="mx-4"
                 variant="text"
-                prepend-icon="mdi-arrow-right-circle"
+                icon="mdi-arrow-right-circle"
+                :aria-label="`Open report ${item.Name || item.ID}`"
                 :to=getPipelineLink(item.ID)></v-btn>
             </template>
             <!-- A pipeline which had nothing to change reports a success even when the
                  change it would have made is already waiting in a pull request nobody
                  merged. The badge is what tells those apart from the genuinely up to
                  date ones, which the result glyph alone cannot do. -->
+            <!-- The icon is the only thing in this cell, so it carries the result as
+                 an image with a name. tabindex lets keyboard readers reach the tooltip,
+                 which is the only place the open pull request is spelled out. -->
             <template v-slot:item.Result="{ item }">
               <v-tooltip :text="getResultTooltipText(item)">
                 <template v-slot:activator="{ props }">
-                  <v-badge
-                    v-if="hasOpenAction(item)"
-                    :icon="openActionIcon"
-                    :color="openActionColor"
-                    offset-x="-1"
-                    offset-y="-1"
+                  <span
                     v-bind="props"
+                    role="img"
+                    tabindex="0"
+                    class="result-cell"
+                    :aria-label="getResultTooltipText(item)"
                   >
+                    <v-badge
+                      v-if="hasOpenAction(item)"
+                      :icon="openActionIcon"
+                      :color="openActionColor"
+                      offset-x="-1"
+                      offset-y="-1"
+                    >
+                      <v-icon
+                        :icon=getStatusIcon(item.Result)
+                        :color=getStatusColor(item.Result)
+                        ></v-icon>
+                    </v-badge>
                     <v-icon
+                      v-else
                       :icon=getStatusIcon(item.Result)
                       :color=getStatusColor(item.Result)
                       ></v-icon>
-                  </v-badge>
-                  <v-icon
-                    v-else
-                    :icon=getStatusIcon(item.Result)
-                    :color=getStatusColor(item.Result)
-                    v-bind="props"
-                    ></v-icon>
+                  </span>
                 </template>
               </v-tooltip>
             </template>
@@ -177,10 +198,11 @@
                     <v-btn
                       class="mx-4"
                       variant="text"
-                      :prepend-icon="getActionProviderIcon(actionURL.url)"
+                      :icon="getActionProviderIcon(actionURL.url)"
                       :href="actionURL.url"
                       target="_blank"
-                      rel="noopener"
+                      rel="noopener noreferrer"
+                      :aria-label="`${actionURL.title || 'Open action'} (opens in a new tab)`"
                       v-bind="props"
                     ></v-btn>
                   </template>
@@ -195,13 +217,18 @@
 </template>
 
 <script>
-import { getStatusColor, getStatusIcon, getStatusText, OPEN_ACTION_ICON, OPEN_ACTION_COLOR } from '@/composables/status';
+import { getStatusColor, getStatusIcon, getPipelineResultText, OPEN_ACTION_ICON, OPEN_ACTION_COLOR } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git'
 import { toLocalDate } from '@/composables/date'
-import { apiFetch } from '@/composables/api';
+import { apiFetch, describeLoadError } from '@/composables/api';
+import LoadError from '../LoadError.vue';
 
 export default {
   name: 'PipelinesTable',
+
+  components: {
+    LoadError,
+  },
 
   props: {
     filter: {},
@@ -231,6 +258,10 @@ export default {
     itemsPerPage: 25,
     totalItems: 0,
     currentPage: 1,
+    loadError: null,
+    hasLoaded: false,
+    isFetching: false,
+    requestId: 0,
   }),
 
   watch: {
@@ -287,7 +318,7 @@ export default {
     },
 
     getResultTooltipText(pipeline){
-      const status = getStatusText(pipeline.Result)
+      const status = getPipelineResultText(pipeline.Result)
       if (!this.hasOpenAction(pipeline)) {
         return status
       }
@@ -337,6 +368,12 @@ export default {
     },
 
     async getReportsData(page =1 ) {
+      // Pages and filters can change faster than the API answers; only the latest
+      // request may write the table, or an older answer lands on top of a newer one.
+      this.requestId += 1
+      const requestId = this.requestId
+
+      this.isFetching = true
       this.$emit('loaded', false)
 
       const requestBody = {
@@ -404,18 +441,26 @@ export default {
           body: requestBody,
         });
 
+        if (requestId !== this.requestId) return
+
         this.pipelines = data.data || data.reports || [];
         this.getPipelinesActionsURL()
         this.totalItems = data.total_count || 0;
         this.currentPage = page;
+        this.loadError = null;
 
       } catch (error) {
-        console.error('Error fetching reports:', error);
-        this.pipelines = [];
-        this.totalItems = 0;
-      }
+        if (requestId !== this.requestId) return
 
-      this.$emit('loaded', true)
+        console.error('Error fetching reports:', error);
+        this.loadError = describeLoadError(error, 'the pipeline reports')
+      } finally {
+        if (requestId === this.requestId) {
+          this.isFetching = false
+          this.hasLoaded = true
+          this.$emit('loaded', true)
+        }
+      }
     },
 
     onPageChange(page) {
@@ -456,5 +501,15 @@ export default {
 
 .action-list-item:hover {
   background-color: rgba(0, 0, 0, 0.04);
+}
+
+.result-cell {
+  display: inline-flex;
+  border-radius: 50%;
+}
+
+.result-cell:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 2px;
 }
 </style>

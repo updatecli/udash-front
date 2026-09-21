@@ -7,14 +7,16 @@
             <v-icon
                 :icon="getStatusIcon(data.Result)"
                 :color="getStatusColor(data.Result)"
+                aria-hidden="true"
             ></v-icon>  {{ data.Name }}
         </v-toolbar-title>
 
         <v-toolbar-items>
-            <v-btn v-if="data.DryRun == true">
+            <v-chip v-if="data.DryRun == true" color="warning" size="small" variant="outlined" class="align-self-center mr-2">
                 DryRun
-            </v-btn>
-            <v-btn>{{ id }}</v-btn>
+            </v-chip>
+            <!-- The resource id is a reference to read or copy, not an action. -->
+            <span class="resource-id text-body-medium text-medium-emphasis">{{ id }}</span>
         </v-toolbar-items>
     </v-toolbar>
 
@@ -69,7 +71,7 @@
 
         <v-row>
             <v-col cols="12" lg="8" md="8" sm="12">
-                <v-card v-if="data.Scm.URL" variant="flat" class="mb-4">
+                <v-card v-if="data.Scm?.URL" variant="flat" class="mb-4">
                     <v-card-title class="d-flex align-center pb-2">
                         <v-icon class="mr-2">mdi-git</v-icon>
                         Source Control
@@ -78,14 +80,14 @@
                         <v-row>
                             <v-col cols="12" md="8">
                                 <div class="d-flex align-center">
-                                    <v-icon size="small" class="mr-2" color="grey-darken-1">mdi-link</v-icon>
+                                    <v-icon size="small" class="mr-2 text-medium-emphasis" aria-hidden="true">mdi-link</v-icon>
                                     <span class="text-body-medium">{{ data.Scm.URL }}</span>
                                 </div>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="d-flex align-center">
-                                    <v-icon size="small" class="mr-2" color="grey-darken-1">mdi-source-branch</v-icon>
-                                    <span class="text-body-medium">{{ data.Scm.Branch.Source }}</span>
+                                    <v-icon size="small" class="mr-2 text-medium-emphasis" aria-hidden="true">mdi-source-branch</v-icon>
+                                    <span class="text-body-medium">{{ data.Scm.Branch?.Source || 'Unknown branch' }}</span>
                                 </div>
                             </v-col>
                         </v-row>
@@ -115,7 +117,7 @@
                                                 <v-icon size="small" class="mr-1">mdi-minus</v-icon>
                                                 Previous
                                             </div>
-                                            <div class="information-content bg-red-lighten-5">
+                                            <div class="information-content information-content--removed">
                                                 {{ data.Information }}
                                             </div>
                                         </v-col>
@@ -127,7 +129,7 @@
                                                 <v-icon size="small" class="mr-1">mdi-plus</v-icon>
                                                 New
                                             </div>
-                                            <div class="information-content bg-green-lighten-5">
+                                            <div class="information-content information-content--added">
                                                 {{ data.NewInformation }}
                                             </div>
                                         </v-col>
@@ -183,7 +185,7 @@
 
                         <div v-if="!data.Config?.Spec && !data.Config?.Transformers" class="text-center pa-4">
                             <v-icon size="large">mdi-file-outline</v-icon>
-                            <p class="text-grey-darken-1 mt-2">No configuration available</p>
+                            <p class="text-medium-emphasis mt-2">No configuration available</p>
                         </div>
                     </v-card-text>
                 </v-card>
@@ -266,6 +268,21 @@ export default {
 </script>
 
 <style scoped>
+.resource-id {
+    align-self: center;
+    padding-inline: 16px;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    overflow-wrap: anywhere;
+}
+
+.information-content.information-content--removed {
+    background-color: rgba(var(--v-theme-error), 0.1);
+}
+
+.information-content.information-content--added {
+    background-color: rgba(var(--v-theme-success), 0.1);
+}
+
 
 .yaml-container {
     max-height: 300px;
@@ -288,8 +305,11 @@ export default {
 .information-content {
     white-space: pre-wrap;
     word-break: break-word;
-    font-family: 'Roboto Mono', monospace;
-    background-color: #f5f5f5;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    /* Tinted from the theme's own ink so the block reads on both surfaces; a fixed
+       light grey left the dark theme's near-white text on a near-white box. */
+    background-color: rgba(var(--v-theme-on-surface), 0.05);
+    color: rgb(var(--v-theme-on-surface));
     padding: 12px;
     border-radius: 4px;
     font-size: 0.9rem;

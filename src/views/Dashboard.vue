@@ -10,7 +10,7 @@
       :opacity="0"
       >
       <v-progress-circular
-        color="black"
+        color="primary"
         indeterminate
         size="64"
       ></v-progress-circular>
@@ -91,11 +91,19 @@ export default {
     ]
   }),
   watch: {
+    // The overlay gives up after ten seconds so a stalled request never leaves the
+    // page covered; the timer is cleared on leave so it cannot fire into a dead view.
     isLoading: function (val) {
-      val && setTimeout(() => {
-        this.isLoading = false
-      }, 10000)
+      clearTimeout(this.loadingTimer)
+      if (val) {
+        this.loadingTimer = setTimeout(() => {
+          this.isLoading = false
+        }, 10000)
+      }
     }
+  },
+  beforeUnmount() {
+    clearTimeout(this.loadingTimer)
   },
   methods: {
     updateFilter: function(newFilter) {
