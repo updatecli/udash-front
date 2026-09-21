@@ -8,8 +8,7 @@ import { initAuth, consumeReturnTo } from '@/composables/auth'
 import hljs from 'highlight.js/lib/core'
 import bash from 'highlight.js/lib/languages/bash'
 import yaml from 'highlight.js/lib/languages/yaml'
-//import 'highlight.js/styles/atom-one-dark.css'
-import 'highlight.js/styles/default.css'
+import './styles/code.scss'
 
 hljs.registerLanguage('bash', bash)
 hljs.registerLanguage('yaml', yaml)

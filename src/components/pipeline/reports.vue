@@ -53,10 +53,7 @@
                 >
                   <template v-slot:prepend>
                     <v-avatar size="32" class="mr-3">
-                      <v-icon
-                        :color="getProviderColor(action.url)"
-                        size="18"
-                      >
+                      <v-icon size="18">
                         {{ getActionProviderIcon(action.url) }}
                       </v-icon>
                     </v-avatar>
@@ -259,16 +256,6 @@ export default {
       return icons[info?.provider] || 'mdi-git'
     },
 
-    // New: Get provider color for better visual distinction
-    getProviderColor(url) {
-      const info = extractGitURLInfo(url)
-      const colors = {
-        'github': 'grey-darken-2',
-        'gitlab': 'orange',
-        'bitbucket': 'blue'
-      }
-      return colors[info?.provider] || 'grey'
-    },
 
     // New: Get provider name for subtitle
     getProviderName(url) {
@@ -460,7 +447,7 @@ export default {
 
 <style scoped>
 .action-summary-card {
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 8px;
 }
 
@@ -471,7 +458,7 @@ export default {
 }
 
 .action-list-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .result-cell {

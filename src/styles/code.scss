@@ -1,0 +1,16 @@
+@use 'sass:meta';
+
+// Syntax colours follow the active Vuetify theme; the block itself is tinted from the
+// theme's ink so it reads as code on both surfaces.
+.v-theme--light {
+  @include meta.load-css('highlight.js/styles/github');
+}
+
+.v-theme--dark {
+  @include meta.load-css('highlight.js/styles/github-dark');
+}
+
+.v-application pre code.hljs {
+  background: rgba(var(--v-theme-on-surface), 0.05);
+  border-radius: 4px;
+}

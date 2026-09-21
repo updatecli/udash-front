@@ -7,7 +7,6 @@
         <v-toolbar-title>
             <v-icon
                 :icon="getActionIcon()"
-                :color="getActionColor()"
             ></v-icon>  {{ data.title }}
         </v-toolbar-title>
 
@@ -44,10 +43,9 @@
                                     </v-chip>
                                 </td>
                                 <td>
-                                    <v-chip 
+                                    <v-chip
                                         size="small"
-                                        :color="getPlatformColor()"
-                                        variant="flat"
+                                        variant="outlined"
                                         >
                                         <v-icon size="x-small" class="mr-1">
                                             {{ getPlatformIcon() }}
@@ -122,18 +120,6 @@ export default {
             return platformIcons[this.gitInfo.provider] || 'mdi-git';
         },
 
-        getPlatformColor() {
-            if (!this.gitInfo) return 'grey';
-
-            const platformColors = {
-                'github': 'grey-darken-4',
-                'gitlab': 'orange',
-                'bitbucket': 'blue',
-                'gitea': 'green'
-            };
-
-            return platformColors[this.gitInfo.provider] || 'primary';
-        },
 
         getActionType() {
             if (!this.gitInfo) return 'Action';
@@ -171,9 +157,6 @@ export default {
             return 'Review PR';
         },
 
-        getActionColor() {
-            return this.getPlatformColor();
-        }
     }
 }
 </script>

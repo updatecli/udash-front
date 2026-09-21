@@ -19,6 +19,11 @@ const darkTheme = {
     info: '#7CCBFF',
     success: '#3DFF9A',
     warning: '#FFC857',
+    // Pipeline results without a semantic colour of their own. Success, changed and
+    // failed use success, warning and error.
+    'result-waiting': '#60A5FA',
+    'result-skipped': '#9CA3AF',
+    'result-unknown': '#A78BFA',
   }
 }
 
@@ -27,14 +32,17 @@ const lightTheme = {
   colors: {
     background: '#F4F9FF',
     surface: '#FFFFFF',
-    primary: '#0E9F6E',
-    'primary-darken-1': '#0B7A55',
+    primary: '#0B7A55',
+    'primary-darken-1': '#095E42',
     secondary: '#0E6E99',
     'secondary-darken-1': '#0A5575',
-    error: '#C62828',
-    info: '#1E88E5',
-    success: '#2E7D32',
-    warning: '#C77800',
+    error: '#BE2626',
+    info: '#1A6FD1',
+    success: '#2A732E',
+    warning: '#915806',
+    'result-waiting': '#225BD8',
+    'result-skipped': '#5E6471',
+    'result-unknown': '#7A39E8',
   }
 }
 

@@ -150,16 +150,6 @@ export default {
     extractGitURLInfo,
     toYAML,
 
-    getKindColor(kind) {
-      const colors = {
-        'source': 'blue',
-        'condition': 'orange',
-        'target': 'green',
-        'action': 'purple',
-        'transform': 'teal'
-      }
-      return colors[kind?.toLowerCase()] || 'grey'
-    },
 
     getKindIcon(type) {
       const icons = {

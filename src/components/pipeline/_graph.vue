@@ -1,7 +1,8 @@
 <template>
   <div class="graph-container">
-    <vue-mermaid-string 
-      :value="enhancedData" 
+    <vue-mermaid-string
+      :key="themeName"
+      :value="graph"
       :options="mermaidConfig"
     />
   </div>
@@ -22,73 +23,64 @@ export default {
   ],
 
   computed: {
-    enhancedData() {
-      if (!this.data) return '';
-      
-      let graph = this.data;
-      
-      // Add simple class definitions for component distinction
-      const classDefinitions = `
-        classDef sourceClass fill:#e8f5e8,stroke:#4caf50,stroke-width:3px
-        classDef conditionClass fill:#fff3e0,stroke:#ff9800,stroke-width:3px
-        classDef targetClass fill:#e3f2fd,stroke:#2196f3,stroke-width:3px
-        classDef actionClass fill:#f3e5f5,stroke:#9c27b0,stroke-width:3px
-      `;
-      
-      // Apply classes based on node names
-      const lines = graph.split('\n');
-      const enhancedLines = lines.map(line => {
-        if (!line.trim() || line.includes('-->') || line.includes('---')) {
-          return line;
-        }
-        
-        const trimmedLine = line.trim().toLowerCase();
-        
-        if (trimmedLine.startsWith('source')) {
-          return line + ':::sourceClass';
-        } else if (trimmedLine.startsWith('condition')) {
-          return line + ':::conditionClass';
-        } else if (trimmedLine.startsWith('target')) {
-          return line + ':::targetClass';
-        } else if (trimmedLine.startsWith('action')) {
-          return line + ':::actionClass';
-        }
-        
-        return line;
-      });
-      
-      return enhancedLines.join('\n') + '\n' + classDefinitions;
-    }
-  },
+    themeName() {
+      return this.$vuetify.theme.global.name;
+    },
 
-  data: () => ({
-    mermaidConfig: {
-      theme: 'base',
-      themeVariables: {
-        primaryColor: '#f8f9fa',
-        primaryTextColor: '#212529',
-        primaryBorderColor: '#dee2e6',
-        lineColor: '#6c757d',
-        background: '#ffffff'
-      },
-      markdown: false,
-      htmlLabels: false,
-      flowchart: {
-        curve: 'basis',
-        padding: 20,
-        nodeSpacing: 50,
-        rankSpacing: 60,
-        useMaxWidth: true
-      },
-      fontSize: 14,
-    }
-  })
+    graph() {
+      return this.data || '';
+    },
+
+    // Mermaid needs plain hex values, so the node and edge colours are mixed from the
+    // active theme rather than read from CSS variables. Nodes stay neutral: the other
+    // hues on this page already stand for pipeline results.
+    mermaidConfig() {
+      const colors = this.$vuetify.theme.current.colors;
+      const ink = colors['on-surface'];
+      const surface = colors.surface;
+
+      return {
+        theme: 'base',
+        themeVariables: {
+          background: surface,
+          primaryColor: mix(surface, ink, 0.06),
+          primaryTextColor: ink,
+          primaryBorderColor: mix(surface, ink, 0.35),
+          lineColor: mix(surface, ink, 0.55),
+          fontFamily: 'inherit',
+        },
+        markdown: false,
+        htmlLabels: false,
+        flowchart: {
+          curve: 'basis',
+          padding: 20,
+          nodeSpacing: 50,
+          rankSpacing: 60,
+          useMaxWidth: true,
+        },
+        fontSize: 14,
+      };
+    },
+  },
+}
+
+function mix(from, to, amount) {
+  const parse = (hex) => {
+    const value = hex.replace('#', '');
+    const full = value.length === 3 ? value.split('').map((c) => c + c).join('') : value;
+    return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+  };
+  const a = parse(from);
+  const b = parse(to);
+
+  return '#' + a.map((channel, i) => Math.round(channel + (b[i] - channel) * amount)
+    .toString(16).padStart(2, '0')).join('');
 }
 </script>
 
 <style scoped>
 .graph-container {
-  background: white;
+  background: rgb(var(--v-theme-surface));
   padding: 20px;
   min-height: 300px;
   border-radius: 8px;
