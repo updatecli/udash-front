@@ -1023,18 +1023,18 @@ export default {
 }
 
 .date-range-hint {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.25;
 }
 
 /* Kept in step with isCompactDisplay, which drops the weekday at the same width. */
 @media (max-width: 600px) {
   .date-range-value {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
   }
 
   .date-range-hint {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -1042,7 +1042,7 @@ export default {
    which buys the three surviving anchors enough room to clear each other at 320px. */
 @media (max-width: 960px) {
   .v-slider :deep(.v-slider-track__tick-label) {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
 }
 </style>

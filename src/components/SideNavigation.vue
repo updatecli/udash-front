@@ -3,11 +3,10 @@
     <v-navigation-drawer
         v-model="drawer"
         color="background"
-        expand-on-hover
-        permanent
-        rail
-        bottom
-        app>
+        :expand-on-hover="!isNarrow"
+        :permanent="!isNarrow"
+        :rail="!isNarrow"
+        :temporary="isNarrow">
   
         <v-list-item
           height="48"
@@ -52,8 +51,12 @@
 </template>
 
 <script>
+    import { computed, watch } from 'vue';
+    import { useRoute } from 'vue-router';
+    import { useDisplay } from 'vuetify';
     import { useAuth } from '@/composables/auth';
     import { getAppBaseUrl } from '@/composables/runtime';
+    import { navDrawerOpen } from '@/composables/navigation';
 
     export default {
         name: 'SideNavigation',
@@ -62,10 +65,23 @@
         // instance without this component special-casing one.
         setup() {
           const auth = useAuth();
+          const { smAndDown } = useDisplay();
+          const route = useRoute();
+
+          // Below 960px the rail would cost a sixth of a phone's width on every page, so
+          // it becomes a drawer that stays closed until the app bar opens it.
+          const drawer = computed({
+            get: () => !smAndDown.value || navDrawerOpen.value,
+            set: (value) => { navDrawerOpen.value = value },
+          });
+
+          watch(() => route.fullPath, () => { navDrawerOpen.value = false });
 
           return {
             canReadData: auth.canReadData,
             isLoading: auth.isLoading,
+            isNarrow: smAndDown,
+            drawer,
           }
         },
 
@@ -75,8 +91,5 @@
             return baseUrl + '/updatecli.png';
           }
         },
-        data: () => ({
-            drawer: true,
-        }),
     }
 </script>

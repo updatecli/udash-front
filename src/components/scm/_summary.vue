@@ -72,7 +72,7 @@
                                         size="x-small"
                                         class="mr-2"
                                     >
-                                        {{ getBranchEntries(scmData).length }} branches
+                                        {{ getBranchEntries(scmData).length }} {{ getBranchEntries(scmData).length === 1 ? 'branch' : 'branches' }}
                                     </v-chip>
                                     <v-btn
                                         variant="text"

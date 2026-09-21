@@ -62,7 +62,7 @@
           <v-icon
             :icon="getStatusIcon(pipeline.Pipeline.Result)"
             :color="getStatusColor(pipeline.Pipeline.Result)"
-            size="80"
+            :size="$vuetify.display.xs ? 40 : 80"
             aria-hidden="true"
           ></v-icon>
         </template>
@@ -76,51 +76,41 @@
             variant="flat"
           >
             <v-card-text>
-              <v-table density="compact">
-                <thead>
-                  <tr>
-                    <th>Result</th>
-                    <th>Reported</th>
-                    <th>Pipeline</th>
-                    <th>CI</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      {{ getPipelineResultText(pipeline.Pipeline.Result) }}
-                    </td>
-                    <td>{{ formatDate(pipeline.Updated_at) }}</td>
-                    <td>{{ pipeline.Pipeline.Name }}</td>
-                    <td>
-                      <template v-if="pipelinePrimaryURL">
-                        <v-btn
-                          :href="pipelinePrimaryURL"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          size="small"
-                          variant="outlined"
-                          prepend-icon="mdi-open-in-new"
-                        >
-                          View Job
-                        </v-btn>
-                      </template>
-                      <span
-                        v-else
-                        class="text-medium-emphasis"
-                      >
-                        None
-                      </span>
-                      <span
-                        v-if="hasMultiplePipelineURLs"
-                        class="text-warning text-body-small ci-warning"
-                      >
-                        This report lists several CI jobs; the link opens the first.
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </v-table>
+              <!-- A wrapping list rather than a table: four columns cannot fit a phone,
+                   and the pipeline name already titles the page. -->
+              <dl class="report-meta">
+                <div>
+                  <dt>Result</dt>
+                  <dd>{{ getPipelineResultText(pipeline.Pipeline.Result) }}</dd>
+                </div>
+                <div>
+                  <dt>Reported</dt>
+                  <dd>{{ formatDate(pipeline.Updated_at) }}</dd>
+                </div>
+                <div>
+                  <dt>CI</dt>
+                  <dd>
+                    <v-btn
+                      v-if="pipelinePrimaryURL"
+                      :href="pipelinePrimaryURL"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      size="small"
+                      variant="outlined"
+                      prepend-icon="mdi-open-in-new"
+                    >
+                      View Job
+                    </v-btn>
+                    <span v-else class="text-medium-emphasis">None</span>
+                    <span
+                      v-if="hasMultiplePipelineURLs"
+                      class="text-warning text-body-small ci-warning"
+                    >
+                      This report lists several CI jobs; the link opens the first.
+                    </span>
+                  </dd>
+                </div>
+              </dl>
             </v-card-text>
           </v-card>
         </v-col>
@@ -201,10 +191,7 @@
 
       <v-row>
         <v-col
-          cols="auto"
-          lg="12"
-          md="12"
-          sm="12"
+          cols="12"
         >
 
           <v-container
@@ -327,10 +314,7 @@
 
       <v-row>
         <v-col
-          cols="auto"
-          lg="12"
-          md="12"
-          sm="12"
+          cols="12"
           class="text-center"
         >
             <v-card
@@ -576,6 +560,23 @@ export default {
 <style scoped>
 .loading-container {
   min-height: 50vh;
+}
+
+.report-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem 2rem;
+  margin: 0;
+}
+
+.report-meta dt {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.report-meta dd {
+  margin: 0;
 }
 
 .ci-warning {
