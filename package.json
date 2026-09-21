@@ -10,7 +10,7 @@
     "lint": "eslint --fix src/"
   },
   "dependencies": {
-    "@mdi/font": "^7.4.47",
+    "@mdi/js": "^7.4.47",
     "axios": "^1.20.0",
     "chart.js": "^4.5.1",
     "core-js": "^3.50.0",
