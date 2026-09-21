@@ -1,7 +1,7 @@
 <template>
     <div class="stage-header">
         <v-icon aria-hidden="true" class="stage-header__icon" :icon="getActionIcon()"></v-icon>
-        <h3 class="stage-header__name text-title-large">{{ data.title }}</h3>
+        <h2 class="stage-header__name text-title-large">{{ data.title }}</h2>
         <span class="resource-id text-body-medium text-medium-emphasis">{{ id }}</span>
     </div>
 
@@ -10,12 +10,6 @@
             <v-col cols="12">
                 <v-card flat class="pa-3">
                     <dl class="meta-grid">
-                    <div>
-                        <dt>ID</dt>
-                        <dd>
-                            {{ id }}
-                        </dd>
-                    </div>
                     <div>
                         <dt>Type</dt>
                         <dd>

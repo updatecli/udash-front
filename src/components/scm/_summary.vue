@@ -59,46 +59,53 @@
                             <v-col
                                 v-if="!hideRepositoryTitle"
                                 cols="12"
-                                md="3"
+                                :md="isRepoCollapsed(url) ? 12 : 3"
                                 class="repo-side"
+                                :class="{ 'repo-side--collapsed': isRepoCollapsed(url) }"
                             >
-                                <div class="d-flex align-center pa-4">
-                                    <v-icon class="mr-2">{{ getGitIcon(url) }}</v-icon>
-                                    <span class="text-truncate repo-title" :title="sanitizeURL(url)">{{ sanitizeURL(url) }}</span>
-                                </div>
-                                <div class="px-4 pb-4 d-flex align-center">
-                                    <v-chip
-                                        variant="outlined"
-                                        size="x-small"
-                                        class="mr-2"
-                                    >
-                                        {{ getBranchEntries(scmData).length }} {{ getBranchEntries(scmData).length === 1 ? 'branch' : 'branches' }}
-                                    </v-chip>
-                                    <v-btn
-                                        variant="text"
-                                        size="small"
-                                        :aria-expanded="String(!isRepoCollapsed(url))"
-                                        :aria-label="`${isRepoCollapsed(url) ? 'Show' : 'Hide'} branches of ${sanitizeURL(url)}`"
-                                        @click="toggleRepo(url)"
-                                    >
-                                        {{ isRepoCollapsed(url) ? 'Show' : 'Hide' }}
-                                    </v-btn>
+                                <!-- The rollup stays visible when the branches are hidden, so a
+                                     collapsed repository still says whether it needs a human. -->
+                                <div class="repo-summary">
+                                    <div class="repo-summary__title d-flex align-center">
+                                        <v-icon class="mr-2" aria-hidden="true">{{ getGitIcon(url) }}</v-icon>
+                                        <span class="text-truncate repo-title" :title="sanitizeURL(url)">{{ sanitizeURL(url) }}</span>
+                                    </div>
+
+                                    <div class="repo-rollup text-body-medium">
+                                        <template v-if="repoNeedsAttention(scmData)">
+                                            <span v-if="repoRollup(scmData).failed" class="text-error">✗ {{ repoRollup(scmData).failed }} failed</span>
+                                            <span v-if="repoRollup(scmData).changed" class="text-warning">⚠ {{ repoRollup(scmData).changed }} changed</span>
+                                            <span v-if="repoRollup(scmData).waiting" class="text-result-waiting">
+                                                {{ repoRollup(scmData).waiting }} {{ getActionShortLabel(url) }}{{ repoRollup(scmData).waiting === 1 ? '' : 's' }} waiting
+                                            </span>
+                                        </template>
+                                        <span v-else class="text-medium-emphasis">✔ Up to date</span>
+                                    </div>
+
+                                    <div class="d-flex align-center ga-2">
+                                        <span class="text-body-small text-medium-emphasis">
+                                            {{ getBranchEntries(scmData).length }} {{ getBranchEntries(scmData).length === 1 ? 'branch' : 'branches' }}
+                                        </span>
+                                        <v-btn
+                                            variant="text"
+                                            size="small"
+                                            :aria-expanded="String(!isRepoCollapsed(url))"
+                                            :aria-label="`${isRepoCollapsed(url) ? 'Show' : 'Hide'} branches of ${sanitizeURL(url)}`"
+                                            @click="toggleRepo(url)"
+                                        >
+                                            {{ isRepoCollapsed(url) ? 'Show branches' : 'Hide branches' }}
+                                        </v-btn>
+                                    </div>
                                 </div>
                             </v-col>
 
                             <v-col
+                                v-if="!isRepoCollapsed(url)"
                                 cols="12"
                                 :md="hideRepositoryTitle ? 12 : 9"
                                 class="branch-side"
                             >
-                                <div
-                                    v-if="isRepoCollapsed(url)"
-                                    class="pa-4 text-body-small text-medium-emphasis"
-                                >
-                                    Branches hidden. Select Show to list them.
-                                </div>
-
-                                <template v-else>
+                                <div>
                                     <div
                                         v-for="([branch, branchData], index) in getVisibleBranchEntries(url, scmData)"
                                         :key="branch"
@@ -314,7 +321,7 @@
                                             Show more branches
                                         </v-btn>
                                     </div>
-                                </template>
+                                </div>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -323,7 +330,7 @@
         </v-row>
 
         <!-- Loading and Pagination Controls -->
-        <v-row v-if="totalCount > 1" justify="center">
+        <v-row v-if="hasMoreData" justify="center">
             <v-col cols="12" md="6">
                 <v-card variant="flat" class="text-center" color="background">
                     <v-card-text>
@@ -411,7 +418,7 @@ const DOUGHNUT_SEGMENTS = Object.freeze([
     { result: '-', label: '- Skipped', color: 'result-skipped' },
     { result: null, label: '? Unknown', color: 'result-unknown' },
 ]);
-const COLLAPSE_STORAGE_KEY = getStorageKey('scm.summary.collapse.v1');
+const COLLAPSE_STORAGE_KEY = getStorageKey('scm.summary.collapse.v2');
 
 export default {
     components: {
@@ -466,7 +473,9 @@ export default {
         currentRequestId: 0,
         hasSearched: false,
         loadError: null,
-        collapseAllByDefault: true,
+        // null lets each repository decide: only the ones with nothing to act on start
+        // collapsed. Expand all / collapse all set it explicitly.
+        collapseAllByDefault: null,
         collapsedRepositories: {},
         visibleBranchesByRepo: {},
         initialBranchPageSize: 10,
@@ -500,13 +509,33 @@ export default {
             return Math.min(100, Math.round((this.loadedScmBranchCount / this.totalScmCount) * 100));
         },
 
+        // Repositories needing a human come first: failures, then pull requests waiting to
+        // be merged, then applied changes. The rest keep the API's order.
         displayedData() {
-            if (!this.hideEmpty) return this.data;
-            return Object.fromEntries(
-                Object.entries(this.data).filter(([, scmData]) =>
+            let entries = Object.entries(this.data);
+
+            if (this.hideEmpty) {
+                entries = entries.filter(([, scmData]) =>
                     Object.values(scmData).some(branch => (Number(branch?.total_result) || 0) > 0)
-                )
-            );
+                );
+            }
+
+            const rank = ([, scmData]) => {
+                const { failed, waiting, changed } = this.repoRollup(scmData);
+                return [failed, waiting, changed];
+            };
+
+            entries = entries
+                .map((entry, index) => ({ entry, index, rank: rank(entry) }))
+                .sort((a, b) => {
+                    for (let i = 0; i < a.rank.length; i += 1) {
+                        if (a.rank[i] !== b.rank[i]) return b.rank[i] - a.rank[i];
+                    }
+                    return a.index - b.index;
+                })
+                .map(({ entry }) => entry);
+
+            return Object.fromEntries(entries);
         },
 
         hasLoadedData() {
@@ -571,7 +600,7 @@ export default {
 
                 const savedState = JSON.parse(rawValue);
 
-                if (typeof savedState.collapseAllByDefault === 'boolean') {
+                if (typeof savedState.collapseAllByDefault === 'boolean' || savedState.collapseAllByDefault === null) {
                     this.collapseAllByDefault = savedState.collapseAllByDefault;
                 }
 
@@ -638,7 +667,31 @@ export default {
                 return this.collapsedRepositories[url];
             }
 
-            return this.collapseAllByDefault;
+            if (typeof this.collapseAllByDefault === 'boolean') {
+                return this.collapseAllByDefault;
+            }
+
+            return !this.repoNeedsAttention(this.data?.[url] || {});
+        },
+
+        // repoRollup totals a repository's branches: failed and changed pipelines, and
+        // pull requests still waiting to be merged.
+        repoRollup(scmData) {
+            const rollup = { failed: 0, changed: 0, waiting: 0 };
+
+            Object.values(scmData || {}).forEach((branch) => {
+                const byType = branch?.total_result_by_type || {};
+                rollup.failed += Number(byType['✗']) || 0;
+                rollup.changed += Number(byType['⚠']) || 0;
+                rollup.waiting += Number(branch?.total_action_urls) || 0;
+            });
+
+            return rollup;
+        },
+
+        repoNeedsAttention(scmData) {
+            const { failed, changed, waiting } = this.repoRollup(scmData);
+            return failed + changed + waiting > 0;
         },
 
         toggleRepo(url) {
@@ -1136,6 +1189,33 @@ export default {
 
 .repo-title {
     max-width: 100%;
+    font-weight: 600;
+}
+
+.repo-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+}
+
+.repo-side--collapsed .repo-summary {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 24px;
+}
+
+.repo-side--collapsed .repo-summary__title {
+    flex: 1 1 16rem;
+    min-width: 0;
+}
+
+.repo-rollup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    font-variant-numeric: tabular-nums;
 }
 
 .branch-item {
@@ -1206,6 +1286,10 @@ export default {
 
 .branch-info {
     min-width: 0; /* Allows text-truncate to work in flex */
+}
+
+.repo-side--collapsed {
+    border-right: 0;
 }
 
 @media (max-width: 959px) {

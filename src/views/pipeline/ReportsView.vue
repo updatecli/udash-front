@@ -23,12 +23,6 @@
       <v-col
         cols="12"
       >
-        <!-- Add explanatory header for filter -->
-        <div class="mb-3">
-          <h3 class="text-title-large d-flex align-center">
-            Filter
-          </h3>
-        </div>
 
         <PipelineSCMFilter
           ref="scmFilter"

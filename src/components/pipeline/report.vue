@@ -53,22 +53,80 @@
   </v-container>
 
   <template v-else>
-    <v-container class="page-shell">
+    <v-container class="page-shell pb-0">
       <PageTitle
         :title="pipeline.Pipeline.Name || 'Report'"
         icon="mdi-book-open-variant"
       >
         <template v-slot:actions>
-          <v-icon
-            :icon="getStatusIcon(pipeline.Pipeline.Result)"
-            :color="getStatusColor(pipeline.Pipeline.Result)"
-            :size="$vuetify.display.xs ? 40 : 80"
-            aria-hidden="true"
-          ></v-icon>
+          <div class="d-flex flex-wrap ga-2">
+            <v-btn
+              v-for="action in openActions"
+              :key="action.url"
+              :href="action.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              color="primary"
+              variant="flat"
+              :prepend-icon="openActionIcon"
+            >
+              {{ action.label }}
+            </v-btn>
+            <v-btn
+              v-if="pipelinePrimaryURL"
+              :href="pipelinePrimaryURL"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="outlined"
+              prepend-icon="mdi-open-in-new"
+            >
+              View job
+            </v-btn>
+          </div>
+        </template>
+        <template v-slot:subtitle>
+          <span class="report-result" :class="`text-${getStatusColor(pipeline.Pipeline.Result)}`">
+            <v-icon :icon="getStatusIcon(pipeline.Pipeline.Result)" size="small" aria-hidden="true"></v-icon>
+            <strong>{{ getPipelineResultText(pipeline.Pipeline.Result) }}</strong>
+          </span>
+          <span v-if="resultMeaning"> · {{ resultMeaning }}</span>
         </template>
       </PageTitle>
     </v-container>
     <v-container class="page-shell pt-0">
+      <!-- Show link to latest report -->
+       <v-row
+          v-if="latestReportByID && !isLatestReport"
+       >
+        <v-col>
+          <v-card
+            variant="outlined"
+          >
+            <v-card-title>
+              A newer report exists for this pipeline
+            </v-card-title>
+
+            <v-card-text>
+              <p class="mb-2">
+                Reported {{ formatDate(latestReportByID.Updated_at) }}
+              </p>
+                <v-icon
+                  :icon="getStatusIcon(latestReportByID.Pipeline.Result)"
+                  :color="getStatusColor(latestReportByID.Pipeline.Result)"
+                  :aria-label="getPipelineResultText(latestReportByID.Pipeline.Result)"
+                  role="img"
+                ></v-icon>  {{ latestReportByID.Pipeline.Name }}
+                <v-btn
+                  icon="mdi-arrow-right-circle"
+                  variant="flat"
+                  aria-label="Open the newer report"
+                  :to=getPipelineReportLink(latestReportByID.ID)>
+                </v-btn>
+            <v-divider></v-divider>
+            </v-card-text>
+          </v-card>
+        </v-col>
+       </v-row>
       <!-- Show metadata -->
       <v-row>
         <v-col>
@@ -80,34 +138,13 @@
                    and the pipeline name already titles the page. -->
               <dl class="meta-grid">
                 <div>
-                  <dt>Result</dt>
-                  <dd>{{ getPipelineResultText(pipeline.Pipeline.Result) }}</dd>
-                </div>
-                <div>
                   <dt>Reported</dt>
                   <dd>{{ formatDate(pipeline.Updated_at) }}</dd>
                 </div>
-                <div>
+                <div v-if="hasMultiplePipelineURLs">
                   <dt>CI</dt>
-                  <dd>
-                    <v-btn
-                      v-if="pipelinePrimaryURL"
-                      :href="pipelinePrimaryURL"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      size="small"
-                      variant="outlined"
-                      prepend-icon="mdi-open-in-new"
-                    >
-                      View job
-                    </v-btn>
-                    <span v-else class="text-medium-emphasis">None</span>
-                    <span
-                      v-if="hasMultiplePipelineURLs"
-                      class="text-warning text-body-small ci-warning"
-                    >
-                      This report lists several CI jobs; the link opens the first.
-                    </span>
+                  <dd class="text-body-small">
+                    This report lists several CI jobs; View job opens the first.
                   </dd>
                 </div>
               </dl>
@@ -155,39 +192,6 @@
         </v-col>
       </v-row>
 
-      <!-- Show link to latest report -->
-       <v-row
-          v-if="latestReportByID && !isLatestReport"
-       >
-        <v-col>
-          <v-card
-            variant="outlined"
-          >
-            <v-card-title>
-              A newer report exists for this pipeline
-            </v-card-title>
-
-            <v-card-text>
-              <p>
-                Reported {{ formatDate(latestReportByID.Updated_at) }}
-              </p>
-                <v-icon
-                  :icon="getStatusIcon(latestReportByID.Pipeline.Result)"
-                  :color="getStatusColor(latestReportByID.Pipeline.Result)"
-                  :aria-label="getPipelineResultText(latestReportByID.Pipeline.Result)"
-                  role="img"
-                ></v-icon>  {{ latestReportByID.Pipeline.Name }}
-                <v-btn
-                  icon="mdi-arrow-right-circle"
-                  variant="flat"
-                  aria-label="Open the newer report"
-                  :to=getPipelineReportLink(latestReportByID.ID)>
-                </v-btn>
-            <v-divider></v-divider>
-            </v-card-text>
-          </v-card>
-        </v-col>
-       </v-row>
 
       <v-row>
         <v-col
@@ -205,17 +209,17 @@
                 v-if="hasSources"
                 variant="text"
                 value="source"
-              >Source</v-btn>
+              >Source<span v-if="stageGlyph('source')" class="ml-2" :class="`text-${getStatusColor(stageGlyph('source'))}`">{{ stageGlyph('source') }}</span></v-btn>
               <v-btn
                 v-if="hasConditions"
                 variant="text"
                 value="condition"
-              >Condition</v-btn>
+              >Condition<span v-if="stageGlyph('condition')" class="ml-2" :class="`text-${getStatusColor(stageGlyph('condition'))}`">{{ stageGlyph('condition') }}</span></v-btn>
               <v-btn
                 v-if="hasTargets"
                 variant="text"
                 value="target"
-              >Target</v-btn>
+              >Target<span v-if="stageGlyph('target')" class="ml-2" :class="`text-${getStatusColor(stageGlyph('target'))}`">{{ stageGlyph('target') }}</span></v-btn>
               <v-btn
                 v-if="hasActions"
                 variant="text"
@@ -225,15 +229,14 @@
           </v-container>
 
           <!-- Show Sources -->
-          <v-card
-            variant="outlined"
+          <div
+            class="stage-list"
             v-if="hasSources && resourceStage === 'source'"
           >
-            <v-card-text>
-                <v-card
-                  variant="flat"
-                  v-for="(data, key) in pipeline.Pipeline.Sources" :key="key"
-                >
+            <section
+              class="stage-item"
+              v-for="(data, key) in pipeline.Pipeline.Sources" :key="key"
+            >
                   <SourceComponent
                     :id="key"
                     :data="data"
@@ -243,20 +246,18 @@
                     configType="source"
                     :pipelineUUID="pipelineUUID"
                   ></LinkedReports>
-                </v-card>
-            </v-card-text>
-          </v-card>
+            </section>
+          </div>
 
           <!-- Show Conditions -->
-          <v-card
-            variant="outlined"
+          <div
+            class="stage-list"
             v-if="hasConditions && resourceStage === 'condition'"
           >
-            <v-card-text>
-                <v-card
-                  variant="flat"
-                  v-for="(data, key) in pipeline.Pipeline.Conditions" :key="key"
-                >
+            <section
+              class="stage-item"
+              v-for="(data, key) in pipeline.Pipeline.Conditions" :key="key"
+            >
                   <ConditionComponent
                     :id="key"
                     :data="data"
@@ -266,20 +267,18 @@
                     configType="condition"
                     :pipelineUUID="pipelineUUID"
                   ></LinkedReports>
-                </v-card>
-            </v-card-text>
-          </v-card>
+            </section>
+          </div>
 
           <!-- Show Targets -->
-          <v-card
-            variant="outlined"
+          <div
+            class="stage-list"
             v-if="hasTargets && resourceStage === 'target'"
           >
-            <v-card-text>
-                <v-card
-                  v-for="(data, key) in pipeline.Pipeline.Targets" :key="key"
-                  variant="flat"
-                >
+            <section
+              class="stage-item"
+              v-for="(data, key) in pipeline.Pipeline.Targets" :key="key"
+            >
                   <TargetComponent
                     :id="key"
                     :data="data"
@@ -289,26 +288,23 @@
                     configType="target"
                     :pipelineUUID="pipelineUUID"
                   ></LinkedReports>
-                </v-card>
-            </v-card-text>
-          </v-card>
+            </section>
+          </div>
           <!-- Show Actions -->
-          <v-card
-            variant="outlined"
+          <div
+            class="stage-list"
             v-if="hasActions && resourceStage === 'action'"
           >
-            <v-card-text>
-                <v-card
-                  variant="flat"
-                  v-for="(data, key) in pipeline.Pipeline.Actions" :key="key"
-                >
+            <section
+              class="stage-item"
+              v-for="(data, key) in pipeline.Pipeline.Actions" :key="key"
+            >
                   <ActionComponent
                     :id="key"
                     :data="data"
                   ></ActionComponent>
-                </v-card>
-            </v-card-text>
-          </v-card>
+            </section>
+          </div>
         </v-col>
       </v-row>
 
@@ -338,7 +334,8 @@ import TargetComponent from './_target.vue';
 import LinkedReports from './configs/_linkedReports.vue';
 import PageTitle from '@/components/PageTitle.vue';
 
-import { getStatusColor, getStatusIcon, getPipelineResultText } from '@/composables/status';
+import { getStatusColor, getStatusIcon, getPipelineResultText, PIPELINE_RESULTS, OPEN_ACTION_ICON } from '@/composables/status';
+import { extractGitURLInfo } from '@/composables/git';
 import { toLocalDate } from '@/composables/date';
 import { apiFetch, describeLoadError } from '@/composables/api';
 import LoadError from '@/components/LoadError.vue';
@@ -349,6 +346,12 @@ const PipelineGraphComponent = defineAsyncComponent(() => import('./_graph.vue')
 // CONFIG_ID_KEYS names, per resource stage, the field of the report holding the mapping
 // from a config UUID to the resource it belongs to. Actions are absent on purpose: they
 // carry no config of their own to link back to.
+const STAGE_FIELDS = {
+  source: 'Sources',
+  condition: 'Conditions',
+  target: 'Targets',
+};
+
 const CONFIG_ID_KEYS = {
   source: 'SourceConfigIDs',
   condition: 'ConditionConfigIDs',
@@ -411,6 +414,30 @@ export default {
 
     hasMultiplePipelineURLs() {
       return this.pipelineURLs.length > 1
+    },
+
+    // openActions lists the pull or merge requests this pipeline opened, so the header
+    // can link straight to what is waiting for review.
+    openActions() {
+      const actions = Object.values(this.pipeline?.Pipeline?.Actions || {})
+      const seen = new Set()
+
+      return actions
+        .filter((action) => action?.actionUrl && !seen.has(action.actionUrl) && seen.add(action.actionUrl))
+        .map((action) => ({
+          url: action.actionUrl,
+          label: extractGitURLInfo(action.actionUrl)?.provider === 'gitlab'
+            ? 'View merge request'
+            : 'View pull request',
+        }))
+    },
+
+    openActionIcon() {
+      return OPEN_ACTION_ICON
+    },
+
+    resultMeaning() {
+      return PIPELINE_RESULTS.find((entry) => entry.value === this.pipeline?.Pipeline?.Result)?.subtitle || ''
     },
 
     sortedLabels() {
@@ -483,7 +510,26 @@ export default {
       }
     },
 
+    // stageGlyph is the most serious result among a stage's resources, or nothing when
+    // they all succeeded, so the toggle points at where to look.
+    stageGlyph(stage) {
+      const resources = Object.values(this.pipeline?.Pipeline?.[STAGE_FIELDS[stage]] || {})
+      const results = resources.map((resource) => resource?.Result)
+
+      return ['✗', '⚠'].find((glyph) => results.includes(glyph)) || ''
+    },
+
+    // getDefaultStage opens on what happened: the first stage with a failure, then the
+    // first with a change, and only then the usual order.
     getDefaultStage(){
+      const stages = ['source', 'condition', 'target']
+      for (const glyph of ['✗', '⚠']) {
+        const stage = stages.find((name) => this.stageGlyph(name) === glyph)
+        if (stage) {
+          return stage
+        }
+      }
+
       if (this.hasActions) {
         return "action"
       } else if (this.hasSources) {
@@ -560,6 +606,22 @@ export default {
 <style scoped>
 .loading-container {
   min-height: 50vh;
+}
+
+.report-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stage-list {
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 4px;
+  background: rgb(var(--v-theme-surface));
+}
+
+.stage-item + .stage-item {
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .ci-warning {

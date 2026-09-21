@@ -1,7 +1,7 @@
 <template>
     <div class="stage-header">
         <v-icon class="stage-header__icon" :icon="getStatusIcon(data.Result)" :color="getStatusColor(data.Result)" aria-hidden="true"></v-icon>
-        <h3 class="stage-header__name text-title-large">{{ data.Name }}</h3>
+        <h2 class="stage-header__name text-title-large">{{ data.Name }}</h2>
         <span class="resource-id text-body-medium text-medium-emphasis">{{ id }}</span>
     </div>
 
@@ -10,12 +10,6 @@
             <v-col cols="12">
                 <v-card flat class="pa-3">
                     <dl class="meta-grid">
-                    <div>
-                        <dt>ID</dt>
-                        <dd>
-                            {{ id }}
-                        </dd>
-                    </div>
                     <div>
                         <dt>Status</dt>
                         <dd>
@@ -115,7 +109,7 @@
                     <v-card-text>
                         <div v-if="data.Config?.Spec" class="mb-4">
                             <div class="d-flex align-center mb-2">
-                                <h5 class="text-label-large font-weight-medium">Specification</h5>
+                                <h3 class="text-label-large font-weight-medium">Specification</h3>
                             </div>
                             <v-card variant="outlined" class="pa-2">
                                 <div class="yaml-container">
@@ -126,7 +120,7 @@
 
                         <div v-if="data.Config?.Transformers" class="mb-4">
                             <div class="d-flex align-center mb-2">
-                                <h5 class="text-label-large font-weight-medium">Transformers</h5>
+                                <h3 class="text-label-large font-weight-medium">Transformers</h3>
                             </div>
                             <v-card variant="outlined" class="pa-2">
                                 <div class="yaml-container">

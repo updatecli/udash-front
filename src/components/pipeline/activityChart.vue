@@ -12,15 +12,16 @@
   <!-- Nothing is rendered when the request failed or returned no report at all:
        a host page stays exactly as it would be without this component. -->
   <div v-else-if="hasData" class="activity-chart" :class="{ 'activity-chart--refreshing': loading }">
-    <p v-if="showStats" class="text-body-medium text-medium-emphasis mb-3">
-      <span class="font-weight-medium text-high-emphasis">{{ formatCount(stats.total) }}</span>
-      {{ stats.total === 1 ? 'report' : 'reports' }}
-      &middot;
-      <span class="font-weight-medium text-high-emphasis">{{ stats.successRate }}%</span>
-      success
-      &middot;
-      <span class="font-weight-medium text-high-emphasis">{{ formatCount(stats.failures) }}</span>
-      {{ stats.failures === 1 ? 'failure' : 'failures' }}
+    <!-- Counts rather than a success rate: a change Updatecli applied is not a failure,
+         and a percentage would have to count it as one or the other. -->
+    <p v-if="showStats" class="activity-stats text-body-medium text-medium-emphasis mb-3">
+      <span>
+        <span class="font-weight-medium text-high-emphasis">{{ formatCount(stats.total) }}</span>
+        {{ stats.total === 1 ? 'report' : 'reports' }}
+      </span>
+      <span v-if="stats.failed" class="text-error">✗ {{ formatCount(stats.failed) }} failed</span>
+      <span v-if="stats.changed" class="text-warning">⚠ {{ formatCount(stats.changed) }} changed</span>
+      <span v-if="stats.waiting" class="text-result-waiting">{{ formatCount(stats.waiting) }} waiting to be merged</span>
     </p>
 
     <div v-if="canPlot" :style="{ height }">
@@ -353,19 +354,15 @@ export default {
         stats() {
             const total = this.summary?.total_count || 0;
 
-            let success = 0;
-            let failures = 0;
+            const stats = { total, failed: 0, changed: 0, waiting: 0 };
 
             this.entries.forEach((entry) => {
-                success += entry.results?.['✔'] || 0;
-                failures += entry.results?.['✗'] || 0;
+                stats.failed += entry.results?.['✗'] || 0;
+                stats.changed += entry.results?.['⚠'] || 0;
+                stats.waiting += Object.values(entry.open_actions || {}).reduce((sum, count) => sum + (count || 0), 0);
             });
 
-            return {
-                total,
-                failures,
-                successRate: total > 0 ? Math.round((success / total) * 100) : 0,
-            };
+            return stats;
         },
 
         chartData() {
@@ -719,5 +716,11 @@ export default {
 
 .activity-chart {
     transition: opacity 0.2s ease;
+}
+
+.activity-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
 }
 </style>
