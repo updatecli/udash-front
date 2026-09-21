@@ -86,18 +86,36 @@
         <v-col
             cols="12"
           >
-          <v-pagination
-            v-model="currentPage"
-            :length="Math.ceil(totalItems / itemsPerPage)"
-            :total-visible="7"
-            @update:model-value="onPageChange"
-          ></v-pagination>
+          <p class="text-body-small text-medium-emphasis mb-2">
+            {{ totalItems.toLocaleString() }} {{ totalItems === 1 ? 'report' : 'reports' }}
+          </p>
 
-          <div class="text-center mt-2">
-            <small>{{ totalItems.toLocaleString() }} {{ totalItems === 1 ? 'report' : 'reports' }}</small>
-          </div>
+          <!-- Phones get a stacked list: the table's columns cannot fit without scrolling
+               sideways, and the name is what someone checking in needs to tap. -->
+          <v-list v-if="$vuetify.display.xs" class="report-list py-0" lines="two">
+            <v-list-item
+              v-for="item in pipelines"
+              :key="item.ID"
+              :to="getPipelineLink(item.ID)"
+              class="report-list__item"
+            >
+              <template v-slot:prepend>
+                <v-icon
+                  :icon="getStatusIcon(item.Result)"
+                  :color="getStatusColor(item.Result)"
+                  class="mr-3"
+                  aria-hidden="true"
+                ></v-icon>
+              </template>
+              <v-list-item-title class="text-wrap">{{ item.Name || 'Unnamed report' }}</v-list-item-title>
+              <v-list-item-subtitle>
+                {{ getResultTooltipText(item) }} · {{ toLocalDate(item.UpdatedAt) }}
+              </v-list-item-subtitle>
+            </v-list-item>
+          </v-list>
 
           <v-data-table-virtual
+            v-else
             v-model:items-per-page="itemsPerPage"
             :headers="pipelinesHeaders"
             :items="pipelines"
@@ -105,15 +123,6 @@
             fixed-header
             max-height="600px"
           >
-            <!-- Your existing table templates -->
-            <template v-slot:item.ID="{ item }">
-              <v-btn
-                class="mx-4"
-                variant="text"
-                icon="mdi-arrow-right-circle"
-                :aria-label="`Open report ${item.Name || item.ID}`"
-                :to=getPipelineLink(item.ID)></v-btn>
-            </template>
             <!-- A pipeline which had nothing to change reports a success even when the
                  change it would have made is already waiting in a pull request nobody
                  merged. The badge is what tells those apart from the genuinely up to
@@ -150,7 +159,7 @@
               </v-tooltip>
             </template>
             <template v-slot:item.Name="{ item }">
-              <span class="report-name">{{ item.Name || 'Unnamed Report' }}</span>
+              <router-link :to="getPipelineLink(item.ID)" class="report-name">{{ item.Name || 'Unnamed report' }}</router-link>
             </template>
             <template v-slot:item.UpdatedAt="{ item }">
               <span class="text-no-wrap">{{ toLocalDate(item.UpdatedAt) }}</span>
@@ -175,6 +184,15 @@
               </div>
             </template>
           </v-data-table-virtual>
+
+          <v-pagination
+            v-if="pageCount > 1"
+            v-model="currentPage"
+            class="mt-4"
+            :length="pageCount"
+            :total-visible="$vuetify.display.xs ? 5 : 7"
+            @update:model-value="onPageChange"
+          ></v-pagination>
         </v-col>
       </v-row>
     </v-container>
@@ -213,7 +231,6 @@ export default {
       },
       { title: "Time", key:'UpdatedAt', width: '200px'},
       { title: "Pull request", key: 'Action', align:'start', width: '120px'},
-      { key: 'ID', sortable: false, width:'80px' },
     ],
     pipelines: [],
     itemsPerPage: 25,
@@ -224,6 +241,12 @@ export default {
     isFetching: false,
     requestId: 0,
   }),
+
+  computed: {
+    pageCount() {
+      return Math.ceil(this.totalItems / this.itemsPerPage)
+    },
+  },
 
   watch: {
     filter() {
@@ -451,6 +474,23 @@ export default {
 .report-name {
   display: inline-block;
   min-width: 12rem;
+  color: inherit;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.report-name:hover,
+.report-name:focus-visible {
+  text-decoration: underline;
+}
+
+.report-list {
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 4px;
+}
+
+.report-list__item + .report-list__item {
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .result-cell {

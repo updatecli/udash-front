@@ -57,8 +57,14 @@
         >
           <v-expansion-panel>
             <v-expansion-panel-title>
-              <v-icon class="mr-2">mdi-filter-outline</v-icon>
-              Advanced filter
+              <div class="d-flex flex-wrap align-center ga-2">
+                <span class="d-flex align-center">
+                  <v-icon class="mr-2" aria-hidden="true">mdi-filter-outline</v-icon>
+                  Advanced filter
+                </span>
+                <!-- What is currently applied, readable without opening the panel. -->
+                <span class="text-body-small text-medium-emphasis">{{ filterSummary }}</span>
+              </div>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
               <!-- Label Key and Value Selection -->
@@ -278,6 +284,35 @@ export default {
   },
 
   computed: {
+    filterSummary() {
+      const [newest, oldest] = this.dateRange
+      const span = (step) => this.describeRelativeStep(step).replace(/ ago$/, '')
+      const parts = [
+        newest === 0
+          ? `Last ${span(oldest).replace(/^1 /, '')}`
+          : `${this.describeRelativeStep(oldest)} to ${this.describeRelativeStep(newest).toLowerCase()}`,
+      ]
+
+      if (this.selectedResults.length > 0) {
+        parts.push(this.pipelineResults
+          .filter((result) => this.selectedResults.includes(result.value))
+          .map((result) => result.title)
+          .join(', '))
+      }
+
+      const openAction = this.openActionOptions.find((option) => option.value === this.selectedOpenAction)
+      if (openAction) {
+        parts.push(openAction.title)
+      }
+
+      const labelCount = this.selectedLabels.filter((label) => label.key).length
+      if (labelCount > 0) {
+        parts.push(labelCount === 1 ? '1 label' : `${labelCount} labels`)
+      }
+
+      return parts.join(' · ')
+    },
+
     hasActiveAdvancedFilters() {
       return this.selectedLabels.some(label => label.key !== null) || this.selectedResults.length > 0 || this.selectedOpenAction !== null
     },

@@ -20,7 +20,7 @@ export function getStatusIcon(status){
         case "✗":
           return "mdi-close-circle"
         case "⚠":
-          return "mdi-alert-circle"
+          return "mdi-arrow-up-bold-circle"
         case "-":
           return "mdi-minus-circle"
         default:
@@ -33,9 +33,7 @@ export function getStatusIcon(status){
 //
 // The wording is deliberately not the one getStatusText returns. That function also
 // labels the source, condition and target rows, where the same glyphs mean something
-// else: a "✔" on a condition means the condition passed, not that nothing changed. It
-// reads "Warning" for "⚠" too, which at pipeline level says the opposite of what
-// happened, since "⚠" is how Updatecli reports that it applied a change.
+// else: a "✔" on a condition means the condition passed, not that nothing changed.
 export const PIPELINE_RESULTS = [
   { value: '✔', title: '✔ Success', subtitle: 'Ran fine, nothing to change' },
   { value: '⚠', title: '⚠ Changed', subtitle: 'Updatecli applied a change' },
@@ -109,7 +107,7 @@ export function getStatusText(input){
       const statusMap = {
         '✔': 'Success',
         '✗': 'Failed',
-        '⚠': 'Warning',
+        '⚠': 'Changed',
         '-': 'Skipped',
         '?': 'Unknown'
       };

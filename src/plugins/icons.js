@@ -3,7 +3,6 @@ import { h } from 'vue'
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 import {
   mdiAccount,
-  mdiAlertCircle,
   mdiAlertDecagramOutline,
   mdiAlphaACircle,
   mdiAlphaCCircle,
@@ -12,6 +11,7 @@ import {
   mdiArrowLeft,
   mdiArrowRight,
   mdiArrowRightCircle,
+  mdiArrowUpBoldCircle,
   mdiBitbucket,
   mdiBookOpenVariant,
   mdiBug,
@@ -68,7 +68,6 @@ import {
 
 const ICONS = {
   'mdi-account': mdiAccount,
-  'mdi-alert-circle': mdiAlertCircle,
   'mdi-alert-decagram-outline': mdiAlertDecagramOutline,
   'mdi-alpha-a-circle': mdiAlphaACircle,
   'mdi-alpha-c-circle': mdiAlphaCCircle,
@@ -77,6 +76,7 @@ const ICONS = {
   'mdi-arrow-left': mdiArrowLeft,
   'mdi-arrow-right': mdiArrowRight,
   'mdi-arrow-right-circle': mdiArrowRightCircle,
+  'mdi-arrow-up-bold-circle': mdiArrowUpBoldCircle,
   'mdi-bitbucket': mdiBitbucket,
   'mdi-book-open-variant': mdiBookOpenVariant,
   'mdi-bug': mdiBug,
