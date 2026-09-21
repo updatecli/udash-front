@@ -1,72 +1,64 @@
 <template>
-    <v-toolbar
-        density="compact"
-        flat
-        color="surface"
-    >
-        <v-toolbar-title>
-            <v-icon
-                :icon="getActionIcon()"
-            ></v-icon>  {{ data.title }}
-        </v-toolbar-title>
-
-        <v-toolbar-items>
-            <span class="resource-id text-body-medium text-medium-emphasis">{{ id }}</span>
-        </v-toolbar-items>
-    </v-toolbar>
+    <div class="stage-header">
+        <v-icon aria-hidden="true" class="stage-header__icon" :icon="getActionIcon()"></v-icon>
+        <h3 class="stage-header__name text-title-large">{{ data.title }}</h3>
+        <span class="resource-id text-body-medium text-medium-emphasis">{{ id }}</span>
+    </div>
 
     <v-container fluid class="px-0 px-sm-4">
         <v-row class="mb-4">
             <v-col cols="12">
                 <v-card flat class="pa-3">
-                    <v-table>
-                        <thead>
-                            <tr>
-                                <th style="width: 25%">ID</th>
-                                <th style="width: 25%">Type</th>
-                                <th style="width: 25%">Platform</th>
-                                <th style="width: 25%">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="font-weight-medium">{{ id }}</td>
-                                <td>
-                                    <v-chip
-                                        size="small"
-                                        variant="flat"
-                                    >
-                                        <v-icon size="x-small" class="mr-1">
-                                            {{ getActionIcon() }}
-                                        </v-icon>
-                                        {{ getActionType() }}
-                                    </v-chip>
-                                </td>
-                                <td>
-                                    <v-chip
-                                        size="small"
-                                        variant="outlined"
-                                        >
-                                        <v-icon size="x-small" class="mr-1">
-                                            {{ getPlatformIcon() }}
-                                        </v-icon>
-                                        {{ getPlatformName() }}
-                                    </v-chip>
-                                </td>
-                                <td>
-                                    <v-btn
-                                        :href="data.actionUrl"
-                                        target="_blank"
-                                        size="small"
-                                        variant="outlined"
-                                        :prepend-icon="getActionIcon()"
-                                    >
-                                        {{ getActionButtonText() }}
-                                    </v-btn>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </v-table>
+                    <dl class="meta-grid">
+                    <div>
+                        <dt>ID</dt>
+                        <dd>
+                            {{ id }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Type</dt>
+                        <dd>
+                            <v-chip
+                                size="small"
+                                variant="flat"
+                            >
+                                <v-icon size="x-small" class="mr-1">
+                                    {{ getActionIcon() }}
+                                </v-icon>
+                                {{ getActionType() }}
+                            </v-chip>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Platform</dt>
+                        <dd>
+                            <v-chip
+                                size="small"
+                                variant="outlined"
+                                >
+                                <v-icon size="x-small" class="mr-1">
+                                    {{ getPlatformIcon() }}
+                                </v-icon>
+                                {{ getPlatformName() }}
+                            </v-chip>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Action</dt>
+                        <dd>
+                            <v-btn
+                                :href="data.actionUrl"
+                                target="_blank"
+                                size="small"
+                                variant="outlined"
+                                :prepend-icon="getActionIcon()"
+                            >
+                                {{ getActionButtonText() }}
+                            </v-btn>
+                        </dd>
+                    </div>
+                    </dl>
                 </v-card>
             </v-col>
         </v-row>
@@ -161,9 +153,23 @@ export default {
 }
 </script>
 <style scoped>
+.stage-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 12px 16px;
+    background: rgb(var(--v-theme-surface));
+}
+
+.stage-header__name {
+    flex: 1 1 16rem;
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
 .resource-id {
-    align-self: center;
-    padding-inline: 16px;
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
     overflow-wrap: anywhere;
 }

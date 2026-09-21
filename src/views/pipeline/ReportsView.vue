@@ -109,13 +109,6 @@ export default {
     PipelineSCMSummary
   },
   data: () => ({
-    links:[
-      {
-      name: "Updatecli",
-      to: "https://www.updatecli.io",
-      icon: "mdi-arrow-right-circle",
-      },
-    ],
     isFilterLoaded: false,
     isSummaryLoaded: false,
     isReportsLoaded: false,
@@ -153,7 +146,6 @@ export default {
       return Object.keys(this.filter).length !== 0 && this.isFilterLoaded;
     },
     cancelAutoUpdate: function() {
-      clearInterval(this.timer);
       clearTimeout(this.loadingTimer);
     },
     setFilterLoaded: function(state) {
