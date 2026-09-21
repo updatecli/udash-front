@@ -21,10 +21,7 @@
     />
     <v-row>
       <v-col
-        cols="auto"
-        lg="12"
-        md="12"
-        sm="12"
+        cols="12"
       >
         <!-- Add explanatory header for filter -->
         <div class="mb-3">
@@ -43,10 +40,7 @@
     </v-row>
     <v-row>
       <v-col
-        cols="auto"
-        lg="12"
-        md="12"
-        sm="12"
+        cols="12"
       >
         <!-- Add explanatory header -->
         <div class="mb-3">
@@ -74,10 +68,7 @@
     </v-row>
     <v-row>
       <v-col
-        cols="auto"
-        lg="12"
-        md="12"
-        sm="12"
+        cols="12"
       >
         <!-- Add explanatory header for pipeline reports -->
         <div class="mb-3">

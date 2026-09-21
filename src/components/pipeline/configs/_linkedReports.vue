@@ -1,10 +1,9 @@
 <template>
   <v-container fluid>
-    <!-- Loading Overlay -->
-    <v-overlay v-model="isLoading" class="align-center justify-center">
-      <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
-      <div class="mt-4 text-body-large">Loading related reports…</div>
-    </v-overlay>
+    <div v-if="isLoading" class="d-flex align-center ga-3 py-4 text-medium-emphasis" role="status">
+      <v-progress-circular color="primary" indeterminate size="24" width="3"></v-progress-circular>
+      Loading related reports…
+    </div>
 
     <div v-if="isLinkedReports && !isLoading">
       <!-- Linked Reports Section -->

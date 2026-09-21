@@ -19,7 +19,7 @@
         </v-toolbar-items>
     </v-toolbar>
 
-    <v-container fluid>
+    <v-container fluid class="px-0 px-sm-4">
         <v-row class="mb-4">
             <v-col cols="12">
                 <v-card flat class="pa-3">

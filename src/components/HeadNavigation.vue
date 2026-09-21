@@ -1,5 +1,9 @@
 <template>
   <v-app-bar density="comfortable" color="surface" border="b" flat>
+    <template v-if="smAndDown" v-slot:prepend>
+      <v-app-bar-nav-icon aria-label="Open navigation" @click="navDrawerOpen = !navDrawerOpen" />
+    </template>
+
     <v-app-bar-title>Udash</v-app-bar-title>
 
     <template v-slot:append>
@@ -38,6 +42,8 @@
 
 <script>
 import { useRoute } from 'vue-router';
+import { useDisplay } from 'vuetify';
+import { navDrawerOpen } from '@/composables/navigation';
 import { useAuth } from '@/composables/auth';
 import { isAuthEnabled } from '@/composables/runtime';
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
@@ -53,8 +59,11 @@ export default {
     // state before mounting in every mode, so useAuth() is safe to call here regardless.
     const auth = useAuth();
     const route = useRoute();
+    const { smAndDown } = useDisplay();
 
     return {
+      smAndDown,
+      navDrawerOpen,
       isAuthEnabled,
       isAuthenticated: auth.isAuthenticated,
       isLoading: auth.isLoading,

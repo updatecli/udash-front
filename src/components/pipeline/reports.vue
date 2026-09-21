@@ -24,10 +24,8 @@
     <v-container class="pa-0" v-if="pipelines.length > 0 && !loadError">
       <v-row>
         <v-col
-            cols="auto"
+            cols="12"
             lg="6"
-            md="12"
-            sm="12"
             v-if="actionURLs && actionURLs.length > 0"
           >
           <div class="mb-3">
@@ -86,10 +84,7 @@
 
       <v-row>
         <v-col
-            cols="auto"
-            lg="12"
-            md="12"
-            sm="12"
+            cols="12"
           >
           <v-pagination
             v-model="currentPage"
@@ -155,10 +150,10 @@
               </v-tooltip>
             </template>
             <template v-slot:item.Name="{ item }">
-              <span style="min-width: 400px; display: inline-block;">{{ item.Name || 'Unnamed Report' }}</span>
+              <span class="report-name">{{ item.Name || 'Unnamed Report' }}</span>
             </template>
             <template v-slot:item.UpdatedAt="{ item }">
-              <span style="min-width: 175px; display: inline-block;">{{ toLocalDate(item.UpdatedAt) }}</span>
+              <span class="text-no-wrap">{{ toLocalDate(item.UpdatedAt) }}</span>
 
             </template>
             <template v-slot:item.Action="{ item }">
@@ -214,14 +209,14 @@ export default {
     }],
     pipelinesHeaders: [
       { title: "Result", align: "start", key:'Result', width: '80px'},
-      { title: "Time", key:'UpdatedAt', width: '200px'},
-      { title: "Pull request", key: 'Action', align:'start', width: '200px'},
       {
         title: "Name",
         align: 'start',
         sortable: true,
         key: 'Name'
       },
+      { title: "Time", key:'UpdatedAt', width: '200px'},
+      { title: "Pull request", key: 'Action', align:'start', width: '120px'},
       { key: 'ID', sortable: false, width:'80px' },
     ],
     pipelines: [],
@@ -459,6 +454,11 @@ export default {
 
 .action-list-item:hover {
   background-color: rgba(var(--v-theme-on-surface), 0.04);
+}
+
+.report-name {
+  display: inline-block;
+  min-width: 12rem;
 }
 
 .result-cell {

@@ -18,7 +18,13 @@
    max-width regardless of which stylesheet loads first. */
 .v-container.page-shell {
   max-width: 1400px;
-  padding: 2rem 1.5rem;
+  padding: 1.5rem 1rem;
+}
+
+@media (min-width: 600px) {
+  .v-container.page-shell {
+    padding: 2rem 1.5rem;
+  }
 }
 </style>
 
