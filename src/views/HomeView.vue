@@ -9,15 +9,12 @@
         subtitle="The Updatecli dashboard for tracking automated updates across your Git repositories."
       />
 
-      <!-- The row sits in the hero rather than in a panel of its own: on a private
-           instance it is the only content a signed-out page has, so a border would be
-           separating it from nothing. What signing in buys differs by visibility, so the
-           copy has to as well. On a public instance the panels below are already there
-           and the row must not promise access it is not granting. -->
-      <div v-if="isAuthEnabled && !isAuthenticated" class="d-flex align-center flex-wrap ga-4 mt-8">
-        <v-btn color="primary" @click="login">Sign in</v-btn>
+      <!-- Only on a private instance, where it is the only content a signed-out page has.
+           Elsewhere the app bar's Log in button is enough. -->
+      <div v-if="requiresLoginToRead && !isAuthenticated" class="d-flex align-center flex-wrap ga-4 mt-8">
+        <v-btn color="primary" @click="login">Log in</v-btn>
         <span class="text-medium-emphasis">
-          {{ signInHint }}
+          Pipeline activity and reports need an account.
         </span>
       </div>
     </section>
@@ -110,9 +107,11 @@
 <script>
 import GetStartedSteps from '../components/GetStartedSteps.vue';
 import PageTitle from '../components/PageTitle.vue';
-import ActivityChart from '../components/pipeline/activityChart.vue';
-import { getMaxHistoryDays, isAuthEnabled, requiresLoginToRead } from '@/composables/runtime';
+import { defineAsyncComponent } from 'vue';
+import { getMaxHistoryDays, requiresLoginToRead } from '@/composables/runtime';
 import { useAuth } from '@/composables/auth';
+
+const ActivityChart = defineAsyncComponent(() => import('../components/pipeline/activityChart.vue'));
 
 export default {
   name: 'HomeView',
@@ -129,7 +128,7 @@ export default {
     const auth = useAuth();
 
     return {
-      isAuthEnabled,
+      requiresLoginToRead,
       isAuthenticated: auth.isAuthenticated,
       canReadData: auth.canReadData,
       login() {
@@ -162,14 +161,6 @@ export default {
     ],
   }),
   computed: {
-    // What a signed-out visitor gains by signing in: the data on a private instance, the
-    // account pages on a public one, where the data is already in front of them.
-    signInHint() {
-      return requiresLoginToRead
-        ? 'Pipeline activity and reports need an account.'
-        : 'Sign in to manage your profile and API tokens.'
-    },
-
     // The activity band never looks further back than the instance is configured to
     // serve, so lowering MAX_HISTORY_DAYS narrows the chart along with the filter.
     maxHistoryDays() {
