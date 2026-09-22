@@ -716,6 +716,12 @@ export default {
             } catch (error) {
                 if (requestId !== this.currentRequestId) return;
 
+                // A background refresh that fails keeps the chart already on screen.
+                if (silent && this.hasData) {
+                    console.error('refreshing pipeline reports summary:', error);
+                    return;
+                }
+
                 // A summary is supporting information, so the host keeps rendering and
                 // is told there is no data. We show the reason in place of the plot and
                 // do not only log it, because a blank strip reads as "no activity",

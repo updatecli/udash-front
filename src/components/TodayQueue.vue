@@ -116,6 +116,8 @@ const queues = [
 
 const state = reactive(Object.fromEntries(queues.map((queue) => [queue.key, { rows: null, total: 0, error: null }])))
 
+const generations = {}
+
 function toRow(report) {
   const targets = Object.values(report.Report?.Targets || {})
   const scm = targets.find((target) => target?.Scm?.URL)?.Scm
@@ -146,17 +148,22 @@ function safeHttpUrl(value) {
 async function load(queue) {
   const entry = state[queue.key]
   entry.error = null
+  // A slow response must not overwrite the one from a later refresh.
+  const generation = (generations[queue.key] || 0) + 1
+  generations[queue.key] = generation
 
   try {
     const data = await apiFetch('/pipeline/reports/search', {
       method: 'POST',
       body: { limit: QUEUE_SIZE, page: 1, latest: true, ...queue.body },
     })
+    if (generations[queue.key] !== generation) return
 
     entry.rows = (data.data || data.reports || []).map(toRow)
     entry.total = data.total_count || 0
     markUpdated()
   } catch (error) {
+    if (generations[queue.key] !== generation) return
     // A background refresh that fails keeps what is already on screen.
     if (entry.rows === null) {
       entry.error = describeLoadError(error, `the ${queue.title.toLowerCase()} pipelines`)

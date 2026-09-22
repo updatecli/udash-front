@@ -468,7 +468,13 @@ export default {
   },
 
   mounted() {
-    this.stopRefresh = subscribeRefresh(() => this.getReportsData(this.currentPage, { silent: true }))
+    // A silent refresh would supersede a foreground request still in flight, which
+    // then never clears its loading state.
+    this.stopRefresh = subscribeRefresh(() => {
+      if (!this.isFetching) {
+        this.getReportsData(this.currentPage, { silent: true })
+      }
+    })
   },
 
   beforeUnmount() {
