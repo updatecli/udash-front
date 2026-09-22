@@ -134,6 +134,11 @@ export default {
       return method.code || ''
     },
     async copyCode(text, key) {
+      // Drop the tick from the previous copy first, so a failed one cannot leave it
+      // showing on another button.
+      clearTimeout(this.copiedTimer)
+      this.copiedKey = null
+
       if (!(await copyText(text))) {
         this.failedKey = key
         return
@@ -141,7 +146,6 @@ export default {
 
       this.failedKey = null
       this.copiedKey = key
-      clearTimeout(this.copiedTimer)
       this.copiedTimer = setTimeout(() => {
         if (this.copiedKey === key) {
           this.copiedKey = null
