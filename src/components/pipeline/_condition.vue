@@ -211,7 +211,7 @@ export default {
 }
 
 .resource-id {
-    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    font-family: var(--udash-font-mono);
     overflow-wrap: anywhere;
 }
 
@@ -231,7 +231,7 @@ export default {
 .information-content {
     white-space: pre-wrap;
     word-break: break-word;
-    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    font-family: var(--udash-font-mono);
     background-color: rgba(var(--v-theme-on-surface), 0.05);
     color: rgb(var(--v-theme-on-surface));
     padding: 12px;

@@ -1,20 +1,13 @@
 <template>
   <v-container class="page-shell">
-    <v-overlay
-      :model-value="isLoading"
-      class="align-center justify-center"
-      :disabled=false
-      :eager=true
-      :no-click-animation=false
-      :persistent=false
-      :opacity="0"
-      >
-      <v-progress-circular
-        color="primary"
-        indeterminate
-        size="64"
-      ></v-progress-circular>
-    </v-overlay>
+    <v-progress-linear
+      v-if="isLoading"
+      indeterminate
+      color="primary"
+      height="2"
+      class="page-progress"
+      aria-label="Loading"
+    ></v-progress-linear>
     <PageTitle
       title="Dashboard"
       icon="mdi-view-dashboard"

@@ -366,6 +366,6 @@ export default {
   margin: 0;
   padding: 8px 48px 8px 12px;
   border-radius: 4px;
-  background: rgba(127, 127, 127, 0.12);
+  background: rgba(var(--v-theme-on-surface), 0.05);
 }
 </style>

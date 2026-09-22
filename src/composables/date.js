@@ -2,6 +2,54 @@ import { getStorageKey } from '@/composables/runtime'
 
 export const FILTER_STORAGE_KEY = getStorageKey('scm.filter.v1')
 
+// parseApiDate reads the API's timestamps ("2026-09-21 09:16:41.459368 +0000 UTC") as well
+// as ISO strings. Safari rejects the API form outright, so it is rewritten to ISO first.
+export function parseApiDate(raw) {
+    if (raw instanceof Date) {
+        return raw
+    }
+
+    const match = String(raw || '').match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})(\.\d+)?\s*([+-]\d{2}):?(\d{2})/)
+    if (match) {
+        const fraction = match[3] ? match[3].slice(0, 4) : ''
+        return new Date(`${match[1]}T${match[2]}${fraction}${match[4]}:${match[5]}`)
+    }
+
+    return new Date(raw)
+}
+
+// toRelativeTime says how long ago something happened ("3 minutes ago", "2 days ago"),
+// falling back to the date once it is more than a month old.
+export function toRelativeTime(raw, now = Date.now()) {
+    const date = parseApiDate(raw)
+    if (Number.isNaN(date.getTime())) {
+        return ''
+    }
+
+    const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
+    const seconds = Math.round((date.getTime() - now) / 1000)
+    const steps = [[60, 'second'], [60, 'minute'], [24, 'hour'], [30, 'day']]
+
+    let value = seconds
+    for (const [size, unit] of steps) {
+        if (Math.abs(value) < size) {
+            return rtf.format(value, unit)
+        }
+        value = Math.round(value / size)
+    }
+
+    return formatAbsoluteDate(date)
+}
+
+export function formatAbsoluteDate(raw) {
+    const date = parseApiDate(raw)
+    if (Number.isNaN(date.getTime())) {
+        return ''
+    }
+
+    return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'medium' }).format(date)
+}
+
 export function toLocalDate(rawDate) {
 
     const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" })
@@ -11,7 +59,7 @@ export function toLocalDate(rawDate) {
         timeStyle: 'medium'
     })
 
-    const date = new Date(rawDate)
+    const date = parseApiDate(rawDate)
     const now = new Date()
     const diffSec = Math.floor((now - date) / 1000)
 

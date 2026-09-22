@@ -1,7 +1,15 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import vuetify from './plugins/vuetify'
-import { loadFonts } from './plugins/webfontloader'
+// Fonts ship with the app rather than from Google Fonts: self-hosted instances often run on
+// networks that cannot reach it. Only the weights in use are included.
+import '@fontsource/space-grotesk/400.css'
+import '@fontsource/space-grotesk/500.css'
+import '@fontsource/space-grotesk/600.css'
+import '@fontsource/space-grotesk/700.css'
+import '@fontsource/orbitron/700.css'
+import '@fontsource/jetbrains-mono/400.css'
+import '@fontsource/jetbrains-mono/500.css'
 import router from './router'
 import { initAuth, consumeReturnTo } from '@/composables/auth'
 
@@ -12,8 +20,6 @@ import './styles/code.scss'
 
 hljs.registerLanguage('bash', bash)
 hljs.registerLanguage('yaml', yaml)
-
-loadFonts()
 
 // Custom directive for highlight.js
 const highlightDirective = {

@@ -19,6 +19,13 @@
       </div>
     </section>
 
+    <!-- What needs a human, before the activity overview: this is what someone opening
+         Udash every morning comes for. Not shown to an instance that has never reported. -->
+    <section v-if="canReadData && !isKnownEmpty" class="pb-8" aria-labelledby="needs-attention">
+      <h2 id="needs-attention" class="text-headline-medium font-weight-bold mb-4">Needs attention</h2>
+      <TodayQueue />
+    </section>
+
     <!-- Pipeline Activity Section
 
          ActivityChart is mounted for any viewer allowed to fetch, but it renders
@@ -59,34 +66,6 @@
       </v-card>
     </section>
 
-    <!-- Features Section -->
-    <section v-if="canReadData" class="pb-8">
-      <v-row>
-        <v-col
-          v-for="feature in features"
-          :key="feature.title"
-          cols="12"
-          md="6"
-        >
-          <v-card
-            :to="feature.to"
-            height="100%"
-            variant="outlined"
-            hover
-            class="pa-4 d-flex flex-column"
-          >
-            <v-icon :icon="feature.icon" size="48" class="mb-4"></v-icon>
-            <v-card-title class="text-title-large px-0 mb-2">{{ feature.title }}</v-card-title>
-            <v-card-text class="px-0">{{ feature.description }}</v-card-text>
-            <v-card-actions class="px-0 mt-auto text-info">
-              <span class="font-weight-medium">{{ feature.cta }}</span>
-              <v-icon icon="mdi-arrow-right" size="small" class="ml-1"></v-icon>
-            </v-card-actions>
-          </v-card>
-        </v-col>
-      </v-row>
-    </section>
-
     <!-- Setup steps, demoted to reference material once this instance is
          already reporting: at that point they are only needed to add a runner. A
          refused summary lands here too — the steps stay reachable, without the page
@@ -107,6 +86,7 @@
 <script>
 import GetStartedSteps from '../components/GetStartedSteps.vue';
 import PageTitle from '../components/PageTitle.vue';
+import TodayQueue from '../components/TodayQueue.vue';
 import { defineAsyncComponent } from 'vue';
 import { getMaxHistoryDays, requiresLoginToRead } from '@/composables/runtime';
 import { useAuth } from '@/composables/auth';
@@ -118,6 +98,7 @@ export default {
   components: {
     GetStartedSteps,
     PageTitle,
+    TodayQueue,
     ActivityChart,
   },
   // The panels below follow canReadData the way SideNavigation does, while the hero
@@ -143,22 +124,6 @@ export default {
     // last of the three is evidence that onboarding is what the viewer needs.
     activity: null,
 
-    features: [
-      {
-        title: "Dashboard",
-        icon: "mdi-view-dashboard",
-        description: "See the latest results for every Git repository and branch.",
-        to: "/scm/dashboard",
-        cta: "Open dashboard"
-      },
-      {
-        title: "Reports",
-        icon: "mdi-book-open-variant",
-        description: "Browse every pipeline report for a repository and branch.",
-        to: "/pipeline/reports",
-        cta: "View reports"
-      },
-    ],
   }),
   computed: {
     // The activity band never looks further back than the instance is configured to
