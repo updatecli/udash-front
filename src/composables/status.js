@@ -1,31 +1,31 @@
-export function getStatusColor(input){
-      switch (input) {
-        case "✔":
-          return "success"
-        case "✗":
-          return "error"
-        case "⚠":
-          return "warning"
-        case "-":
-          return "result-skipped"
-        default:
-          return "result-unknown"
-      }
-    }
+export function getStatusColor(input) {
+  switch (input) {
+    case "✔":
+      return "success"
+    case "✗":
+      return "error"
+    case "⚠":
+      return "warning"
+    case "-":
+      return "result-skipped"
+    default:
+      return "result-unknown"
+  }
+}
 
-export function getStatusIcon(status){
-      switch (status) {
-        case "✔":
-          return "mdi-check-circle"
-        case "✗":
-          return "mdi-close-circle"
-        case "⚠":
-          return "mdi-arrow-up-bold-circle"
-        case "-":
-          return "mdi-minus-circle"
-        default:
-          return "mdi-help-circle"
-      }
+export function getStatusIcon(status) {
+  switch (status) {
+    case "✔":
+      return "mdi-check-circle"
+    case "✗":
+      return "mdi-close-circle"
+    case "⚠":
+      return "mdi-arrow-up-bold-circle"
+    case "-":
+      return "mdi-minus-circle"
+    default:
+      return "mdi-help-circle"
+  }
 }
 
 // PIPELINE_RESULTS describes the four results a pipeline report can carry, for the
@@ -36,9 +36,9 @@ export function getStatusIcon(status){
 // else: a "✔" on a condition means the condition passed, not that nothing changed.
 export const PIPELINE_RESULTS = [
   { value: '✔', title: '✔ Success', subtitle: 'Ran fine, nothing to change' },
-  { value: '⚠', title: '⚠ Changed', subtitle: 'Updatecli applied a change' },
-  { value: '✗', title: '✗ Failed', subtitle: 'Something went wrong, or a condition did not pass' },
-  { value: '-', title: '- Skipped', subtitle: 'Did not run' },
+  { value: '⚠', title: '⚠ Changed', subtitle: 'Pipeline applied a change' },
+  { value: '✗', title: '✗ Failed', subtitle: 'Something went wrong' },
+  { value: '-', title: '- Skipped', subtitle: 'Pipeline skipped' },
 ]
 
 // PIPELINE_RESULT_VALUES is what a pipeline result may be, to check the results
@@ -98,18 +98,18 @@ export const OPEN_ACTION_RESULT_SEGMENTS = {
 }
 
 // getPipelineResultText names a pipeline-level result, where "⚠" means "Changed".
-export function getPipelineResultText(result){
+export function getPipelineResultText(result) {
   const match = PIPELINE_RESULTS.find((entry) => entry.value === result)
   return match ? match.title.replace(/^\S+\s/, '') : 'Unknown'
 }
 
-export function getStatusText(input){
-      const statusMap = {
-        '✔': 'Success',
-        '✗': 'Failed',
-        '⚠': 'Changed',
-        '-': 'Skipped',
-        '?': 'Unknown'
-      };
-      return statusMap[input] || input || 'Unknown';
+export function getStatusText(input) {
+  const statusMap = {
+    '✔': 'Success',
+    '✗': 'Failed',
+    '⚠': 'Changed',
+    '-': 'Skipped',
+    '?': 'Unknown'
+  };
+  return statusMap[input] || input || 'Unknown';
 }

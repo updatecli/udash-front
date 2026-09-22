@@ -1,35 +1,20 @@
 <template>
   <!-- The report is on its way. -->
-  <v-container
-    v-if="isLoading"
-    class="page-shell d-flex justify-center align-center loading-container"
-  >
-    <v-progress-circular
-      color="primary"
-      indeterminate
-      size="64"
-    ></v-progress-circular>
+  <v-container v-if="isLoading" class="page-shell d-flex justify-center align-center loading-container">
+    <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
   </v-container>
 
   <!-- The request did not return a report. We say so because with an empty page the
        reader cannot tell a broken API from a report with no content. -->
   <v-container v-else-if="loadError" class="page-shell">
-    <LoadError
-      title="Could not load this report"
-      :message="loadError"
-      @retry="getPipelineReportData"
-    />
+    <LoadError title="Could not load this report" :message="loadError" @retry="getPipelineReportData" />
   </v-container>
 
   <!-- The API answered fine, it just has nothing under that id. -->
   <v-container v-else-if="!pipeline" class="page-shell">
     <v-card variant="outlined">
       <v-card-title>
-        <v-icon
-          icon="mdi-help-circle"
-          class="mr-2 text-medium-emphasis"
-          aria-hidden="true"
-        ></v-icon>
+        <v-icon icon="mdi-help-circle" class="mr-2 text-medium-emphasis" aria-hidden="true"></v-icon>
         Report not found
       </v-card-title>
 
@@ -41,11 +26,7 @@
       </v-card-text>
 
       <v-card-actions>
-        <v-btn
-          variant="flat"
-          prepend-icon="mdi-arrow-left"
-          to="/pipeline/reports"
-        >
+        <v-btn variant="flat" prepend-icon="mdi-arrow-left" to="/pipeline/reports">
           Back to reports
         </v-btn>
       </v-card-actions>
@@ -54,92 +35,70 @@
 
   <template v-else>
     <v-container class="page-shell pb-0">
-      <PageTitle
-        :title="pipeline.Pipeline.Name || 'Report'"
-        icon="mdi-book-open-variant"
-      >
+      <PageTitle :title="pipeline.Pipeline.Name || 'Report'" icon="mdi-book-open-variant">
         <template v-slot:actions>
           <div class="d-flex flex-wrap ga-2">
-            <v-btn
-              v-for="action in openActions"
-              :key="action.url"
-              :href="action.url"
-              target="_blank"
-              rel="noopener noreferrer"
-              color="primary"
-              variant="flat"
-              :prepend-icon="openActionIcon"
-            >
+            <v-btn v-for="action in openActions" :key="action.url" :href="action.url" target="_blank"
+              rel="noopener noreferrer" color="primary" variant="flat" :prepend-icon="openActionIcon">
               {{ action.label }}
             </v-btn>
-            <v-btn
-              v-if="pipelinePrimaryURL"
-              :href="pipelinePrimaryURL"
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="outlined"
-              prepend-icon="mdi-open-in-new"
-            >
+            <v-btn v-if="pipelinePrimaryURL" :href="pipelinePrimaryURL" target="_blank" rel="noopener noreferrer"
+              variant="outlined" prepend-icon="mdi-open-in-new">
               View job
             </v-btn>
           </div>
         </template>
         <template v-slot:subtitle>
-          <span class="report-result" :class="`text-${getStatusColor(pipeline.Pipeline.Result)}`">
-            <v-icon :icon="getStatusIcon(pipeline.Pipeline.Result)" size="small" aria-hidden="true"></v-icon>
-            <strong>{{ getPipelineResultText(pipeline.Pipeline.Result) }}</strong>
+          <!-- One flex row, so the icon, the result and its meaning share a centre line
+               instead of the meaning hanging off the icon's baseline. -->
+          <span class="report-subtitle">
+            <span class="report-result" :class="`text-${getStatusColor(pipeline.Pipeline.Result)}`">
+              <v-icon :icon="getStatusIcon(pipeline.Pipeline.Result)" size="small" aria-hidden="true"></v-icon>
+              <strong>{{ getPipelineResultText(pipeline.Pipeline.Result) }}</strong>
+            </span>
+            <span v-if="resultMeaning">· {{ resultMeaning }}</span>
           </span>
-          <span v-if="resultMeaning"> · {{ resultMeaning }}</span>
         </template>
       </PageTitle>
     </v-container>
     <v-container class="page-shell pt-0">
       <!-- Show link to latest report -->
-       <v-row
-          v-if="latestReportByID && !isLatestReport"
-       >
+      <v-row v-if="latestReportByID && !isLatestReport">
         <v-col>
-          <v-card
-            variant="outlined"
-          >
+          <v-card variant="outlined">
             <v-card-title>
               A newer report exists for this pipeline
             </v-card-title>
 
             <v-card-text>
               <p class="mb-2">
-                Reported <span class="text-mono" :title="formatAbsoluteDate(latestReportByID.Updated_at)">{{ toRelativeTime(latestReportByID.Updated_at, now) }}</span>
+                Reported <span class="text-mono" :title="formatAbsoluteDate(latestReportByID.Updated_at)">{{
+                  toRelativeTime(latestReportByID.Updated_at, now) }}</span>
               </p>
-                <v-icon
-                  :icon="getStatusIcon(latestReportByID.Pipeline.Result)"
-                  :color="getStatusColor(latestReportByID.Pipeline.Result)"
-                  :aria-label="getPipelineResultText(latestReportByID.Pipeline.Result)"
-                  role="img"
-                ></v-icon>  {{ latestReportByID.Pipeline.Name }}
-                <v-btn
-                  icon="mdi-arrow-right-circle"
-                  variant="flat"
-                  aria-label="Open the newer report"
-                  :to=getPipelineReportLink(latestReportByID.ID)>
-                </v-btn>
-            <v-divider></v-divider>
+              <v-icon :icon="getStatusIcon(latestReportByID.Pipeline.Result)"
+                :color="getStatusColor(latestReportByID.Pipeline.Result)"
+                :aria-label="getPipelineResultText(latestReportByID.Pipeline.Result)" role="img"></v-icon> {{
+                  latestReportByID.Pipeline.Name }}
+              <v-btn icon="mdi-arrow-right-circle" variant="flat" aria-label="Open the newer report"
+                :to=getPipelineReportLink(latestReportByID.ID)>
+              </v-btn>
+              <v-divider></v-divider>
             </v-card-text>
           </v-card>
         </v-col>
-       </v-row>
+      </v-row>
       <!-- Show metadata -->
       <v-row>
         <v-col>
-          <v-card
-            variant="flat"
-          >
+          <v-card variant="flat">
             <v-card-text>
               <!-- A wrapping list instead of a table, because four columns do not fit on a
                    phone. The pipeline name is already the page title. -->
               <dl class="meta-grid">
                 <div>
                   <dt>Reported</dt>
-                  <dd class="text-mono" :title="formatAbsoluteDate(pipeline.Updated_at)">{{ toRelativeTime(pipeline.Updated_at, now) }}</dd>
+                  <dd class="text-mono" :title="formatAbsoluteDate(pipeline.Updated_at)">{{
+                    toRelativeTime(pipeline.Updated_at, now) }}</dd>
                 </div>
                 <div v-if="hasMultiplePipelineURLs">
                   <dt>CI</dt>
@@ -160,17 +119,9 @@
             <v-card-text class="labels-card">
               <div class="labels-header">Labels</div>
               <div class="labels-list">
-                <div
-                  v-for="([key, value]) in sortedLabels"
-                  :key="key"
-                  class="label-row"
-                >
+                <div v-for="([key, value]) in sortedLabels" :key="key" class="label-row">
                   <div class="label-key-wrap">
-                    <v-icon
-                      size="18"
-                      class="label-icon text-medium-emphasis"
-                      aria-hidden="true"
-                    >
+                    <v-icon size="18" class="label-icon text-medium-emphasis" aria-hidden="true">
                       mdi-label-outline
                     </v-icon>
                     <span class="label-key">{{ key }}</span>
@@ -194,131 +145,68 @@
 
 
       <v-row>
-        <v-col
-          cols="12"
-        >
+        <v-col cols="12">
 
-          <v-container
-            class="d-flex justify-center align-center"
-          >
-            <v-btn-toggle
-              v-model="resourceStage"
-              mandatory
-            >
-              <v-btn
-                v-if="hasSources"
-                variant="text"
-                value="source"
-              >Source<template v-if="stageGlyph('source')"><span class="ml-2" aria-hidden="true" :class="`text-${getStatusColor(stageGlyph('source'))}`">{{ stageGlyph('source') }}</span><span class="d-sr-only">, {{ getStatusText(stageGlyph('source')) }}</span></template></v-btn>
-              <v-btn
-                v-if="hasConditions"
-                variant="text"
-                value="condition"
-              >Condition<template v-if="stageGlyph('condition')"><span class="ml-2" aria-hidden="true" :class="`text-${getStatusColor(stageGlyph('condition'))}`">{{ stageGlyph('condition') }}</span><span class="d-sr-only">, {{ getStatusText(stageGlyph('condition')) }}</span></template></v-btn>
-              <v-btn
-                v-if="hasTargets"
-                variant="text"
-                value="target"
-              >Target<template v-if="stageGlyph('target')"><span class="ml-2" aria-hidden="true" :class="`text-${getStatusColor(stageGlyph('target'))}`">{{ stageGlyph('target') }}</span><span class="d-sr-only">, {{ getStatusText(stageGlyph('target')) }}</span></template></v-btn>
-              <v-btn
-                v-if="hasActions"
-                variant="text"
-                value="action"
-              >Action</v-btn>
+          <v-container class="d-flex justify-center align-center">
+            <v-btn-toggle v-model="resourceStage" mandatory>
+              <v-btn v-if="hasSources" variant="text" value="source">Source<template v-if="stageGlyph('source')"><span
+                    class="ml-2" aria-hidden="true" :class="`text-${getStatusColor(stageGlyph('source'))}`">{{
+                    stageGlyph('source') }}</span><span class="d-sr-only">, {{ getStatusText(stageGlyph('source'))
+                    }}</span></template></v-btn>
+              <v-btn v-if="hasConditions" variant="text" value="condition">Condition<template
+                  v-if="stageGlyph('condition')"><span class="ml-2" aria-hidden="true"
+                    :class="`text-${getStatusColor(stageGlyph('condition'))}`">{{ stageGlyph('condition') }}</span><span
+                    class="d-sr-only">, {{ getStatusText(stageGlyph('condition')) }}</span></template></v-btn>
+              <v-btn v-if="hasTargets" variant="text" value="target">Target<template v-if="stageGlyph('target')"><span
+                    class="ml-2" aria-hidden="true" :class="`text-${getStatusColor(stageGlyph('target'))}`">{{
+                    stageGlyph('target') }}</span><span class="d-sr-only">, {{ getStatusText(stageGlyph('target'))
+                    }}</span></template></v-btn>
+              <v-btn v-if="hasActions" variant="text" value="action">Action</v-btn>
             </v-btn-toggle>
           </v-container>
 
           <!-- Show Sources -->
-          <div
-            class="stage-list"
-            v-if="hasSources && resourceStage === 'source'"
-          >
-            <section
-              class="stage-item"
-              v-for="(data, key) in pipeline.Pipeline.Sources" :key="key"
-            >
-                  <SourceComponent
-                    :id="key"
-                    :data="data"
-                  ></SourceComponent>
-                  <LinkedReports
-                    :configID="getResourceUUID('source', key)"
-                    configType="source"
-                    :pipelineUUID="pipelineUUID"
-                  ></LinkedReports>
+          <div class="stage-list" v-if="hasSources && resourceStage === 'source'">
+            <section class="stage-item" v-for="(data, key) in pipeline.Pipeline.Sources" :key="key">
+              <SourceComponent :id="key" :data="data"></SourceComponent>
+              <LinkedReports :configID="getResourceUUID('source', key)" configType="source"
+                :pipelineUUID="pipelineUUID">
+              </LinkedReports>
             </section>
           </div>
 
           <!-- Show Conditions -->
-          <div
-            class="stage-list"
-            v-if="hasConditions && resourceStage === 'condition'"
-          >
-            <section
-              class="stage-item"
-              v-for="(data, key) in pipeline.Pipeline.Conditions" :key="key"
-            >
-                  <ConditionComponent
-                    :id="key"
-                    :data="data"
-                  ></ConditionComponent>
-                  <LinkedReports
-                    :configID="getResourceUUID('condition', key)"
-                    configType="condition"
-                    :pipelineUUID="pipelineUUID"
-                  ></LinkedReports>
+          <div class="stage-list" v-if="hasConditions && resourceStage === 'condition'">
+            <section class="stage-item" v-for="(data, key) in pipeline.Pipeline.Conditions" :key="key">
+              <ConditionComponent :id="key" :data="data"></ConditionComponent>
+              <LinkedReports :configID="getResourceUUID('condition', key)" configType="condition"
+                :pipelineUUID="pipelineUUID"></LinkedReports>
             </section>
           </div>
 
           <!-- Show Targets -->
-          <div
-            class="stage-list"
-            v-if="hasTargets && resourceStage === 'target'"
-          >
-            <section
-              class="stage-item"
-              v-for="(data, key) in pipeline.Pipeline.Targets" :key="key"
-            >
-                  <TargetComponent
-                    :id="key"
-                    :data="data"
-                  ></TargetComponent>
-                  <LinkedReports
-                    :configID="getResourceUUID('target', key)"
-                    configType="target"
-                    :pipelineUUID="pipelineUUID"
-                  ></LinkedReports>
+          <div class="stage-list" v-if="hasTargets && resourceStage === 'target'">
+            <section class="stage-item" v-for="(data, key) in pipeline.Pipeline.Targets" :key="key">
+              <TargetComponent :id="key" :data="data"></TargetComponent>
+              <LinkedReports :configID="getResourceUUID('target', key)" configType="target"
+                :pipelineUUID="pipelineUUID">
+              </LinkedReports>
             </section>
           </div>
           <!-- Show Actions -->
-          <div
-            class="stage-list"
-            v-if="hasActions && resourceStage === 'action'"
-          >
-            <section
-              class="stage-item"
-              v-for="(data, key) in pipeline.Pipeline.Actions" :key="key"
-            >
-                  <ActionComponent
-                    :id="key"
-                    :data="data"
-                  ></ActionComponent>
+          <div class="stage-list" v-if="hasActions && resourceStage === 'action'">
+            <section class="stage-item" v-for="(data, key) in pipeline.Pipeline.Actions" :key="key">
+              <ActionComponent :id="key" :data="data"></ActionComponent>
             </section>
           </div>
         </v-col>
       </v-row>
 
       <v-row>
-        <v-col
-          cols="12"
-          class="text-center"
-        >
-            <v-card
-              variant="flat"
-              v-if="pipeline.Pipeline.Graph"
-            >
-                <PipelineGraphComponent :data="pipeline.Pipeline.Graph" />
-            </v-card>
+        <v-col cols="12" class="text-center">
+          <v-card variant="flat" v-if="pipeline.Pipeline.Graph">
+            <PipelineGraphComponent :data="pipeline.Pipeline.Graph" />
+          </v-card>
         </v-col>
       </v-row>
     </v-container>
@@ -518,7 +406,7 @@ export default {
 
     // getDefaultStage opens on what happened: the first stage with a failure, then the
     // first with a change, and only then the usual order.
-    getDefaultStage(){
+    getDefaultStage() {
       const stages = ['source', 'condition', 'target']
       for (const glyph of ['✗', '⚠']) {
         const stage = stages.find((name) => this.stageGlyph(name) === glyph)
@@ -540,23 +428,23 @@ export default {
       return "source";
     },
 
-    getPipelineReportLink: function(id){
+    getPipelineReportLink: function (id) {
       return "/pipeline/reports/" + id
     },
 
-    getStatusColor: function(input){
+    getStatusColor: function (input) {
       return getStatusColor(input);
     },
 
-    getStatusText: function(input){
+    getStatusText: function (input) {
       return getStatusText(input);
     },
 
-    getStatusIcon: function(status){
+    getStatusIcon: function (status) {
       return getStatusIcon(status);
     },
 
-    getPipelineResultText: function(status){
+    getPipelineResultText: function (status) {
       return getPipelineResultText(status);
     },
 
@@ -609,6 +497,13 @@ export default {
   min-height: 50vh;
 }
 
+.report-subtitle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .report-result {
   display: inline-flex;
   align-items: center;
@@ -621,7 +516,7 @@ export default {
   background: rgb(var(--v-theme-surface));
 }
 
-.stage-item + .stage-item {
+.stage-item+.stage-item {
   border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
