@@ -29,9 +29,9 @@
             v-if="actionURLs && actionURLs.length > 0"
           >
           <div class="mb-3">
-            <h4 class="d-flex align-center mb-2">
+            <h3 class="text-title-medium d-flex align-center mb-2">
               Open pull requests
-            </h4>
+            </h3>
             <p class="text-body-small text-medium-emphasis mb-0">
               {{ actionURLs.length === 1 ? 'Opened by these pipelines and still waiting to be merged.' : `${actionURLs.length} opened by these pipelines and still waiting to be merged.` }}
             </p>
@@ -90,9 +90,9 @@
             {{ totalItems.toLocaleString() }} {{ totalItems === 1 ? 'report' : 'reports' }}
           </p>
 
-          <!-- Phones get a stacked list: the table's columns cannot fit without scrolling
+          <!-- Phones and tablets get a stacked list: the table's columns cannot fit without scrolling
                sideways, and the name is what someone checking in needs to tap. -->
-          <v-list v-if="$vuetify.display.xs" class="report-list py-0" lines="two">
+          <v-list v-if="$vuetify.display.smAndDown" class="report-list py-0" lines="two">
             <v-list-item
               v-for="item in pipelines"
               :key="item.ID"
@@ -109,7 +109,7 @@
               </template>
               <v-list-item-title class="text-wrap">{{ item.Name || 'Unnamed report' }}</v-list-item-title>
               <v-list-item-subtitle>
-                {{ getResultTooltipText(item) }} · {{ toLocalDate(item.UpdatedAt) }}
+                {{ getResultTooltipText(item) }} · <span class="text-mono">{{ toRelativeTime(item.UpdatedAt, now) }}</span>
               </v-list-item-subtitle>
             </v-list-item>
           </v-list>
@@ -162,7 +162,7 @@
               <router-link :to="getPipelineLink(item.ID)" class="report-name">{{ item.Name || 'Unnamed report' }}</router-link>
             </template>
             <template v-slot:item.UpdatedAt="{ item }">
-              <span class="text-no-wrap">{{ toLocalDate(item.UpdatedAt) }}</span>
+              <span class="text-no-wrap text-mono" :title="formatAbsoluteDate(item.UpdatedAt)">{{ toRelativeTime(item.UpdatedAt, now) }}</span>
 
             </template>
             <template v-slot:item.Action="{ item }">
@@ -190,7 +190,7 @@
             v-model="currentPage"
             class="mt-4"
             :length="pageCount"
-            :total-visible="$vuetify.display.xs ? 5 : 7"
+            :total-visible="$vuetify.display.smAndDown ? 5 : 7"
             @update:model-value="onPageChange"
           ></v-pagination>
         </v-col>
@@ -202,8 +202,9 @@
 <script>
 import { getStatusColor, getStatusIcon, getPipelineResultText, OPEN_ACTION_ICON, OPEN_ACTION_COLOR } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git'
-import { toLocalDate } from '@/composables/date'
 import { apiFetch, describeLoadError } from '@/composables/api';
+import { markUpdated, subscribeRefresh, useNow } from '@/composables/live';
+import { formatAbsoluteDate, toRelativeTime } from '@/composables/date';
 import LoadError from '../LoadError.vue';
 
 export default {
@@ -211,6 +212,11 @@ export default {
 
   components: {
     LoadError,
+  },
+
+  // now ticks every second so the relative times stay current between refreshes.
+  setup() {
+    return { now: useNow() }
   },
 
   props: {
@@ -256,9 +262,8 @@ export default {
   },
 
   methods: {
-    toLocalDate (rawDate) {
-      return toLocalDate(rawDate)
-    },
+    toRelativeTime,
+    formatAbsoluteDate,
 
     getActionProviderIcon(url) {
       const info = extractGitURLInfo(url)
@@ -341,12 +346,16 @@ export default {
       this.actionURLs = localActionURLs
     },
 
-    async getReportsData(page =1 ) {
+    // A silent refresh leaves the page's loading overlay alone and keeps the rows on
+    // screen if it fails.
+    async getReportsData(page = 1, { silent = false } = {}) {
       this.requestId += 1
       const requestId = this.requestId
 
       this.isFetching = true
-      this.$emit('loaded', false)
+      if (!silent) {
+        this.$emit('loaded', false)
+      }
 
       const requestBody = {
         limit: this.itemsPerPage,
@@ -420,17 +429,22 @@ export default {
         this.totalItems = data.total_count || 0;
         this.currentPage = page;
         this.loadError = null;
+        markUpdated();
 
       } catch (error) {
         if (requestId !== this.requestId) return
 
         console.error('Error fetching reports:', error);
-        this.loadError = describeLoadError(error, 'the pipeline reports')
+        if (!silent) {
+          this.loadError = describeLoadError(error, 'the pipeline reports')
+        }
       } finally {
         if (requestId === this.requestId) {
           this.isFetching = false
           this.hasLoaded = true
-          this.$emit('loaded', true)
+          if (!silent) {
+            this.$emit('loaded', true)
+          }
         }
       }
     },
@@ -451,6 +465,14 @@ export default {
 
   created() {
     this.getReportsData(1)
+  },
+
+  mounted() {
+    this.stopRefresh = subscribeRefresh(() => this.getReportsData(this.currentPage, { silent: true }))
+  },
+
+  beforeUnmount() {
+    this.stopRefresh?.()
   },
 }
 </script>

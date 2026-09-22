@@ -24,7 +24,7 @@
       <span v-if="stats.waiting" class="text-result-waiting">{{ formatCount(stats.waiting) }} waiting to be merged</span>
     </p>
 
-    <div v-if="canPlot" :style="{ height }">
+    <div v-if="canPlot" :style="{ height }" role="img" :aria-label="chartLabel">
       <Bar :data="chartData" :options="chartOptions" />
     </div>
   </div>
@@ -60,6 +60,7 @@ import {
 } from 'chart.js'
 
 import { apiFetch, describeLoadError } from '@/composables/api';
+import { markUpdated, subscribeRefresh } from '@/composables/live';
 import LoadError from '@/components/LoadError.vue';
 
 // Register chart parts and plugin
@@ -365,6 +366,17 @@ export default {
             return stats;
         },
 
+        // chartLabel describes the plot for screen readers, which cannot read a canvas.
+        chartLabel() {
+            if (this.entries.length === 0) {
+                return 'No reports in this period';
+            }
+            const peak = this.entries.reduce((max, entry) => ((entry.total || 0) > (max.total || 0) ? entry : max), this.entries[0]);
+            const first = this.formatBucketDate(this.entries[0].date);
+            const last = this.formatBucketDate(this.entries[this.entries.length - 1].date);
+            return `Reports received from ${first} to ${last}, peaking at ${(peak.total || 0).toLocaleString()} on ${this.formatBucketDate(peak.date)}.`;
+        },
+
         chartData() {
             const labels = this.entries.map((entry) => this.formatBucketDate(entry.date));
 
@@ -523,6 +535,16 @@ export default {
 
     mounted() {
         this.fetchSummary();
+
+        // The full-size chart keeps itself current; the compact strips on the dashboard
+        // would be one request per branch every minute, so they do not.
+        if (!this.compact) {
+            this.stopRefresh = subscribeRefresh(() => this.fetchSummary({ silent: true }));
+        }
+    },
+
+    beforeUnmount() {
+        this.stopRefresh?.();
     },
 
     methods: {
@@ -659,12 +681,16 @@ export default {
             return body;
         },
 
-        async fetchSummary() {
+        // silent refreshes keep the chart at full opacity: a dim every minute would read
+        // as a problem rather than as fresh data.
+        async fetchSummary({ silent = false } = {}) {
             this.currentRequestId += 1;
             const requestId = this.currentRequestId;
 
-            this.loading = true;
-            this.error = null;
+            this.loading = !silent;
+            if (!silent) {
+                this.error = null;
+            }
 
             try {
                 // apiFetch surfaces the sentence the API puts in the body of a rejection.
@@ -679,6 +705,10 @@ export default {
                 if (requestId !== this.currentRequestId) return;
 
                 this.summary = responseData;
+                this.error = null;
+                if (!this.compact) {
+                    markUpdated();
+                }
                 this.$emit('loaded', {
                     hasData: this.hasData,
                     summary: this.hasData ? responseData : null,

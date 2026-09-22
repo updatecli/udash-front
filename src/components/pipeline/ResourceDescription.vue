@@ -32,7 +32,7 @@ const parts = computed(() => splitDescription(props.text))
   border-radius: 4px;
   background-color: rgba(var(--v-theme-on-surface), 0.05);
   color: rgb(var(--v-theme-on-surface));
-  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-family: var(--udash-font-mono);
   font-size: 0.875rem;
   line-height: 1.5;
   white-space: pre;

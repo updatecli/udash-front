@@ -12,7 +12,7 @@
           <v-col>
             <div class="empty-state">
               <v-icon size="96" class="text-medium-emphasis" aria-hidden="true">mdi-alert-decagram-outline</v-icon>
-              <h3 class="text-headline-small mt-6 mb-2 font-weight-medium">No pipeline reports match this filter</h3>
+              <p class="text-headline-small mt-6 mb-2 font-weight-medium" role="status">No pipeline reports match this filter</p>
               <p class="text-medium-emphasis mb-0">Widen the date range or clear the advanced filter.</p>
             </div>
           </v-col>
@@ -189,6 +189,7 @@
                                                         <SCMDoughnut
                                                             :chartData="getDoughnutData(url, branch)"
                                                             :chartOptions="doughnutOptionsFor(url, branch, branchData)"
+                                                            :label="doughnutLabel(branch, branchData)"
                                                             :centerText="branchData.total_result"
                                                             size="small"
                                                         />
@@ -265,6 +266,7 @@
                                                             <SCMDoughnut
                                                                 :chartData="getDoughnutData(url, branch)"
                                                                 :chartOptions="doughnutOptionsFor(url, branch, branchData)"
+                                                            :label="doughnutLabel(branch, branchData)"
                                                                 :centerText="branchData.total_result"
                                                                 size="small"
                                                             />
@@ -1147,6 +1149,13 @@ export default {
                 case '-': return 'result-skipped';
                 default: return 'result-unknown';
             }
+        },
+
+        doughnutLabel(branch, branchData) {
+            const parts = Object.entries(branchData?.total_result_by_type || {}).map(
+                ([status, count]) => `${getPipelineResultText(status)} ${this.getStatusPercentage(count, branchData.total_result)}`
+            );
+            return `Results on ${branch}: ${parts.join(', ')}`;
         },
 
         getStatusPercentage(count, total) {

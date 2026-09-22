@@ -164,7 +164,7 @@ export default {
 }
 
 .resource-id {
-    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    font-family: var(--udash-font-mono);
     overflow-wrap: anywhere;
 }
 </style>

@@ -108,7 +108,7 @@
 
             <v-card-text>
               <p class="mb-2">
-                Reported {{ formatDate(latestReportByID.Updated_at) }}
+                Reported <span class="text-mono" :title="formatAbsoluteDate(latestReportByID.Updated_at)">{{ toRelativeTime(latestReportByID.Updated_at, now) }}</span>
               </p>
                 <v-icon
                   :icon="getStatusIcon(latestReportByID.Pipeline.Result)"
@@ -139,7 +139,7 @@
               <dl class="meta-grid">
                 <div>
                   <dt>Reported</dt>
-                  <dd>{{ formatDate(pipeline.Updated_at) }}</dd>
+                  <dd class="text-mono" :title="formatAbsoluteDate(pipeline.Updated_at)">{{ toRelativeTime(pipeline.Updated_at, now) }}</dd>
                 </div>
                 <div v-if="hasMultiplePipelineURLs">
                   <dt>CI</dt>
@@ -175,7 +175,7 @@
                     </v-icon>
                     <span class="label-key">{{ key }}</span>
                   </div>
-                  <div class="label-value">{{ value }}</div>
+                  <div class="label-value text-mono">{{ value }}</div>
                 </div>
               </div>
             </v-card-text>
@@ -336,7 +336,8 @@ import PageTitle from '@/components/PageTitle.vue';
 
 import { getStatusColor, getStatusIcon, getPipelineResultText, PIPELINE_RESULTS, OPEN_ACTION_ICON } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git';
-import { toLocalDate } from '@/composables/date';
+import { formatAbsoluteDate, toRelativeTime } from '@/composables/date';
+import { useNow } from '@/composables/live';
 import { apiFetch, describeLoadError } from '@/composables/api';
 import LoadError from '@/components/LoadError.vue';
 import { defineAsyncComponent } from 'vue';
@@ -360,6 +361,11 @@ const CONFIG_ID_KEYS = {
 
 export default {
   name: 'PipelineReport',
+
+  // now ticks every second so "Reported 3 minutes ago" stays true while the page is open.
+  setup() {
+    return { now: useNow() }
+  },
 
   components: {
     LoadError,
@@ -498,17 +504,8 @@ export default {
       return this.resourceUUIDsByName[type]?.[id] || ''
     },
 
-    formatDate(rawDate) {
-      if (!rawDate) {
-        return 'N/A';
-      }
-      try {
-        return toLocalDate(rawDate);
-      } catch {
-        console.warn('Invalid date format:', rawDate);
-        return rawDate;
-      }
-    },
+    toRelativeTime,
+    formatAbsoluteDate,
 
     // stageGlyph is the most serious result among a stage's resources, or nothing when
     // they all succeeded, so the toggle points at where to look.

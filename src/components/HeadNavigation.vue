@@ -4,9 +4,10 @@
       <v-app-bar-nav-icon aria-label="Open navigation" @click="navDrawerOpen = !navDrawerOpen" />
     </template>
 
-    <v-app-bar-title>Udash</v-app-bar-title>
+    <v-app-bar-title><span class="udash-wordmark">Udash</span></v-app-bar-title>
 
     <template v-slot:append>
+      <LiveStatus />
       <ThemeSwitcher />
       <v-btn
         v-if="!isAuthenticated && isAuthEnabled"
@@ -47,10 +48,12 @@ import { navDrawerOpen } from '@/composables/navigation';
 import { useAuth } from '@/composables/auth';
 import { isAuthEnabled } from '@/composables/runtime';
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
+import LiveStatus from '@/components/LiveStatus.vue';
 
 export default {
   name: 'HeadNavigation',
   components: {
+    LiveStatus,
     ThemeSwitcher,
   },
   setup() {
@@ -88,3 +91,11 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.udash-wordmark {
+  font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+</style>

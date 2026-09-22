@@ -1,5 +1,7 @@
 <template>
-  <Doughnut :data="chartData" :options="chartOptions" />
+  <div role="img" :aria-label="label || undefined" class="scm-doughnut">
+    <Doughnut :data="chartData" :options="chartOptions" />
+  </div>
 </template>
 
 <script>
@@ -23,6 +25,12 @@ export default {
     },
 
     props: {
+        // label is the text alternative of the chart, since a canvas has none.
+        label: {
+            type: String,
+            default: '',
+        },
+
         chartData: {
             type: Object,
             required: true,
@@ -45,3 +53,10 @@ export default {
 }
 
 </script>
+
+<style scoped>
+.scm-doughnut {
+  width: 100%;
+  height: 100%;
+}
+</style>

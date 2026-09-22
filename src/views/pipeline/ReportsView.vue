@@ -1,20 +1,13 @@
 <template>
-  <v-overlay
-    :model-value="isLoading"
-    class="align-center justify-center"
-    :disabled=true
-    :eager=true
-    :no-click-animation=true
-    :persistent=true
-    :opacity="0"
-  >
-    <v-progress-circular
-      color="primary"
-      indeterminate
-      size="64"
-    ></v-progress-circular>
-  </v-overlay>
   <v-container class="page-shell">
+    <v-progress-linear
+      v-if="isLoading"
+      indeterminate
+      color="primary"
+      height="2"
+      class="page-progress"
+      aria-label="Loading"
+    ></v-progress-linear>
     <PageTitle
       title="Reports"
       icon="mdi-book-open-variant"
@@ -38,9 +31,9 @@
       >
         <!-- Add explanatory header -->
         <div class="mb-3">
-          <h3 class="text-title-large d-flex align-center">
+          <h2 class="text-title-large d-flex align-center">
             Latest results
-          </h3>
+          </h2>
           <p class="text-body-small text-medium-emphasis mb-0">
             Result of the most recent run of each pipeline on this branch. Select a result to filter the reports below.
           </p>
@@ -66,9 +59,9 @@
       >
         <!-- Add explanatory header for pipeline reports -->
         <div class="mb-3">
-          <h3 class="text-title-large d-flex align-center">
+          <h2 class="text-title-large d-flex align-center">
             All reports
-          </h3>
+          </h2>
         </div>
 
         <PipelineReports
