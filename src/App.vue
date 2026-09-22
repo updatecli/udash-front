@@ -27,6 +27,14 @@
   font-size: 0.9em;
 }
 
+/* The product name where it stands as a logo: the app bar and the Home hero. Prose
+   mentions of Udash keep the body face. */
+.udash-wordmark {
+  font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 .v-container.page-shell {
   max-width: 1400px;
   padding: 1.5rem 1rem;
