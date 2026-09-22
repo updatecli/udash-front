@@ -209,17 +209,17 @@
                 v-if="hasSources"
                 variant="text"
                 value="source"
-              >Source<span v-if="stageGlyph('source')" class="ml-2" :class="`text-${getStatusColor(stageGlyph('source'))}`">{{ stageGlyph('source') }}</span></v-btn>
+              >Source<template v-if="stageGlyph('source')"><span class="ml-2" aria-hidden="true" :class="`text-${getStatusColor(stageGlyph('source'))}`">{{ stageGlyph('source') }}</span><span class="d-sr-only">, {{ getStatusText(stageGlyph('source')) }}</span></template></v-btn>
               <v-btn
                 v-if="hasConditions"
                 variant="text"
                 value="condition"
-              >Condition<span v-if="stageGlyph('condition')" class="ml-2" :class="`text-${getStatusColor(stageGlyph('condition'))}`">{{ stageGlyph('condition') }}</span></v-btn>
+              >Condition<template v-if="stageGlyph('condition')"><span class="ml-2" aria-hidden="true" :class="`text-${getStatusColor(stageGlyph('condition'))}`">{{ stageGlyph('condition') }}</span><span class="d-sr-only">, {{ getStatusText(stageGlyph('condition')) }}</span></template></v-btn>
               <v-btn
                 v-if="hasTargets"
                 variant="text"
                 value="target"
-              >Target<span v-if="stageGlyph('target')" class="ml-2" :class="`text-${getStatusColor(stageGlyph('target'))}`">{{ stageGlyph('target') }}</span></v-btn>
+              >Target<template v-if="stageGlyph('target')"><span class="ml-2" aria-hidden="true" :class="`text-${getStatusColor(stageGlyph('target'))}`">{{ stageGlyph('target') }}</span><span class="d-sr-only">, {{ getStatusText(stageGlyph('target')) }}</span></template></v-btn>
               <v-btn
                 v-if="hasActions"
                 variant="text"
@@ -334,7 +334,7 @@ import TargetComponent from './_target.vue';
 import LinkedReports from './configs/_linkedReports.vue';
 import PageTitle from '@/components/PageTitle.vue';
 
-import { getStatusColor, getStatusIcon, getPipelineResultText, PIPELINE_RESULTS, OPEN_ACTION_ICON } from '@/composables/status';
+import { getStatusColor, getStatusIcon, getStatusText, getPipelineResultText, PIPELINE_RESULTS, OPEN_ACTION_ICON } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git';
 import { formatAbsoluteDate, toRelativeTime } from '@/composables/date';
 import { useNow } from '@/composables/live';
@@ -546,6 +546,10 @@ export default {
 
     getStatusColor: function(input){
       return getStatusColor(input);
+    },
+
+    getStatusText: function(input){
+      return getStatusText(input);
     },
 
     getStatusIcon: function(status){
