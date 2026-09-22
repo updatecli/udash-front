@@ -333,16 +333,22 @@ export default {
     },
 
     async copyToken() {
+      this.copied = false;
       this.copyFailed = !(await copyText(this.createdToken));
       if (this.copyFailed) {
         return;
       }
 
       this.copied = true;
-      setTimeout(() => {
+      clearTimeout(this.copiedTimer);
+      this.copiedTimer = setTimeout(() => {
         this.copied = false;
       }, 1500);
     },
+  },
+
+  beforeUnmount() {
+    clearTimeout(this.copiedTimer);
   },
 };
 </script>

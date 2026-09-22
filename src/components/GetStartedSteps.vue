@@ -141,12 +141,16 @@ export default {
 
       this.failedKey = null
       this.copiedKey = key
-      setTimeout(() => {
+      clearTimeout(this.copiedTimer)
+      this.copiedTimer = setTimeout(() => {
         if (this.copiedKey === key) {
           this.copiedKey = null
         }
       }, 1500)
     }
+  },
+  beforeUnmount() {
+    clearTimeout(this.copiedTimer)
   }
 }
 </script>
