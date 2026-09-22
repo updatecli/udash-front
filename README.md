@@ -31,7 +31,7 @@ Set it in the runtime config files to mount the SPA below a subpath such as `/ud
 
 **config.json**
 
-.public/config.json
+public/config.json
 ```
 {
    "AUTH_ENABLED": false,
@@ -45,54 +45,52 @@ Set it in the runtime config files to mount the SPA below a subpath such as `/ud
 }
 ```
 
-The app bootstraps from `config.json` before loading the Vue bundle, then exposes the same values on `window.config`.
+The app loads `config.json` before the Vue bundle, then exposes the same values on `window.config`.
 
-`MAX_HISTORY_DAYS` caps how far back the interface looks: it sets how far the dashboard
-date filter reaches and the window of the activity chart on the home page. It defaults to
+`MAX_HISTORY_DAYS` caps how far back the interface looks. It sets how far the dashboard
+date filter reaches, and the window of the activity chart on the home page. It defaults to
 `30` when unset and is capped at the API's own maximum of `366`.
 
-Raising it does not change how much work the backend does by default — the date filter
-still starts on the last day whatever the maximum, so a wider range is only ever queried
-when someone explicitly asks for one. Lower it on instances where a large report history
-makes the wider queries expensive.
+Raising it does not add load on the backend by default. The date filter still starts on
+the last day, so a wider range is only queried when someone asks for it. Lower it on
+instances where a large report history makes the wider queries expensive.
 
 #### Authentication (OIDC)
 
-Authentication uses the standards-based OpenID Connect Authorization Code + PKCE
-flow via [`oidc-client-ts`](https://github.com/authts/oidc-client-ts), and works
-with any compliant provider (the reference deployment uses [Zitadel](https://zitadel.com)).
-It is toggled and configured entirely at runtime through `config.json`, so the same
-image serves both authenticated and open deployments:
+Authentication uses the OpenID Connect Authorization Code + PKCE flow via
+[`oidc-client-ts`](https://github.com/authts/oidc-client-ts), and works with any
+compliant provider (the reference deployment uses [Zitadel](https://zitadel.com)).
+Everything is configured at runtime through `config.json`, so the same image serves
+both authenticated and open deployments:
 
-- `AUTH_ENABLED` — set to `true` to require authentication. Defaults to `false`.
-- `AUTH_VISIBILITY` — `public` or `private`. Only read when `AUTH_ENABLED` is `true`.
+- `AUTH_ENABLED`: set to `true` to require authentication. Defaults to `false`.
+- `AUTH_VISIBILITY`: `public` or `private`. Only read when `AUTH_ENABLED` is `true`.
   Defaults to `private`.
-  - `private` — reports, the SCM dashboard and the home page activity chart all require
-    a session. Signing in is the price of admission.
-  - `public` — anyone may browse reports, the dashboard and the activity chart without an
-    account. Signing in adds the profile and the API tokens page, and is what a runner
-    needs to publish reports.
-- `OAUTH_DOMAIN` — the provider's issuer URL (e.g. `https://your-instance.zitadel.cloud`).
-- `OAUTH_CLIENTID` — the SPA application's client ID.
-- `OAUTH_SCOPE` — requested scopes. Include `openid profile email offline_access`
+  - `private`: reports, the SCM dashboard and the home page activity chart all require
+    a session.
+  - `public`: anyone can browse reports, the dashboard and the activity chart without an
+    account. Signing in adds the profile and the API tokens page. A runner still needs
+    to sign in to publish reports.
+- `OAUTH_DOMAIN`: the provider's issuer URL (e.g. `https://your-instance.zitadel.cloud`).
+- `OAUTH_CLIENTID`: the SPA application's client ID.
+- `OAUTH_SCOPE`: requested scopes. Include `openid profile email offline_access`
   (`offline_access` enables silent token refresh). For Zitadel, add the project
-  audience scope `urn:zitadel:iam:org:project:id:<PROJECT_ID>:aud` so the access
-  token is accepted by the API. Defaults to `openid profile email offline_access`
-  when omitted.
+  audience scope `urn:zitadel:iam:org:project:id:<PROJECT_ID>:aud` so the API accepts
+  the access token. Defaults to `openid profile email offline_access` when omitted.
 
-`AUTH_VISIBILITY` must match the API's own `server.auth.visibility`, which takes the same
-two values. Note the defaults differ on purpose: the API defaults to `public`, this
-frontend to `private`, so that upgrading an existing instance never starts serving its
-data to anonymous visitors on its own. A stock API paired with a stock frontend therefore
-asks for a login it does not strictly need — the harmless direction. The reverse, a
-frontend set to `public` against a private API, sends anonymous requests the API refuses;
-the first refusal redirects the visitor to the identity provider, so the instance behaves
-private rather than rendering empty pages.
+`AUTH_VISIBILITY` must match the API's `server.auth.visibility`, which takes the same
+two values. The defaults are different: the API defaults to `public` and this frontend
+to `private`. That way, upgrading an existing instance never starts showing its data to
+anonymous visitors by itself.
 
-Register the app in the provider as a **User Agent / SPA** application with
-**PKCE**, and add the app's base URL (the value of `APP_BASE_PATH` resolved
-against the deployment origin) as both an allowed **redirect URI** and
-**post-logout redirect URI**.
+With both defaults, the frontend asks for a login that the API does not strictly need,
+which is harmless. In the opposite case (frontend set to `public`, API private), the API
+refuses the anonymous requests. The first refusal sends the visitor to the identity
+provider, so the instance behaves as private instead of showing empty pages.
+
+Register the app in the provider as a User Agent / SPA application with PKCE. Add the
+app's base URL (the value of `APP_BASE_PATH` resolved against the deployment origin) as
+both an allowed redirect URI and post-logout redirect URI.
 
 For the local development environment, the runtime config file must be located at `public/config.json`.
 A `.gitignore` rule ensures this file is not committed to the git repository.

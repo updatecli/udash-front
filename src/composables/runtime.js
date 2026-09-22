@@ -3,11 +3,10 @@ const runtimeConfig = window.config || {}
 // MAX_HISTORY_DAYS caps how far back the interface lets anyone look: it drives the
 // date filter's reach and the window of the activity chart.
 //
-// It guards the UI only — the API enforces its own ceiling — so it is clamped to
-// that ceiling here rather than letting a misconfigured instance send requests the
-// backend answers with a 400. Raising it does not increase baseline load: the
-// filter's default selection stays at the last day whatever the maximum is, so a
-// wider range only ever costs something once someone deliberately asks for it.
+// The API enforces its own ceiling (366 days), so we clamp to it here. Otherwise a
+// misconfigured instance would send requests the API rejects with a 400. Raising the
+// value does not increase the default load: the filter still starts on the last day
+// whatever the maximum is, so a wider range is only queried when someone asks for it.
 const DEFAULT_MAX_HISTORY_DAYS = 30
 const API_MAX_HISTORY_DAYS = 366
 
@@ -17,15 +16,15 @@ const API_MAX_HISTORY_DAYS = 366
 // body runs.
 export const isAuthEnabled = String(runtimeConfig.AUTH_ENABLED) === 'true'
 
-// AUTH_VISIBILITY mirrors the API's own `server.auth.visibility`, and only carries
-// meaning when AUTH_ENABLED is true — an instance with no login is readable by everyone
-// whatever it says here.
+// AUTH_VISIBILITY mirrors the API's own `server.auth.visibility`. It only matters when
+// AUTH_ENABLED is true, since an instance with no login is readable by everyone whatever
+// it says here.
 //
-// It defaults to "private" where the API defaults to "public". The mismatch is
-// deliberate: this is the value that decides whether an existing deployment starts
-// serving its data to anonymous visitors, and that must never happen because someone
-// upgraded without editing a config file. An unknown value falls back the same way, so a
-// typo cannot open an instance either.
+// It defaults to "private" while the API defaults to "public", and that difference is
+// intended. This value decides whether an existing deployment starts serving its data to
+// anonymous visitors, which must never happen just because someone upgraded without
+// editing a config file. An unknown value falls back to "private" too, so a typo cannot
+// open an instance either.
 const VISIBILITY_PUBLIC = 'public'
 const VISIBILITY_PRIVATE = 'private'
 
@@ -50,8 +49,8 @@ function readAuthVisibility() {
 const authVisibility = isAuthEnabled ? readAuthVisibility() : VISIBILITY_PUBLIC
 
 // requiresLoginToRead answers one question: does browsing pipeline data need a session?
-// It is false on an open instance and on a public one. The account pages — the profile
-// and the API tokens — have their own rule and never consult it.
+// It is false on an open instance and on a public one. The account pages (the profile
+// and the API tokens) have their own rule and never check it.
 export const requiresLoginToRead = isAuthEnabled && authVisibility === VISIBILITY_PRIVATE
 
 export function getRuntimeConfig() {

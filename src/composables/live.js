@@ -1,9 +1,9 @@
 import { onBeforeUnmount, ref, watch } from 'vue'
 
-// Live data for the views people keep open all day. Views that can refresh quietly
-// subscribe with useLiveRefresh and report each successful load with markUpdated; the
-// app bar reads lastUpdated to say how fresh the page is. A view that does not refresh
-// never calls markUpdated, so the app bar shows nothing rather than a stale promise.
+// Live data for the views people keep open all day. Views that can refresh in the
+// background subscribe with useLiveRefresh and report each successful load with
+// markUpdated. The app bar reads lastUpdated to show how fresh the page is. A view that
+// does not refresh never calls markUpdated, so the app bar shows nothing for it.
 
 const REFRESH_INTERVAL_MS = 60 * 1000
 

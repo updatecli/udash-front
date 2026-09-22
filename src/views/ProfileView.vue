@@ -6,8 +6,8 @@
     />
     <v-row>
       <v-col cols="12">
-        <!-- The userinfo fetch is intentionally non-fatal, so without this a failure
-             would be indistinguishable from a user who simply has no details set. -->
+        <!-- The userinfo fetch is not fatal, so without this a failure would look the
+             same as a user with no details set. -->
         <v-alert
           v-if="error"
           type="warning"
@@ -29,8 +29,7 @@
             <v-icon v-else icon="mdi-account" size="64"></v-icon>
           </v-avatar>
 
-          <!-- The card used to be titled "Profile"; the page heading now says that, so
-               repeating it here would label the card with its own page name. -->
+          <!-- No card title: the page heading already says "Profile". -->
           <v-card-text class="pt-6">
             <v-text-field
               label="Username"

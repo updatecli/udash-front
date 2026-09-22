@@ -11,8 +11,8 @@
     ></v-progress-circular>
   </v-container>
 
-  <!-- The request never came back with a report. Saying so beats an empty page: the
-       reader otherwise has no way to tell a broken API from a report with no content. -->
+  <!-- The request did not return a report. We say so because with an empty page the
+       reader cannot tell a broken API from a report with no content. -->
   <v-container v-else-if="loadError" class="page-shell">
     <LoadError
       title="Could not load this report"
@@ -134,8 +134,8 @@
             variant="flat"
           >
             <v-card-text>
-              <!-- A wrapping list rather than a table: four columns cannot fit a phone,
-                   and the pipeline name already titles the page. -->
+              <!-- A wrapping list instead of a table, because four columns do not fit on a
+                   phone. The pipeline name is already the page title. -->
               <dl class="meta-grid">
                 <div>
                   <dt>Reported</dt>
@@ -345,8 +345,8 @@ import { defineAsyncComponent } from 'vue';
 const PipelineGraphComponent = defineAsyncComponent(() => import('./_graph.vue'));
 
 // CONFIG_ID_KEYS names, per resource stage, the field of the report holding the mapping
-// from a config UUID to the resource it belongs to. Actions are absent on purpose: they
-// carry no config of their own to link back to.
+// from a config UUID to the resource it belongs to. Actions are left out because they
+// have no config of their own to link back to.
 const STAGE_FIELDS = {
   source: 'Sources',
   condition: 'Conditions',
@@ -383,9 +383,9 @@ export default {
     loadError: '',
     resourceStage: "source",
     pipelineUUID: "",
-    // Both start empty rather than holding a placeholder shape: the template tells the
-    // three states apart by them, and a placeholder would render a report header with an
-    // unknown status before anything has been fetched.
+    // Both start empty. The template uses them to tell the three states apart, and a
+    // placeholder would render a report header with an unknown status before anything
+    // has been fetched.
     pipeline: null,
     latestReportByID: null,
   }),
@@ -467,8 +467,8 @@ export default {
       return Object.keys(this.pipeline?.Pipeline?.Targets || {}).length > 0
     },
 
-    // hasActions asks for an actionUrl rather than merely for an action: an action with
-    // nowhere to link to has nothing to show on its tab.
+    // hasActions checks for an actionUrl, not only an action. An action with no link has
+    // nothing to show on its tab.
     hasActions() {
       const actions = this.pipeline?.Pipeline?.Actions
       if (!actions) {
@@ -570,9 +570,9 @@ export default {
         console.error('Error fetching pipeline report:', error)
         this.pipeline = null
         this.latestReportByID = null
-        // A 404 is how the API says the id has nothing behind it, which is not a failure
-        // to report. Leaving loadError empty falls through to the "not found" state, which
-        // tells the reader what happened better than the API's own "no rows in result set".
+        // The API returns a 404 when nothing exists for the id. That is not an error to
+        // report: with loadError left empty, the page shows the "not found" state, which is
+        // clearer than the API's own "no rows in result set".
         this.loadError = error.status === 404 ? '' : describeLoadError(error, 'this report')
       } finally {
         this.isLoading = false
@@ -651,7 +651,7 @@ export default {
   gap: 16px;
   padding: 14px 16px;
   border-radius: 12px;
-  /* Themed rather than a fixed black: the dark surface would otherwise swallow it. */
+  /* Uses the theme colour, because fixed black disappears on the dark surface. */
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 

@@ -12,16 +12,15 @@
 </template>
 
 <style>
-/* Every page's outermost container. Views used to each pick their own width, fluidity
-   and padding, so no two page titles started at the same x or y. The .v-container
-   prefix is deliberate: it outranks Vuetify's own .v-container padding and per-breakpoint
-   max-width regardless of which stylesheet loads first. */
+/* Every page's outermost container, so all page titles start at the same x and y.
+   The .v-container prefix outranks Vuetify's own .v-container padding and per-breakpoint
+   max-width, whichever stylesheet loads first. */
 :root {
   --udash-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
 /* Versions, digests, identifiers and times: aligned digits and a face that tells
-   0 from O, so values can be compared at a glance. */
+   0 from O, so values are easy to compare. */
 .text-mono {
   font-family: var(--udash-font-mono);
   font-variant-numeric: tabular-nums;

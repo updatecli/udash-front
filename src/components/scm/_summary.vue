@@ -278,18 +278,16 @@
 
                                         <!-- Reports received on this branch. It sits
                                              outside the link above so hovering the bars
-                                             does not read as navigation, and it only
-                                             mounts once a repository is expanded, so a
-                                             collapsed page costs nothing.
+                                             does not look like navigation. It only mounts
+                                             once a repository is expanded, so a collapsed
+                                             page costs nothing.
 
-                                             It follows the filter's window: the bucket
-                                             size is derived from that window, so the
-                                             last day now reads as hours rather than
-                                             collapsing into a single bar. Every card
-                                             shares the one window, which is what keeps
-                                             the branches comparable to each other. It
-                                             falls back to the full history when no
-                                             range is set. -->
+                                             It uses the filter's window, and the bucket
+                                             size comes from that window, so the last day
+                                             shows as hourly bars. Every card shares the
+                                             same window, so the branches can be compared.
+                                             With no range set, it shows the full
+                                             history. -->
                                         <v-lazy class="branch-activity px-4 pb-2" min-height="44">
                                             <ActivityChart
                                                 mode="volume"
@@ -400,18 +398,17 @@ ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
 const EMPTY_DONUT_DATA = Object.freeze({ labels: [], datasets: [] });
 
 // DOUGHNUT_SEGMENTS ties every slice to the pipeline result it counts, so the chart
-// and the click handler reading a slice back cannot drift apart. The last one has no
-// result: it counts whatever Updatecli did not report as one, so there is nothing to
-// filter on, and clicking it does nothing.
+// and the click handler always agree. The last slice has no result: it counts anything
+// Updatecli did not report as a result, so there is nothing to filter on and clicking
+// it does nothing.
 //
-// The wording follows PIPELINE_RESULTS rather than getStatusText: at pipeline level
-// "⚠" is Updatecli reporting that it changed something, which "Warning" reads as the
-// opposite of.
+// The labels come from PIPELINE_RESULTS, not getStatusText. At pipeline level "⚠"
+// means Updatecli changed something, and "Warning" suggests something went wrong.
 //
-// Success is split in two, matching RESULT_SERIES in activityChart.vue. A pipeline which
-// had nothing to change reports a success even when the change is already waiting in a
-// pull request nobody merged, and those are the ones worth looking at: without the split
-// they are indistinguishable from the branches which are genuinely up to date.
+// Success is split in two, matching RESULT_SERIES in activityChart.vue. A pipeline with
+// nothing to change reports a success even when the change is already waiting in an
+// unmerged pull request. Those are the ones worth looking at, and without the split they
+// look the same as the branches that are up to date.
 const DOUGHNUT_SEGMENTS = Object.freeze([
     { result: '✔', openAction: true, label: '✔ Waiting to be merged', color: 'result-waiting' },
     { result: '✔', openAction: false, label: '✔ Success', color: 'success' },
@@ -834,9 +831,8 @@ export default {
                     requestBody.results = this.filter.results;
                 }
 
-                // Tri-state: an unset filter has to stay absent from the body rather than
-                // be sent as false, which would drop every pipeline with an open pull
-                // request.
+                // Tri-state: an unset filter must be left out of the body. Sending false
+                // would drop every pipeline with an open pull request.
                 if (typeof this.filter?.openAction === 'boolean') {
                     requestBody.open_action = this.filter.openAction;
                 }
@@ -1009,9 +1005,9 @@ export default {
             }
 
             const resultsByType = branchData.total_result_by_type || {};
-            // total_open_action_by_result is a breakdown of total_result_by_type rather
-            // than an addition to it, so a split result contributes to both of its
-            // segments and the doughnut still totals total_result.
+            // total_open_action_by_result is a breakdown of total_result_by_type, not an
+            // extra count. A split result contributes to both of its segments, and the
+            // doughnut still adds up to total_result.
             const openActionsByType = branchData.total_open_action_by_result || {};
             const counts = DOUGHNUT_SEGMENTS.map(() => 0);
 
@@ -1027,10 +1023,10 @@ export default {
                     counts[openIndex] += open;
                 }
 
-                // Anything which is not an Updatecli result lands in the last segment,
-                // which is the one carrying no result and so the one not filtering. A
-                // result without a split segment keeps its whole count, so an open action
-                // on it is still counted, just not called out.
+                // Anything that is not an Updatecli result goes into the last segment,
+                // which has no result and does not filter. A result without a split
+                // segment keeps its whole count, so an open action on it is counted but
+                // not shown separately.
                 counts[index === -1 ? DOUGHNUT_SEGMENTS.length - 1 : index] +=
                     openIndex === -1 ? resultsByType[result] : resultsByType[result] - open;
             }
@@ -1047,9 +1043,9 @@ export default {
         },
 
         // doughnutOptionsFor gives every doughnut its own options so the click handler
-        // knows which branch it belongs to. They are cached outside the reactive state:
-        // handing the chart a fresh options object on each render would have it
-        // reinitialise itself, and writing to reactive data while rendering would loop.
+        // knows which branch it belongs to. We cache them outside the reactive state. A
+        // new options object on each render makes the chart reinitialise itself, and
+        // writing to reactive data while rendering would loop.
         doughnutOptionsFor(url, branch, branchData) {
             const key = JSON.stringify([url, branch]);
 
@@ -1069,10 +1065,10 @@ export default {
                             return;
                         }
 
-                        // On the dashboard the whole card is a link to this branch's
-                        // reports, and the canvas sits inside it. Stop the click there
-                        // so picking a segment does not also follow the link, losing
-                        // the result on the way.
+                        // On the dashboard the whole card links to this branch's
+                        // reports, and the canvas sits inside it. Stop the click here,
+                        // otherwise picking a segment also follows the link and the
+                        // selected result is lost.
                         event?.native?.preventDefault();
                         event?.native?.stopPropagation();
 
@@ -1085,9 +1081,9 @@ export default {
             return this.doughnutOptionsCache[key];
         },
 
-        // isFilterableSegment answers whether a click landed on a segment standing for
-        // a single result. The unknown one counts everything Updatecli did not report
-        // as a result, which is not something the search API can be asked for.
+        // isFilterableSegment checks whether a click landed on a segment for a single
+        // result. The unknown segment counts everything Updatecli did not report as a
+        // result, and the search API cannot filter on that.
         isFilterableSegment(elements) {
             if (!Array.isArray(elements) || elements.length === 0) {
                 return false;
@@ -1096,22 +1092,21 @@ export default {
             return !!DOUGHNUT_SEGMENTS[elements[0].index]?.result;
         },
 
-        // openAction is undefined for the segments counting a result whole, and true or
-        // false for the two halves of a split one, which have to carry both dimensions
-        // so the reader lands on the pipelines the slice actually stood for.
+        // openAction is undefined for segments that count a whole result, and true or
+        // false for the two halves of a split one. The halves need both values so the
+        // reader lands on the same pipelines the slice counted.
         selectResult(result, scmID, openAction) {
             if (this.hideButton) {
-                // The reports for this branch are already on screen, so narrowing the
-                // filter in place is enough; navigating would only lose the reader's
-                // position on the page.
+                // The reports for this branch are already on screen, so we narrow the
+                // filter in place. Navigating would lose the reader's position on the
+                // page.
                 this.$emit('toggle-result', result, openAction);
                 return;
             }
 
             // The card already links to this branch's reports, so a segment click goes
-            // to that same place with the result carried over rather than somewhere
-            // new. The current filter travels along, keeping the date range and the
-            // labels the reader had set here.
+            // to the same page with the result added. The current filter comes along
+            // too, keeping the date range and labels the reader had set here.
             const query = { ...router.currentRoute.value.query, scmid: scmID };
             const state = decodeFilterState(query.filter) || {};
 
@@ -1170,8 +1165,8 @@ export default {
         },
     },
     async created() {
-        // Kept off the reactive state on purpose: it only holds the per-doughnut
-        // options objects, which have to keep their identity across renders.
+        // Not reactive: it only holds the per-doughnut options objects, which have to
+        // stay the same objects across renders.
         this.doughnutOptionsCache = {};
         this.themedDoughnutCache = new WeakMap();
 

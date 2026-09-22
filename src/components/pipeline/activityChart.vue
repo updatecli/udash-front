@@ -12,8 +12,8 @@
   <!-- Nothing is rendered when the request failed or returned no report at all:
        a host page stays exactly as it would be without this component. -->
   <div v-else-if="hasData" class="activity-chart" :class="{ 'activity-chart--refreshing': loading }">
-    <!-- Counts rather than a success rate: a change Updatecli applied is not a failure,
-         and a percentage would have to count it as one or the other. -->
+    <!-- We show counts instead of a success rate. A change Updatecli applied is neither
+         a success nor a failure, and a percentage would have to count it as one. -->
     <p v-if="showStats" class="activity-stats text-body-medium text-medium-emphasis mb-3">
       <span>
         <span class="font-weight-medium text-high-emphasis">{{ formatCount(stats.total) }}</span>
@@ -74,17 +74,15 @@ ChartJS.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip,
 // still borrows its order and labels for the tooltip breakdown.
 //
 // The colours are the ones _summary.vue already uses for its doughnuts, so both
-// charts read as one system. They are used solid rather than at 0.7 alpha:
-// compositing them over the page background drops green and amber below the 3:1
-// contrast floor. Red and amber stay close under deuteranopia, which is why every
-// label carries its result glyph — identity is never left to colour alone.
+// charts look the same. They are used solid, not at 0.7 alpha: over the page
+// background, 0.7 alpha drops green and amber below the 3:1 contrast floor. Red and
+// amber stay close under deuteranopia, so every label also carries its result glyph.
 //
-// The success bucket is split in two. A pipeline which had nothing to change reports a
-// success even when the change it would have made is already waiting in a pull request
-// nobody merged, so lumping both together buries the ones needing a human under the ones
-// which are genuinely up to date. The split is drawn below plain success, next to the
-// other results worth acting on, in the blue forges use for an open pull request — a hue
-// none of the other segments occupies.
+// The success bucket is split in two. A pipeline with nothing to change reports a
+// success even when its change is already waiting in a pull request nobody merged.
+// Mixing both would hide the ones that need a human among the ones that are up to
+// date. The split is drawn below plain success, next to the other results worth acting
+// on, in the blue forges use for an open pull request (no other segment uses it).
 const RESULT_SERIES = Object.freeze([
     { key: '✗',       label: '✗ Error',   color: 'error' },
     { key: '⚠',       label: '⚠ Changed', color: 'warning' },
@@ -94,10 +92,10 @@ const RESULT_SERIES = Object.freeze([
     { key: 'unknown', label: '? Unknown', color: 'result-unknown' },
 ]);
 
-// seriesCount reads what a series contributes to a bucket. open_actions is a breakdown of
-// results rather than an addition to it, so the plain success segment is what is left once
-// the ones waiting on a pull request are taken out, and the two together still add up to
-// the success count the API reported.
+// seriesCount reads what a series contributes to a bucket. open_actions breaks the
+// results down further and does not add to them. The plain success segment is what is
+// left once the pipelines waiting on a pull request are taken out, so the two together
+// still add up to the success count the API reported.
 function seriesCount(entry, resultSeries) {
     const total = entry?.results?.[resultSeries.result || resultSeries.key] || 0;
 
@@ -110,27 +108,26 @@ function seriesCount(entry, resultSeries) {
     return resultSeries.openAction ? open : Math.max(total - open, 0);
 }
 
-// VOLUME_COLOR paints the total-reports bar, and is deliberately a hue no result owns.
-// The bar counts every report in its bucket whatever that report said, so wearing a
-// result's colour makes it claim something it does not know — green in particular read
-// as "these all passed" on a day where half of them failed. The claim is worse where
-// this chart sits beside the doughnut in _summary.vue, whose legend names green as
-// "✔ Success" a few pixels away.
+// VOLUME_COLOR paints the total-reports bar. No result uses this hue.
+// The bar counts every report in its bucket, whatever the result. In a result colour
+// it suggests something it does not measure: in green, it read as "these all passed"
+// on a day where half of them failed. That is worse next to the doughnut in
+// _summary.vue, whose legend labels green as "✔ Success".
 //
-// A neutral grey would be the natural mark for a plain quantity, but the greys that
-// clear 3:1 against both themes' surfaces all land within a hair of the grey already
-// meaning "- Skipped" (0.17 relative luminance). Red, amber, blue, green, grey and
-// purple being spoken for by RESULT_SERIES, teal is what is left.
+// Grey is the usual choice for a plain count, but every grey that clears 3:1 against
+// both themes' surfaces is very close to the "- Skipped" grey (0.17 relative
+// luminance). RESULT_SERIES already uses red, amber, blue, green, grey and purple, so
+// teal is what is left.
 //
-// It stays pinned rather than read from the theme: at 0.15 relative luminance it clears
-// 3:1 against #FFFFFF, #F4F9FF, #0F1624 and #070B12 alike, and sitting that much darker
-// than the "✔ waiting to be merged" blue keeps the two apart on lightness as well as
-// hue, which is what survives deuteranopia.
+// The colour is fixed and not read from the theme. At 0.15 relative luminance it
+// clears 3:1 against #FFFFFF, #F4F9FF, #0F1624 and #070B12. It is also much darker
+// than the "✔ waiting to be merged" blue, so the two differ in lightness as well as
+// hue, and that difference survives deuteranopia.
 const VOLUME_COLOR = '#0E7490';
 
-// MIN_PLOT_BUCKETS is how many buckets a window must cover before the bars are worth
-// drawing. Below it there is no shape to read — two columns are a comparison, not a
-// trend — so the plot is dropped and the summary line carries the window on its own.
+// MIN_PLOT_BUCKETS is how many buckets a window must cover before we draw the bars.
+// Two columns show no trend, so below this we drop the plot and the summary line
+// describes the window on its own.
 const MIN_PLOT_BUCKETS = 3;
 
 // Thresholds for granularity: 'auto' picks the bucket size that keeps the number of
@@ -155,10 +152,10 @@ const GRANULARITY_DAYS = Object.freeze({
     month: 28,
 });
 
-// MAX_SUMMARY_BUCKETS mirrors the API's own maxSummaryBuckets. Exceeding it is a 400,
-// and with hourly buckets an ordinary filter selection can reach it — a 60 day window
-// is 1441 hours. Coarsening here rather than sending the request follows what
-// getMaxHistoryDays already does with the API's day ceiling.
+// MAX_SUMMARY_BUCKETS mirrors the API's own maxSummaryBuckets. Going over it returns a
+// 400, and hourly buckets reach it with an ordinary filter selection (a 60 day window
+// is 1441 hours). We coarsen the granularity before sending the request, the same way
+// getMaxHistoryDays handles the API's day ceiling.
 const MAX_SUMMARY_BUCKETS = 1000;
 
 // hexToRgba fades a theme colour so grid lines and ticks stay recessive against
@@ -282,9 +279,9 @@ export default {
         },
     },
 
-    // loaded carries a status object rather than a nullable summary, so a host can tell
-    // "this instance has never reported" from "the request was refused": the two look
-    // identical from here but call for opposite pages, one onboarding and one not.
+    // loaded carries a status object instead of a nullable summary, so a host can tell
+    // "this instance has never reported" from "the request was refused". Both look the
+    // same from here, but only the first one should show the onboarding page.
     //   { hasData: Boolean, summary: Object|null, error: String|null }
     emits: ['loaded'],
 
@@ -342,10 +339,10 @@ export default {
         },
 
         // activeSeries drops the results that never occurred over the whole range.
-        // Most instances only ever emit ✔, ⚠ and ✗, and "unknown" only shows up for
-        // reports stored before the result column was backfilled — keeping those in
-        // the legend costs clarity and buys nothing. Colour is bound to the result
-        // key rather than to a position, so dropping one never repaints the others.
+        // Most instances only ever emit ✔, ⚠ and ✗. "unknown" only appears for reports
+        // stored before the result column was backfilled, and keeping it in the legend
+        // only adds noise. Colour is bound to the result key, not to a position, so
+        // dropping one never repaints the others.
         activeSeries() {
             return RESULT_SERIES.filter(
                 (resultSeries) => this.entries.some((entry) => seriesCount(entry, resultSeries) > 0)
@@ -415,8 +412,8 @@ export default {
                     borderColor: surface,
                     borderWidth: { top: 2 },
                     borderSkipped: false,
-                    // Only the top of the stack is rounded, so the bar reads as one
-                    // mark with a single rounded end rather than a pile of pills.
+                    // Only the top of the stack is rounded, so the bar has a single
+                    // rounded end and the segments do not look like separate pills.
                     borderRadius: index === series.length - 1
                         ? { topLeft: 4, topRight: 4 }
                         : 0,
@@ -434,8 +431,8 @@ export default {
             return {
                 responsive: true,
                 maintainAspectRatio: false,
-                // A sparkline gives its whole height to the bars: with a strip this
-                // short an axis band would leave the marks a few pixels to live in.
+                // A sparkline gives its whole height to the bars. The strip is so
+                // short that an axis would leave only a few pixels for them.
                 layout: this.compact ? { padding: { top: 2, bottom: 2 } } : {},
                 scales: {
                     x: {
@@ -484,8 +481,9 @@ export default {
                                 return ` ${count.toLocaleString()} ${count === 1 ? 'report' : 'reports'}`;
                             },
                             // Volume mode drops the per-result stack, so the breakdown
-                            // moves here — at no cost in chart chrome. Zero results are
-                            // skipped so a clean day shows one line rather than five.
+                            // moves into the tooltip and takes no room on the chart.
+                            // Results at zero are skipped, so a clean day shows one line
+                            // instead of five.
                             afterBody: (items) => {
                                 const entry = this.entries[items[0]?.dataIndex];
                                 if (!entry) return '';
@@ -502,7 +500,8 @@ export default {
             };
         },
 
-        // themeColors follows ThemeSwitcher rather than hard-coding light-mode chrome.
+        // themeColors follows ThemeSwitcher, so the chart chrome is not hard-coded to
+        // the light theme.
         themeColors() {
             const colors = this.$vuetify.theme.current.colors;
             const ink = colors['on-background'] || colors['on-surface'] || '#000000';
@@ -603,10 +602,10 @@ export default {
                 return date;
             }
 
-            // An hour bucket marks a moment rather than a calendar unit, so it reads in
-            // the viewer's own zone: activity "at 15:00" should mean their 15:00. Zones
-            // offset by a fraction of an hour land on :30 or :45, which is where the
-            // bucket really falls for them and not a rounding error to correct.
+            // An hour bucket is a moment in time, so it is shown in the viewer's own
+            // zone: activity "at 15:00" should mean their 15:00. In zones offset by a
+            // fraction of an hour, labels land on :30 or :45. That is where the bucket
+            // really falls for them, so we leave it as is.
             if (granularity === 'hour') {
                 return parsed.toLocaleTimeString('en-US', {
                     hour: 'numeric',
@@ -672,8 +671,8 @@ export default {
                 body.results = this.results;
             }
 
-            // Tri-state: an unset filter has to stay absent from the body rather than be
-            // sent as false, which would drop every pipeline with an open pull request.
+            // Tri-state: an unset filter must be left out of the body. Sending false
+            // would drop every pipeline with an open pull request.
             if (typeof this.openAction === 'boolean') {
                 body.open_action = this.openAction;
             }
@@ -681,8 +680,8 @@ export default {
             return body;
         },
 
-        // silent refreshes keep the chart at full opacity: a dim every minute would read
-        // as a problem rather than as fresh data.
+        // silent refreshes keep the chart at full opacity. Dimming it every minute would
+        // look like a problem when it is only fresh data.
         async fetchSummary({ silent = false } = {}) {
             this.currentRequestId += 1;
             const requestId = this.currentRequestId;
@@ -717,12 +716,12 @@ export default {
             } catch (error) {
                 if (requestId !== this.currentRequestId) return;
 
-                // A summary is still supporting information, so the host keeps rendering
-                // and is told there is no data. The reason is shown in place of the plot
-                // rather than only logged: a blank strip reads as "no activity", which is
-                // the wrong conclusion when the window was simply refused. It travels in
-                // the event too, so a host drawing its own conclusions from an empty
-                // chart can hold them when the window never actually arrived.
+                // A summary is supporting information, so the host keeps rendering and
+                // is told there is no data. We show the reason in place of the plot and
+                // do not only log it, because a blank strip reads as "no activity",
+                // which is wrong when the window was refused. The reason is also sent in
+                // the event, so a host that draws conclusions from an empty chart can
+                // hold them back when the window never arrived.
                 console.error('fetching pipeline reports summary:', error);
                 this.error = describeLoadError(error, 'the pipeline activity');
                 this.summary = null;

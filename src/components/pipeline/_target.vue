@@ -215,14 +215,14 @@ export default {
 
     computed: {
         sanitizedInformation: function(){
-            // Updated limit to 72 characters like in _source.vue
+            // 72 character limit, as in _source.vue
             if (this.data.Information && this.data.Information.length > 72) {
                 return this.data.Information.substring(0, 69) + "..."
             }
             return this.data.Information || ''
         },
         sanitizedNewInformation: function(){
-            // Updated limit to 72 characters like in _source.vue
+            // 72 character limit, as in _source.vue
             if (this.data.NewInformation && this.data.NewInformation.length > 72) {
                 return this.data.NewInformation.substring(0, 69) + "..."
             }

@@ -146,7 +146,7 @@ async function load(queue) {
     entry.total = data.total_count || 0
     markUpdated()
   } catch (error) {
-    // A quiet refresh that fails keeps what is already on screen.
+    // A background refresh that fails keeps what is already on screen.
     if (entry.rows === null) {
       entry.error = describeLoadError(error, `the ${queue.title.toLowerCase()} pipelines`)
     }

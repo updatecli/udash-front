@@ -18,10 +18,10 @@
           What is Udash?
         </h2>
         <p class="text-body-large mb-0">
-          Udash is a web dashboard designed to work with
+          Udash is a web dashboard for
           <a href="https://updatecli.io" target="_blank" rel="noopener noreferrer"
-            class="text-decoration-none">Updatecli</a>,
-          providing visibility into your dependency update workflows.
+            class="text-decoration-none">Updatecli</a>.
+          It shows the results of your dependency update pipelines.
         </p>
       </v-card>
     </section>
@@ -59,12 +59,12 @@
 
         <p class="text-body-large mb-4">
           Udash is free and open-source software licensed under the
-          <strong>GNU Affero General Public License v3.0</strong>.
+          GNU Affero General Public License v3.0.
         </p>
 
         <v-alert variant="tonal" class="mb-4">
           <p class="mb-2">
-            <strong>What this means:</strong>
+            In short:
           </p>
           <ul class="license-terms">
             <li v-for="term in licenseTerms" :key="term.text" class="d-flex align-start mb-2">
@@ -125,8 +125,8 @@ export default {
     ],
 
     // The full licence text is not inlined here: it already lives in the repository's
-    // LICENSE file, and the two buttons below point at an authoritative copy. Keeping a
-    // second copy in the bundle only invited drift between them.
+    // LICENSE file, and the two buttons below point at an authoritative copy. A second copy
+    // in the bundle would drift from them.
     licenseTerms: [
       {
         icon: 'mdi-arrow-right-circle',
