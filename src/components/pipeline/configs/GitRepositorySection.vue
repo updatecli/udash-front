@@ -73,7 +73,7 @@ export default {
     },
     getRepositoryDisplayName(url) {
       const info = extractGitURLInfo(url)
-      return info?.provider !== 'unknown' ? `${info.owner}/${info.repo}` : url
+      return info ? `${info.owner}/${info.repo}` : url
     }
   }
 }
