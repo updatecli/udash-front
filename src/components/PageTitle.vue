@@ -4,7 +4,7 @@
        About), and the compact bar for every other page. -->
   <header :class="hero ? 'mb-8' : 'mb-6'">
     <template v-if="hero">
-      <h1 class="text-display-small font-weight-bold mb-4">{{ title }}</h1>
+      <h1 class="text-display-small font-weight-bold mb-4"><slot name="title">{{ title }}</slot></h1>
       <p v-if="hasSubtitle" class="text-body-large text-medium-emphasis mb-0">
         <slot name="subtitle">{{ subtitle }}</slot>
       </p>

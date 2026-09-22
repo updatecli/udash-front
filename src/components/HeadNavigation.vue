@@ -91,11 +91,3 @@ export default {
   },
 }
 </script>
-
-<style scoped>
-.udash-wordmark {
-  font-family: 'Orbitron', 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-</style>

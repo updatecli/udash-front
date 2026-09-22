@@ -7,7 +7,9 @@
         hero
         title="Udash"
         subtitle="The Updatecli dashboard for tracking automated updates across your Git repositories."
-      />
+      >
+        <template #title><span class="udash-wordmark">Udash</span></template>
+      </PageTitle>
 
       <!-- Only on a private instance, where it is the only content a signed-out page has.
            Elsewhere the app bar's Log in button is enough. -->
