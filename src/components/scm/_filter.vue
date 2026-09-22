@@ -1,9 +1,8 @@
 <template>
   <!-- No horizontal padding below sm. Both views already mount this inside their own
-       v-container and v-col, so px-6 here is a second helping of gutters: it costs 48
-       of the 360px a phone has, on top of the nav rail's 56 and the expansion panel's
-       48, which is what squeezed the date labels onto two lines and stacked the slider
-       ticks on top of each other. -->
+       v-container and v-col, so px-6 here would add a second set of gutters. On a 360px
+       phone that is 48px more, on top of the nav rail (56) and the expansion panel (48).
+       It pushed the date labels onto two lines and stacked the slider ticks. -->
   <v-container
       class="py-8 px-0 px-sm-6"
       fluid
@@ -116,16 +115,15 @@
               </div>
                 <!-- Pipeline Result and Open Pull Request Selection
 
-                     Both are picked from their name alone, unlike every other control
-                     here which can be checked against the rows it returns, so their
-                     items carry a subtitle spelling out what each one means.
+                     Users pick these two from their name alone. The other controls can
+                     be checked against the rows they return, so only these items have a
+                     subtitle explaining what each one means.
 
-                     They sit side by side because they are read together: a pipeline
+                     They sit side by side because they are read together. A pipeline
                      reports a success when it had nothing to change, including when the
-                     change is already waiting in a pull request nobody merged, and
-                     pairing the two is what isolates those. They remain two controls
-                     rather than one list of five: an open pull request is a dimension of
-                     its own, orthogonal to the result. -->
+                     change is already waiting in an unmerged pull request, and combining
+                     the two filters finds those. They stay two controls (not one list of
+                     five) because an open pull request is independent of the result. -->
                 <v-row>
                   <v-col cols="12" md="6">
                     <v-select
@@ -232,10 +230,10 @@ import { FILTER_STORAGE_KEY, stepToISO } from '@/composables/date';
 import { PIPELINE_RESULTS, PIPELINE_RESULT_VALUES, OPEN_ACTION_OPTIONS, OPEN_ACTION_VALUES, openActionToQuery } from '@/composables/status';
 import { encodeFilterState, decodeFilterState } from '@/composables/filter';
 
-// Steps 0-23 are hours ago; from 24 onwards a step is a day, so the step standing
-// for D days back is D + DAY_STEP_OFFSET. The default range is deliberately left at
-// the last day whatever the configured maximum: widening the slider must not widen
-// what every visitor asks the backend for by default.
+// Steps 0-23 are hours ago. From 24 onwards a step is a day, so the step for D days
+// back is D + DAY_STEP_OFFSET. The default range stays at the last day whatever the
+// configured maximum, so a wider slider does not increase what every visitor requests
+// from the backend by default.
 const DAY_STEP_OFFSET = 23;
 const DEFAULT_DATE_RANGE = [0, 24];
 
@@ -324,17 +322,17 @@ export default {
       return this.$vuetify.display.xs
     },
 
-    // The ticks give up sooner than the endpoint labels do, and at a different width.
-    // Crossing out of xs restores this container's px-6, so the track is briefly
-    // narrower at 600px than it was at 599; measured, the full anchor set only stops
-    // colliding around 768. Hence smAndDown here against xs above.
+    // The ticks need more room than the endpoint labels, so they switch at a different
+    // width. Above xs this container gets its px-6 back, which makes the track narrower
+    // at 600px than at 599px. Measured, the full set of anchors stops overlapping around
+    // 768px, hence smAndDown here and xs above.
     hasCrowdedTicks() {
       return this.$vuetify.display.smAndDown
     },
 
-    // sliderTicks marks a handful of anchors along the slider so the scale is
-    // readable. Labelling every step is unusable once the range spans weeks, and the
-    // exact instants either side are already spelled out in the two labels above it.
+    // sliderTicks marks a few anchors along the slider so the scale is readable.
+    // Labelling every step does not work once the range spans weeks, and the two labels
+    // above the slider already show the exact start and end.
     //
     // Anchors follow the same mapping as stepToDate: below 24 a step is an hour, and
     // the step for D days back is D + DAY_STEP_OFFSET.
@@ -342,12 +340,11 @@ export default {
       const ticks = {}
       const maxDays = getMaxHistoryDays()
 
-      // Vuetify positions every tick label absolutely and skips none, so anchors falling
-      // close together overprint into an unreadable pile rather than dropping out. A
-      // phone leaves the track about 190px, room for the two ends and one anchor
-      // between them; the instants either side are spelled out above it either way.
-      // The middle anchor is worth keeping: the scale is not linear, an hour and a day
-      // being the same step apart, so two ends alone would misread.
+      // Vuetify positions every tick label absolutely and never skips one, so anchors
+      // that are close together print on top of each other. On a phone the track is
+      // about 190px, enough for the two ends and one anchor between them. We keep the
+      // middle anchor because the scale is not linear (an hour and a day are both one
+      // step), and the two ends alone would be misleading.
       if (this.hasCrowdedTicks) {
         ticks[this.toSliderValue(maxDays + DAY_STEP_OFFSET)] = `${maxDays} days`
         ticks[this.toSliderValue(DAY_STEP_OFFSET + 1)] = '1 day'
@@ -362,7 +359,7 @@ export default {
 
       const dayAnchors = [1, 7, 14, 30, 60, 90, 180, 365].filter((days) => days <= maxDays)
 
-      // Always mark the far end, so how far the filter reaches is legible at a glance.
+      // Always mark the far end, so it is clear how far back the filter reaches.
       if (!dayAnchors.includes(maxDays)) {
         dayAnchors.push(maxDays)
       }
@@ -374,14 +371,13 @@ export default {
       return ticks
     },
 
-    // sliderRange presents dateRange the way a timeline reads: oldest on the left,
-    // now on the right. dateRange itself stays in "steps ago", which is what gets
-    // persisted, shared in the URL and turned into timestamps, so nothing downstream
-    // has to know about the flip.
+    // sliderRange shows dateRange like a timeline, oldest on the left and now on the
+    // right. dateRange itself stays in "steps ago", the form we persist, share in the URL
+    // and turn into timestamps, so nothing downstream has to know about the flip.
     //
-    // This is done by mirroring the values rather than with the slider's own reverse
-    // prop: reverse leaves the ticks sitting at the minimum and maximum pinned to the
-    // wrong ends, which puts "now" and the oldest label on the wrong sides.
+    // We mirror the values instead of using the slider's reverse prop. With reverse,
+    // the ticks at the minimum and maximum stay on the original ends, which puts "now"
+    // and the oldest label on the wrong sides.
     sliderRange: {
       get() {
         return [this.toSliderValue(this.dateRange[1]), this.toSliderValue(this.dateRange[0])]
@@ -393,8 +389,8 @@ export default {
     },
 
     // dateRange[0] is the step closest to now and dateRange[1] the furthest back, so
-    // the range starts at the second entry. The API tolerates the two being handed
-    // over the wrong way round, which is why this read backwards for so long without
+    // the range starts at the second entry. The API also accepts the two in the wrong
+    // order, which is why this code read them backwards for a long time without
     // breaking anything.
     formattedStartTime() {
       return stepToISO(this.dateRange[1])
@@ -404,8 +400,8 @@ export default {
       return stepToISO(this.dateRange[0])
     },
 
-    // maxDateStep is how far the slider reaches, driven by the instance's configured
-    // history window rather than a fixed bound.
+    // maxDateStep is how far the slider reaches. It comes from the instance's
+    // configured history window.
     maxDateStep() {
       return DAY_STEP_OFFSET + getMaxHistoryDays()
     },
@@ -435,20 +431,18 @@ export default {
       return [...new Set(value.filter((result) => PIPELINE_RESULT_VALUES.includes(result)))]
     },
 
-    // sanitizeOpenAction does for the open action what sanitizeResults does for the
-    // results: anything the API would not understand becomes "no filter" rather than a
-    // query matching nothing.
+    // sanitizeOpenAction does the same as sanitizeResults for the open action. Anything
+    // the API would not understand becomes "no filter", so the query still matches.
     sanitizeOpenAction(value) {
       return OPEN_ACTION_VALUES.includes(value) ? value : null
     },
 
-    // toggleResult is what the summary doughnuts call when one of their segments is
-    // clicked. Clicking the same segment again clears it, so a click is never a
-    // one-way trip into a filter the reader then has to scroll up to undo.
+    // The summary doughnuts call toggleResult when someone clicks a segment. Clicking
+    // the same segment again clears the filter, so the reader does not have to scroll
+    // up to undo it.
     //
-    // Segments standing for one half of a result split on whether a pull request is
-    // still open go through toggleResultWithOpenAction instead, so that both dimensions
-    // are set together.
+    // Some segments split a result on whether a pull request is still open. Those call
+    // toggleResultWithOpenAction instead, so both filters are set together.
     toggleResult(result) {
       const sanitized = this.sanitizeResults([result])
       if (sanitized.length === 0) {
@@ -459,8 +453,8 @@ export default {
         ? this.selectedResults.filter((selected) => selected !== sanitized[0])
         : [...this.selectedResults, sanitized[0]]
 
-      // Show what just changed: the control lives in a panel which is collapsed by
-      // default, and a filter the reader cannot see is a filter they cannot undo.
+      // Open the panel so the reader sees what changed. It is collapsed by default, and
+      // a filter the reader cannot see is hard to undo.
       if (!this.expandedPanels.includes(0)) {
         this.expandedPanels = [...this.expandedPanels, 0]
       }
@@ -468,9 +462,9 @@ export default {
       this.applyFilter()
     },
 
-    // toggleResultWithOpenAction is what the segments split on the open action call, so
-    // that clicking "succeeded, waiting to be merged" selects both dimensions in one go
-    // rather than leaving the reader with a half applied filter.
+    // Segments split on the open action call toggleResultWithOpenAction. Clicking
+    // "succeeded, waiting to be merged" sets both the result and the open action in one
+    // go, so the reader never ends up with half of the filter applied.
     toggleResultWithOpenAction(result, openAction) {
       const wasSelected = this.selectedResults.includes(result) && this.selectedOpenAction === openAction
 
@@ -786,9 +780,9 @@ export default {
         newFilter.results = [...this.selectedResults];
       }
 
-      // The API reads the open action as an optional boolean, so an unset filter has to
-      // stay absent from the body rather than be sent as false, which would drop every
-      // pipeline carrying an open pull request.
+      // The API reads the open action as an optional boolean. An unset filter must be
+      // left out of the body: sending false would drop every pipeline with an open pull
+      // request.
       const openAction = openActionToQuery(this.selectedOpenAction);
       if (openAction !== undefined) {
         newFilter.openAction = openAction;
@@ -855,9 +849,9 @@ export default {
       return date
     },
 
-    // The weekday goes first when room runs out: it is the one part of a range boundary
-    // the date next to it already implies, and it costs about five characters of a line
-    // a phone can barely fit.
+    // When space runs out, the weekday is the first thing we drop. The date next to it
+    // already implies it, and it takes about five characters on a line that barely fits
+    // on a phone.
     formatHumanDate(date) {
       return new Intl.DateTimeFormat(undefined, {
         ...(this.isCompactDisplay ? {} : { weekday: 'short' }),
@@ -1048,10 +1042,10 @@ export default {
 </script>
 
 <style scoped>
-/* Plain text rather than a readonly text field: a solo variant spends about 32px a side
-   on input padding, which is most of the room a phone has to spell out a date, and the
-   box it buys stands for something the reader can never type into. Text also wraps
-   where an input clips, so a longer locale format loses a line rather than its end. */
+/* Plain text instead of a readonly text field. A solo variant uses about 32px of input
+   padding on each side, which is most of the room a phone has for a date, and the box
+   suggests a value the reader could type into. Text also wraps where an input clips, so
+   a longer locale format goes onto a second line instead of losing its end. */
 .date-range-value {
   font-size: 0.85rem;
   line-height: 1.25;
@@ -1073,8 +1067,8 @@ export default {
   }
 }
 
-/* The tick labels keep their default size on a wide track and shrink on a narrow one,
-   which buys the three surviving anchors enough room to clear each other at 320px. */
+/* The tick labels keep their default size on a wide track and shrink on a narrow one.
+   That gives the three remaining anchors enough room not to overlap at 320px. */
 @media (max-width: 960px) {
   .v-slider :deep(.v-slider-track__tick-label) {
     font-size: 0.75rem;

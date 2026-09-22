@@ -13,7 +13,7 @@
             href="https://github.com/updatecli"
         ></v-btn>
         <div>
-            {{ new Date().getFullYear() }} — <strong>© Updatecli Project</strong>
+            © {{ new Date().getFullYear() }} Updatecli Project
         </div>
     </v-footer>
 </template>

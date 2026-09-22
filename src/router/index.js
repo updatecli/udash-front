@@ -60,7 +60,7 @@ const routes = allRoutes.filter((route) => isAuthEnabled || !route.meta?.require
 const router = createRouter({
   history: createWebHistory(getAppBasePath()),
   routes,
-  // The app shell lives in App.vue and no longer unmounts between routes, so the
+  // The app shell lives in App.vue and does not unmount between routes, so the
   // document never collapses and the browser keeps the previous scroll offset.
   // Reset it explicitly, while still honouring back/forward restoration.
   scrollBehavior(to, from, savedPosition) {

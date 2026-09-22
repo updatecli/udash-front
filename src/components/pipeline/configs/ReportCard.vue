@@ -10,7 +10,7 @@
             {{ report.Result }}
           </v-chip>
           <v-spacer></v-spacer>
-          <span>{{ report.Name || 'Unnamed Report' }}</span>
+          <span>{{ report.Name || 'Unnamed report' }}</span>
           <v-spacer></v-spacer>
         </div>
       </v-expansion-panel-title>

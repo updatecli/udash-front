@@ -1,7 +1,7 @@
 <template>
   <!-- Every page announces itself through this component so the heading level, size and
        spacing stay in one place. Two tiers only: `hero` for the landing pages (Home,
-       About), the compact bar for everything that is a tool rather than an entrance. -->
+       About), and the compact bar for every other page. -->
   <header :class="hero ? 'mb-8' : 'mb-6'">
     <template v-if="hero">
       <h1 class="text-display-small font-weight-bold mb-4">{{ title }}</h1>

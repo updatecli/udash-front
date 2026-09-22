@@ -49,11 +49,9 @@ watch(mode, value => {
   immediate: true,
 })
 
-// In 'system' mode the OS preference is only read when applyTheme runs, so without
-// this listener the theme would freeze at whatever the OS was set to when the
-// component mounted. It used to be re-read by accident, because every navigation
-// remounted the whole app shell; now that the shell lives in App.vue and mounts
-// once, tracking the change has to be explicit.
+// In 'system' mode the OS preference is only read when applyTheme runs. The app shell
+// in App.vue mounts once, so without this listener the theme would stay at whatever
+// the OS was set to when the component mounted.
 function onSystemThemeChange() {
   if (mode.value === 'system') {
     applyTheme('system')

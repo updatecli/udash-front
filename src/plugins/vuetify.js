@@ -17,8 +17,8 @@ const darkTheme = {
     'secondary-darken-1': '#2E9BC9',
     error: '#FF5D7A',
     info: '#7CCBFF',
-    // A mid green rather than the brand's neon: "all fine" should be the quietest
-    // status on screen, not the loudest.
+    // A mid green instead of the brand's neon, so "all fine" is the quietest
+    // status on screen.
     success: '#3FB27A',
     warning: '#FFC857',
     // Pipeline results without a semantic colour of their own. Success, changed and

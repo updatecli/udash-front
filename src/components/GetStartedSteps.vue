@@ -4,12 +4,11 @@
       <h3 class="text-title-large mb-2">{{ index + 1 }}. {{ step.title }}</h3>
       <div class="mb-3" v-html="step.description"></div>
 
-      <!-- Both authentication methods need a token, and until now this page asked
-           for one without saying where to get it. -->
+      <!-- Both authentication methods need a token, so tell the user where to get one. -->
       <p v-if="step.needsToken && isAuthEnabled" class="mb-3 text-medium-emphasis">
         Both methods use an API token.
         <router-link class="text-info" to="/profile/tokens">Create one here</router-link>
-        if you have not already — it is shown only once.
+        if you have not already. It is shown only once.
       </p>
 
       <!-- Step with mutually-exclusive methods (Authenticate) -->
@@ -87,17 +86,17 @@ export default {
       },
       {
         title: "Authenticate",
-        description: "Connect Updatecli to Udash. Pick the method that fits your environment — you only need one.",
+        description: "Connect Updatecli to Udash. You only need one of these methods, so pick the one that fits your environment.",
         needsToken: true,
         methods: [
           {
-            label: "Method A – Config file",
-            description: "Stores the token locally — convenient and secure for local development. Updatecli prompts for the token, or takes it with --token.",
+            label: "Method A: Config file",
+            description: "Stores the token in a local config file. Use this for local development. Updatecli prompts for the token, or takes it with --token.",
             code: (apiUrl, dashUrl) => `updatecli udash login --experimental --api-url "${apiUrl}" "${dashUrl}"`
           },
           {
-            label: "Method B – Environment variables",
-            description: "Better for CI/CD pipelines and containers.",
+            label: "Method B: Environment variables",
+            description: "Use this in CI/CD pipelines and containers.",
             code: (apiUrl, dashUrl) => `export UPDATECLI_UDASH_API_URL="${apiUrl}"\nexport UPDATECLI_UDASH_URL="${dashUrl}"\nexport UPDATECLI_UDASH_ACCESS_TOKEN="udash_pat_..."  # Only if required by your Udash instance`
           }
         ]

@@ -122,7 +122,7 @@ export default {
       }
     },
     filter: function() {
-      // IF the filter is changed, we need to wait for the summary and reports to be updated
+      // If the filter is changed, we need to wait for the summary and reports to be updated
       this.setSummaryLoaded(false)
       this.setReportsLoaded(false)
     }
@@ -149,10 +149,10 @@ export default {
     updateFilter: function(filter) {
       this.filter = filter;
     },
-    // The summary doughnuts narrow the filter rather than filtering themselves, so
-    // they keep showing the whole breakdown of the branch while the reports below
-    // shrink to the result which was clicked. The filter owns that state, hence the
-    // hand off rather than a second copy of it here.
+    // The summary doughnuts narrow the filter instead of filtering themselves. They keep
+    // showing the whole breakdown of the branch while the reports below shrink to the
+    // clicked result. The filter owns that state, so we pass the value to it instead of
+    // keeping a second copy here.
     //
     // openAction is set only by the segments standing for one half of a result split on
     // whether a pull request is still open. Both dimensions are then handed over

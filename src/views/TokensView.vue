@@ -35,8 +35,8 @@
       >
         <div class="font-weight-medium mb-1">Copy your token now</div>
         <div class="text-body-medium mb-3">
-          This is the only time it is shown. Once you leave this page it cannot be
-          recovered, only replaced.
+          This is the only time it is shown. After you leave this page you cannot see it
+          again. If you lose it, create a new token.
         </div>
         <div class="token-block">
           <v-btn

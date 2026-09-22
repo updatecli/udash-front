@@ -22,7 +22,7 @@ import { lastUpdated, refreshNow, clearUpdated, useNow } from '@/composables/liv
 const now = useNow()
 const route = useRoute()
 
-// A new page starts without a freshness claim until its own data arrives.
+// A new page shows no update time until its own data arrives.
 watch(() => route.path, () => clearUpdated())
 
 const seconds = computed(() => Math.max(0, Math.floor((now.value - (lastUpdated.value || now.value)) / 1000)))

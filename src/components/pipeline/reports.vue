@@ -37,7 +37,7 @@
             </p>
           </div>
 
-          <!-- Enhanced Actions Card -->
+          <!-- Actions card -->
           <v-card flat class="mb-4 action-summary-card">
             <v-card-text class="pa-0">
               <v-list density="compact" class="py-0">
@@ -123,10 +123,10 @@
             fixed-header
             max-height="600px"
           >
-            <!-- A pipeline which had nothing to change reports a success even when the
-                 change it would have made is already waiting in a pull request nobody
-                 merged. The badge is what tells those apart from the genuinely up to
-                 date ones, which the result glyph alone cannot do. -->
+            <!-- A pipeline with nothing to change reports a success even when its
+                 change is already waiting in a pull request nobody merged. The result
+                 glyph is the same in both cases, so the badge tells them apart from
+                 the ones that are up to date. -->
             <template v-slot:item.Result="{ item }">
               <v-tooltip :text="getResultTooltipText(item)">
                 <template v-slot:activator="{ props }">
@@ -276,13 +276,13 @@ export default {
     },
 
 
-    // New: Get provider name for subtitle
+    // getProviderName returns the provider name for the subtitle.
     getProviderName(url) {
       const info = extractGitURLInfo(url)
       if (info?.provider) {
         return info.provider.charAt(0).toUpperCase() + info.provider.slice(1)
       }
-      return 'External Link'
+      return 'External link'
     },
 
     getActionTooltipText(action) {
@@ -410,8 +410,8 @@ export default {
         requestBody.results = this.filter.results
       }
 
-      // Same reason as the results above, and the value is a tri-state: an unset filter
-      // has to stay absent from the body rather than be sent as false.
+      // Same reason as the results above. The value is a tri-state: an unset filter
+      // must be left out of the body, not sent as false.
       if (typeof this.filter?.openAction === 'boolean') {
         requestBody.open_action = this.filter.openAction
       }

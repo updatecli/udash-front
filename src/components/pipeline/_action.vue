@@ -112,11 +112,11 @@ export default {
 
             // GitLab uses merge requests
             if (this.gitInfo.provider === 'gitlab') {
-                return 'Merge Request';
+                return 'Merge request';
             }
 
             // All others use pull requests
-            return 'Pull Request';
+            return 'Pull request';
         },
 
         getActionIcon() {

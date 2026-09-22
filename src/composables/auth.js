@@ -22,25 +22,25 @@ const state = reactive({
   error: null,
 })
 
-// canReadData separates "may see pipeline data" from "has a session", which used to be
-// the same flag. On a public instance an anonymous visitor reads everything the API
-// serves anonymously, and signing in adds the profile and the API tokens rather than the
-// data. It stays reactive so a visitor who signs in mid-session sees the panels appear
-// without reloading.
+// canReadData says whether the visitor may see pipeline data, which is a separate
+// question from having a session. On a public instance an anonymous visitor reads
+// everything the API serves anonymously, and signing in only adds the profile and the
+// API tokens pages. It stays reactive so a visitor who signs in mid-session sees the
+// panels appear without reloading.
 export const canReadData = computed(() => !requiresLoginToRead || state.isAuthenticated)
 
 let userManager = null
 let initPromise = null
 
-// loadUserInfoClaims resolves the profile claims for a session. The ID token carries
-// only what the provider chooses to put there — Zitadel omits `email`, `name`,
-// `preferred_username` and `picture` unless the application opts in — so the claims are
-// read from the userinfo endpoint and merged over the token's own.
+// loadUserInfoClaims resolves the profile claims for a session. The ID token only
+// carries what the provider puts there (Zitadel omits `email`, `name`,
+// `preferred_username` and `picture` unless the application opts in), so we read the
+// claims from the userinfo endpoint and merge them over the token's own.
 //
-// This is deliberately non-fatal. oidc-client-ts' built-in `loadUserInfo` runs inside
-// the signin callback and the refresh path and throws on failure, which would cost the
-// user their session over a transient userinfo error. Here a failure degrades to the
-// sparse ID-token profile and is recorded for the UI to surface.
+// A failure here is not fatal. oidc-client-ts' built-in `loadUserInfo` runs inside the
+// signin callback and the refresh path and throws on failure, so a transient userinfo
+// error would end the user's session. Instead we fall back to the sparse ID-token
+// profile and record the error for the UI to show.
 async function loadUserInfoClaims(user) {
   if (!user?.access_token) {
     return user?.profile ?? null
@@ -197,10 +197,10 @@ function routeNeedsSession(to) {
     (to.meta?.requiresRead === true && requiresLoginToRead)
 }
 
-// authGuard is registered once as the router's global guard. It replaces the per-route
-// `beforeEnter`, which could not express "needed here, but only on a private instance".
-// Authenticated users pass, others are redirected to the identity provider with the
-// target route remembered.
+// authGuard is registered once as the router's global guard, because a per-route
+// `beforeEnter` cannot express "needed here, but only on a private instance".
+// Authenticated users pass. Others are redirected to the identity provider, and the
+// target route is remembered.
 export async function authGuard(to) {
   if (!isAuthEnabled || !routeNeedsSession(to)) {
     return true
@@ -233,12 +233,11 @@ function currentReturnTo() {
   return relative + window.location.search + window.location.hash
 }
 
-// handleUnauthorized turns an API refusal into the login the viewer was never offered.
-// It fires only for a viewer with no session: on an instance configured public while its
-// API is private, every data request comes back 401 and the pages would otherwise render
-// silently empty. A 401 for someone already signed in is a different fault — an expired
-// token, a missing role, the wrong audience — and bouncing them to the provider would
-// loop.
+// handleUnauthorized sends a viewer with no session to the login page when the API
+// refuses a request. This happens on an instance configured public while its API is
+// private: every data request comes back 401, and the pages would otherwise render empty.
+// For someone already signed in, a 401 means something else (an expired token, a missing
+// role, the wrong audience), and redirecting them to the provider would loop.
 let unauthorizedRedirect = false
 
 export function handleUnauthorized() {

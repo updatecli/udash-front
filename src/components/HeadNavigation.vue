@@ -57,8 +57,8 @@ export default {
     ThemeSwitcher,
   },
   setup() {
-    // Both the login button and the account menu are gated on isAuthEnabled, so with
-    // auth disabled neither renders whatever the auth state says. main.js settles that
+    // Both the login button and the account menu depend on isAuthEnabled, so with
+    // auth disabled neither renders, whatever the auth state says. main.js settles that
     // state before mounting in every mode, so useAuth() is safe to call here regardless.
     const auth = useAuth();
     const route = useRoute();
