@@ -79,7 +79,12 @@
                                                 {{ repoRollup(scmData).waiting }} {{ getActionShortLabel(url) }}{{ repoRollup(scmData).waiting === 1 ? '' : 's' }} waiting
                                             </span>
                                         </template>
-                                        <span v-else class="text-medium-emphasis">✔ Up to date</span>
+                                        <!-- A ✔ needs a pipeline that confirmed there was nothing to
+                                             change. Skipped runs and silence prove nothing. -->
+                                        <span v-else-if="repoRollup(scmData).success" class="text-medium-emphasis">✔ Up to date</span>
+                                        <span v-else-if="repoRollup(scmData).skipped" class="text-result-skipped">- {{ repoRollup(scmData).skipped }} skipped</span>
+                                        <span v-else-if="repoRollup(scmData).total" class="text-result-unknown">? {{ repoRollup(scmData).total }} without a result</span>
+                                        <span v-else class="text-medium-emphasis">No reports in this period</span>
                                     </div>
 
                                     <div class="d-flex align-center ga-2">
@@ -514,9 +519,7 @@ export default {
             let entries = Object.entries(this.data);
 
             if (this.hideEmpty) {
-                entries = entries.filter(([, scmData]) =>
-                    Object.values(scmData).some(branch => (Number(branch?.total_result) || 0) > 0)
-                );
+                entries = entries.filter(([, scmData]) => this.repoRollup(scmData).total > 0);
             }
 
             const rank = ([, scmData]) => {
@@ -676,13 +679,16 @@ export default {
         // repoRollup totals a repository's branches: failed and changed pipelines, and
         // pull requests still waiting to be merged.
         repoRollup(scmData) {
-            const rollup = { failed: 0, changed: 0, waiting: 0 };
+            const rollup = { failed: 0, changed: 0, waiting: 0, success: 0, skipped: 0, total: 0 };
 
             Object.values(scmData || {}).forEach((branch) => {
                 const byType = branch?.total_result_by_type || {};
                 rollup.failed += Number(byType['✗']) || 0;
                 rollup.changed += Number(byType['⚠']) || 0;
                 rollup.waiting += Number(branch?.total_action_urls) || 0;
+                rollup.success += Number(byType['✔']) || 0;
+                rollup.skipped += Number(byType['-']) || 0;
+                rollup.total += Number(branch?.total_result) || 0;
             });
 
             return rollup;
