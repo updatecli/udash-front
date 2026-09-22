@@ -1111,7 +1111,11 @@ export default {
             const state = decodeFilterState(query.filter) || {};
 
             state.selectedResults = [result];
-            if (openAction !== undefined) {
+            // An unsplit slice counted every pipeline with that result, so an open
+            // action filter carried over from the current page must not narrow it.
+            if (openAction === undefined) {
+                delete state.selectedOpenAction;
+            } else {
                 state.selectedOpenAction = openAction ? 'open' : 'none';
             }
             query.filter = encodeFilterState(state);
@@ -1147,9 +1151,13 @@ export default {
         },
 
         doughnutLabel(branch, branchData) {
-            const parts = Object.entries(branchData?.total_result_by_type || {}).map(
-                ([status, count]) => `${getPipelineResultText(status)} ${this.getStatusPercentage(count, branchData.total_result)}`
-            );
+            // Read the counts off the chart itself so the label names the same
+            // segments, split ones included.
+            const counts = this.buildDoughnutData(branchData).datasets[0]?.data || [];
+            const parts = DOUGHNUT_SEGMENTS
+                .map((segment, index) => [segment, counts[index]])
+                .filter(([, count]) => count > 0)
+                .map(([segment, count]) => `${segment.label.replace(/^\S+\s/, '')} ${this.getStatusPercentage(count, branchData.total_result)}`);
             return `Results on ${branch}: ${parts.join(', ')}`;
         },
 
