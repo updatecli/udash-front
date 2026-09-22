@@ -128,7 +128,18 @@ function toRow(report) {
     updatedAt: report.UpdatedAt,
     repository: scm?.URL?.replace(/^https?:\/\/[^/]+\//, '').replace(/\.git$/, '') || '',
     branch: scm?.Branch?.Source || '',
-    actionUrl: action?.actionUrl || '',
+    actionUrl: safeHttpUrl(action?.actionUrl),
+  }
+}
+
+// safeHttpUrl keeps a link only when it is http or https, so a report cannot slip a
+// javascript: URL into the page.
+function safeHttpUrl(value) {
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : ''
+  } catch {
+    return ''
   }
 }
 
