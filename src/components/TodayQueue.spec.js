@@ -23,10 +23,10 @@ function report(id, overrides = {}) {
   }
 }
 
-// Answers the failing queue and the waiting queue from what each request asks for.
+// Answers the failing queue and the waiting queue from the endpoint each one asks.
 function answer({ failing, waiting }) {
-  api.apiFetch.mockImplementation(async (path, { body }) => {
-    const result = body.open_action ? waiting : failing
+  api.apiFetch.mockImplementation(async (path) => {
+    const result = path === '/pipeline/actions/search' ? waiting : failing
     if (result instanceof Error) {
       throw result
     }
@@ -57,14 +57,14 @@ afterEach(() => {
 })
 
 describe('TodayQueue', () => {
-  it('asks for the latest failing reports and the latest ones with an open pull request', async () => {
+  it('asks for the latest failing reports and the open pull requests', async () => {
     answer({ failing: { data: [], total_count: 0 }, waiting: { data: [], total_count: 0 } })
     await mountQueue()
 
     const bodies = api.apiFetch.mock.calls.map(([path, { method, body }]) => ({ path, method, body }))
     expect(bodies).toEqual([
       { path: '/pipeline/reports/search', method: 'POST', body: { limit: 5, page: 1, latest: true, results: ['✗'] } },
-      { path: '/pipeline/reports/search', method: 'POST', body: { limit: 5, page: 1, latest: true, open_action: true } },
+      { path: '/pipeline/actions/search', method: 'POST', body: { limit: 5, page: 1 } },
     ])
   })
 
@@ -92,18 +92,32 @@ describe('TodayQueue', () => {
     })
   })
 
-  it('offers the pull request of a waiting pipeline', async () => {
-    const waiting = report('w', {
-      Result: '✔',
-      Report: { Targets: {}, Actions: { a1: { actionUrl: 'https://github.com/updatecli/udash/pull/7' } } },
-    })
+  it('lists each pull request once, linked to the dashboard', async () => {
+    const waiting = {
+      url: 'https://github.com/updatecli/udash/pull/7',
+      title: 'Bump udash',
+      repository: 'https://github.com/updatecli/udash.git',
+      branch: 'main',
+      updated_at: '2026-09-22T11:57:00Z',
+      pipelines: [
+        { id: 'p1', name: 'First manifest', result: '✔', updated_at: '2026-09-22T11:57:00Z' },
+        { id: 'p2', name: 'Second manifest', result: '⚠', updated_at: '2026-09-22T11:50:00Z' },
+      ],
+    }
     answer({ failing: { data: [], total_count: 0 }, waiting: { data: [waiting], total_count: 1 } })
     const wrapper = await mountQueue()
 
-    const button = column(wrapper, 'waiting').get('a[target="_blank"]')
-    expect(button.attributes('href')).toBe('https://github.com/updatecli/udash/pull/7')
-    expect(button.attributes('aria-label')).toBe('Open the pull request for Bump w (opens in a new tab)')
-    expect(column(wrapper, 'waiting').text()).toContain('1 pull request · see all')
+    const items = column(wrapper, 'waiting').findAll('.pull-requests__item')
+    expect(items).toHaveLength(1)
+    expect(items[0].get('a[target="_blank"]').attributes('href')).toBe('https://github.com/updatecli/udash/pull/7')
+    expect(items[0].text()).toContain('2 pipelines')
+
+    const link = column(wrapper, 'waiting').findComponent(RouterLinkStub)
+    expect(link.text()).toBe('1 pull request · see all')
+    expect(decodeFilterState(link.props('to').query.filter)).toEqual({
+      dateRange: [0, 53],
+      selectedOpenAction: 'open',
+    })
   })
 
   it('says so when a queue is empty', async () => {

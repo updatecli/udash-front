@@ -1,46 +1,40 @@
 <template>
-  <!-- What needs a human right now, from the latest report of every pipeline: the ones
-       failing and the ones whose change is waiting in an open pull request. -->
+  <!-- What needs a human right now: the pipelines whose latest report is failing, and the
+       pull requests still waiting to be merged. -->
   <div class="today-queue">
-    <section
-      v-for="queue in queues"
-      :key="queue.key"
-      class="today-queue__column"
-      :aria-labelledby="`queue-${queue.key}`"
-    >
+    <section class="today-queue__column" aria-labelledby="queue-failing">
       <header class="today-queue__header">
-        <h3 :id="`queue-${queue.key}`" class="text-title-medium font-weight-bold">
-          <v-icon v-if="queue.icon" :icon="queue.icon" :color="queue.color" size="small" aria-hidden="true"></v-icon>
-          <span v-else :class="`text-${queue.color}`" aria-hidden="true">{{ queue.glyph }}</span>
-          {{ queue.title }}
+        <h3 id="queue-failing" class="text-title-medium font-weight-bold">
+          <span class="text-error" aria-hidden="true">✗</span>
+          Failing
         </h3>
         <router-link
-          v-if="state[queue.key].total > 0"
-          :to="queue.link"
+          v-if="failing.total > 0"
+          :to="failingLink"
           class="today-queue__count text-body-small"
         >
-          <span class="text-mono">{{ state[queue.key].total.toLocaleString() }}</span>
-          {{ queue.noun(state[queue.key].total) }} · see all
+          <span class="text-mono">{{ failing.total.toLocaleString() }}</span>
+          {{ failing.total === 1 ? 'pipeline' : 'pipelines' }} · see all
         </router-link>
       </header>
 
       <LoadError
-        v-if="state[queue.key].error"
+        v-if="failing.error"
         compact
-        :message="state[queue.key].error"
-        @retry="load(queue)"
+        :message="failing.error"
+        @retry="loadFailing"
       />
 
-      <div v-else-if="state[queue.key].rows === null" class="today-queue__list" aria-busy="true">
+      <div v-else-if="failing.rows === null" class="today-queue__list" aria-busy="true">
         <v-skeleton-loader v-for="n in 3" :key="n" type="list-item-two-line" />
       </div>
 
-      <p v-else-if="state[queue.key].rows.length === 0" class="today-queue__empty text-body-medium text-medium-emphasis">
-        {{ queue.empty }}
+      <p v-else-if="failing.rows.length === 0" class="today-queue__empty text-body-medium text-medium-emphasis">
+        No pipeline is failing.
       </p>
 
       <ul v-else class="today-queue__list">
-        <li v-for="row in state[queue.key].rows" :key="row.id" class="today-queue__item">
+        <li v-for="row in failing.rows" :key="row.id" class="today-queue__item">
           <v-icon
             :icon="getStatusIcon(row.result)"
             :color="getStatusColor(row.result)"
@@ -57,126 +51,87 @@
               <span class="text-mono" :title="formatAbsoluteDate(row.updatedAt)">{{ toRelativeTime(row.updatedAt, now) }}</span>
             </div>
           </div>
-          <v-btn
-            v-if="row.actionUrl"
-            :href="row.actionUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            :icon="openActionIcon"
-            variant="text"
-            size="small"
-            :aria-label="`Open the pull request for ${row.name} (opens in a new tab)`"
-          ></v-btn>
         </li>
       </ul>
     </section>
+
+    <PullRequestList
+      class="today-queue__column"
+      title="Waiting to be merged"
+      heading-tag="h3"
+      heading-id="queue-waiting"
+      :limit="QUEUE_SIZE"
+      :see-all-link="waitingLink"
+    />
   </div>
 </template>
 
 <script setup>
 import { reactive } from 'vue'
 import LoadError from '@/components/LoadError.vue'
+import PullRequestList from '@/components/PullRequestList.vue'
 import { apiFetch, describeLoadError } from '@/composables/api'
 import { encodeFilterState } from '@/composables/filter'
 import { formatAbsoluteDate, toRelativeTime } from '@/composables/date'
-import { getStatusColor, getStatusIcon, OPEN_ACTION_ICON } from '@/composables/status'
+import { getStatusColor, getStatusIcon } from '@/composables/status'
 import { getMaxHistoryDays } from '@/composables/runtime'
 import { markUpdated, useLiveRefresh, useNow } from '@/composables/live'
+import { shortRepository } from '@/composables/url'
 
 const QUEUE_SIZE = 5
 // The dashboard link spans the whole history the instance serves: "latest" reports can
 // be older than the dashboard's default window of one day.
 const FULL_RANGE = [0, 23 + getMaxHistoryDays()]
 
-const openActionIcon = OPEN_ACTION_ICON
+const failingLink = { path: '/scm/dashboard', query: { filter: encodeFilterState({ dateRange: FULL_RANGE, selectedResults: ['✗'] }) } }
+const waitingLink = { path: '/scm/dashboard', query: { filter: encodeFilterState({ dateRange: FULL_RANGE, selectedOpenAction: 'open' }) } }
+
 const now = useNow()
 
-const queues = [
-  {
-    key: 'failing',
-    title: 'Failing',
-    glyph: '✗',
-    color: 'error',
-    body: { results: ['✗'] },
-    noun: (count) => (count === 1 ? 'pipeline' : 'pipelines'),
-    empty: 'No pipeline is failing.',
-    link: { path: '/scm/dashboard', query: { filter: encodeFilterState({ dateRange: FULL_RANGE, selectedResults: ['✗'] }) } },
-  },
-  {
-    key: 'waiting',
-    title: 'Waiting to be merged',
-    icon: OPEN_ACTION_ICON,
-    color: 'result-waiting',
-    body: { open_action: true },
-    noun: (count) => (count === 1 ? 'pull request' : 'pull requests'),
-    empty: 'No pull request is waiting.',
-    link: { path: '/scm/dashboard', query: { filter: encodeFilterState({ dateRange: FULL_RANGE, selectedOpenAction: 'open' }) } },
-  },
-]
+const failing = reactive({ rows: null, total: 0, error: null })
 
-const state = reactive(Object.fromEntries(queues.map((queue) => [queue.key, { rows: null, total: 0, error: null }])))
-
-const generations = {}
+let generation = 0
 
 function toRow(report) {
   const targets = Object.values(report.Report?.Targets || {})
   const scm = targets.find((target) => target?.Scm?.URL)?.Scm
-  const action = Object.values(report.Report?.Actions || {}).find((item) => item?.actionUrl)
 
   return {
     id: report.ID,
     name: report.Name || 'Unnamed report',
     result: report.Result,
     updatedAt: report.UpdatedAt,
-    repository: scm?.URL?.replace(/^https?:\/\/[^/]+\//, '').replace(/\.git$/, '') || '',
+    repository: shortRepository(scm?.URL),
     branch: scm?.Branch?.Source || '',
-    actionUrl: safeHttpUrl(action?.actionUrl),
   }
 }
 
-// safeHttpUrl keeps a link only when it is http or https, so a report cannot slip a
-// javascript: URL into the page.
-function safeHttpUrl(value) {
-  try {
-    const url = new URL(value)
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : ''
-  } catch {
-    return ''
-  }
-}
-
-async function load(queue) {
-  const entry = state[queue.key]
-  entry.error = null
+async function loadFailing() {
+  failing.error = null
   // A slow response must not overwrite the one from a later refresh.
-  const generation = (generations[queue.key] || 0) + 1
-  generations[queue.key] = generation
+  const current = ++generation
 
   try {
     const data = await apiFetch('/pipeline/reports/search', {
       method: 'POST',
-      body: { limit: QUEUE_SIZE, page: 1, latest: true, ...queue.body },
+      body: { limit: QUEUE_SIZE, page: 1, latest: true, results: ['✗'] },
     })
-    if (generations[queue.key] !== generation) return
+    if (current !== generation) return
 
-    entry.rows = (data.data || data.reports || []).map(toRow)
-    entry.total = data.total_count || 0
+    failing.rows = (data.data || data.reports || []).map(toRow)
+    failing.total = data.total_count || 0
     markUpdated()
   } catch (error) {
-    if (generations[queue.key] !== generation) return
+    if (current !== generation) return
     // A background refresh that fails keeps what is already on screen.
-    if (entry.rows === null) {
-      entry.error = describeLoadError(error, `the ${queue.title.toLowerCase()} pipelines`)
+    if (failing.rows === null) {
+      failing.error = describeLoadError(error, 'the failing pipelines')
     }
   }
 }
 
-function loadAll() {
-  queues.forEach(load)
-}
-
-loadAll()
-useLiveRefresh(loadAll)
+loadFailing()
+useLiveRefresh(loadFailing)
 </script>
 
 <style scoped>

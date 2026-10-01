@@ -396,7 +396,7 @@ import { apiFetch, describeLoadError } from '@/composables/api';
 import { getPipelineResultText, PIPELINE_RESULT_VALUES } from '@/composables/status';
 import { extractGitURLInfo } from '@/composables/git';
 import { getStorageKey, getMaxHistoryDays } from '@/composables/runtime';
-import { encodeFilterState, decodeFilterState } from '@/composables/filter';
+import { encodeFilterState, decodeFilterState, filterRequestBody } from '@/composables/filter';
 
 ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend)
 
@@ -814,28 +814,7 @@ export default {
                     requestBody.scmid = this.filter.scmid;
                 }
 
-                 // Add starttime and endtime filters if provided
-                if (this.filter?.startTime && this.filter.endTime ) {
-                    requestBody.start_time = this.filter.startTime;
-                    requestBody.end_time = this.filter.endTime;
-                }
-
-                if (this.filter?.labels && typeof this.filter.labels === 'object' && !Array.isArray(this.filter.labels)) {
-                    const labels = {};
-                    Object.entries(this.filter.labels).forEach(([key, value]) => {
-                        if (typeof key === 'string' && value !== undefined && value !== null) {
-                            labels[key] = String(value);
-                        }
-                    });
-
-                    if (Object.keys(labels).length > 0) {
-                        requestBody.labels = labels;
-                    }
-                }
-
-                if (Array.isArray(this.filter?.results) && this.filter.results.length > 0) {
-                    requestBody.results = this.filter.results;
-                }
+                Object.assign(requestBody, filterRequestBody(this.filter));
 
                 // Tri-state: an unset filter must be left out of the body. Sending false
                 // would drop every pipeline with an open pull request.

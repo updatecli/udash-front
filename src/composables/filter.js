@@ -49,3 +49,34 @@ export function decodeFilterState(encoded) {
     return null
   }
 }
+
+// filterRequestBody turns the filter the dashboard emits into the fields every search
+// endpoint reads the same way: the date range, the labels and the results. Fields left
+// unset are left out of the body rather than sent empty.
+export function filterRequestBody(filter) {
+  const body = {}
+
+  if (filter?.startTime && filter.endTime) {
+    body.start_time = filter.startTime
+    body.end_time = filter.endTime
+  }
+
+  if (filter?.labels && typeof filter.labels === 'object' && !Array.isArray(filter.labels)) {
+    const labels = {}
+    Object.entries(filter.labels).forEach(([key, value]) => {
+      if (typeof key === 'string' && value !== undefined && value !== null) {
+        labels[key] = String(value)
+      }
+    })
+
+    if (Object.keys(labels).length > 0) {
+      body.labels = labels
+    }
+  }
+
+  if (Array.isArray(filter?.results) && filter.results.length > 0) {
+    body.results = filter.results
+  }
+
+  return body
+}
