@@ -35,7 +35,7 @@
           <PullRequestList
             :filter="filter"
             paginated
-            :limit="10"
+            :limit="5"
             count-qualifier="in this period"
             empty="No pull request matches this filter."
           />
