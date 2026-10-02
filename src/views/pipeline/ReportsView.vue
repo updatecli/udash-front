@@ -53,6 +53,28 @@
         />
       </v-col>
     </v-row>
+    <!-- The pull requests still open on what the filter selects, once each, whichever page
+         of reports below they come from. -->
+    <v-row v-if="isFilterLoaded && filter.openAction !== false">
+      <v-col
+        cols="12"
+      >
+        <PullRequestList
+          :filter="filter"
+          paginated
+          :limit="5"
+          heading-class="text-title-large"
+          count-qualifier="in this period"
+          empty="No pull request matches this filter."
+        />
+      </v-col>
+    </v-row>
+    <p
+      v-else-if="isFilterLoaded"
+      class="reports-note text-body-small text-medium-emphasis"
+    >
+      Pull requests are hidden while the filter keeps only pipelines without one.
+    </p>
     <v-row>
       <v-col
         cols="12"
@@ -80,6 +102,7 @@
 
 import PipelineReports from '../../components/pipeline/reports.vue';
 import PageTitle from '../../components/PageTitle.vue';
+import PullRequestList from '../../components/PullRequestList.vue';
 
 import PipelineSCMSummary from '../../components/scm/_summary.vue';
 import PipelineSCMFilter from '../../components/scm/_filter.vue';
@@ -92,6 +115,7 @@ export default {
   components: {
     PageTitle,
     PipelineReports,
+    PullRequestList,
     PipelineSCMFilter,
     PipelineSCMSummary
   },
@@ -174,3 +198,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.reports-note {
+  margin: 0 0 8px;
+}
+</style>

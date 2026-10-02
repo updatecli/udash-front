@@ -25,66 +25,6 @@
       <v-row>
         <v-col
             cols="12"
-            lg="6"
-            v-if="actionURLs && actionURLs.length > 0"
-          >
-          <div class="mb-3">
-            <h3 class="text-title-medium d-flex align-center mb-2">
-              Open pull requests
-            </h3>
-            <p class="text-body-small text-medium-emphasis mb-0">
-              {{ actionURLs.length === 1 ? 'Opened by these pipelines and still waiting to be merged.' : `${actionURLs.length} opened by these pipelines and still waiting to be merged.` }}
-            </p>
-          </div>
-
-          <!-- Actions card -->
-          <v-card flat class="mb-4 action-summary-card">
-            <v-card-text class="pa-0">
-              <v-list density="compact" class="py-0">
-                <v-list-item
-                  v-for="(action, index) in actionURLs"
-                  :key="index"
-                  :href="action.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="action-list-item"
-                >
-                  <template v-slot:prepend>
-                    <v-avatar size="32" class="mr-3">
-                      <v-icon size="18">
-                        {{ getActionProviderIcon(action.url) }}
-                      </v-icon>
-                    </v-avatar>
-                  </template>
-
-                  <v-list-item-title class="text-body-medium font-weight-medium">
-                    {{ action.title }}
-                  </v-list-item-title>
-
-                  <v-list-item-subtitle class="text-body-small">
-                    {{ getProviderName(action.url) }}
-                  </v-list-item-subtitle>
-
-                  <template v-slot:append>
-                    <v-icon size="small" class="text-medium-emphasis" aria-label="Opens in a new tab">
-                      mdi-open-in-new
-                    </v-icon>
-                  </template>
-
-                  <!-- Add divider except for last item -->
-                  <template v-if="index < actionURLs.length - 1">
-                    <v-divider class="my-2"></v-divider>
-                  </template>
-                </v-list-item>
-              </v-list>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <v-row>
-        <v-col
-            cols="12"
           >
           <p class="text-body-small text-medium-emphasis mb-2">
             {{ totalItems.toLocaleString() }} {{ totalItems === 1 ? 'report' : 'reports' }}
@@ -224,7 +164,6 @@ export default {
   },
 
   data: () => ({
-    actionURLs: [], // Changed from {} to []
     openActionIcon: OPEN_ACTION_ICON,
     openActionColor: OPEN_ACTION_COLOR,
     pipelinesHeaders: [
@@ -276,15 +215,6 @@ export default {
     },
 
 
-    // getProviderName returns the provider name for the subtitle.
-    getProviderName(url) {
-      const info = extractGitURLInfo(url)
-      if (info?.provider) {
-        return info.provider.charAt(0).toUpperCase() + info.provider.slice(1)
-      }
-      return 'External link'
-    },
-
     getActionTooltipText(action) {
       return `${action.title} (${action.url})`
     },
@@ -322,29 +252,6 @@ export default {
       return actionURLs
     },
 
-    getPipelinesActionsURL(){
-      let localActionURLs = []
-      // Remove duplicates by tracking unique URL+title combinations
-      const seen = new Set()
-
-      this.pipelines.forEach(pipeline => {
-        if (pipeline.Report && pipeline.Report.Actions) {
-          for (const [action] of Object.entries(pipeline.Report.Actions)) {
-            const actionURL = pipeline.Report.Actions[action].actionUrl
-            const title = pipeline.Report.Actions[action].title
-            if (actionURL && title) {
-              const key = `${actionURL}-${title}`
-              if (!seen.has(key)) {
-                seen.add(key)
-                localActionURLs.push({"url": actionURL, title: title})
-              }
-            }
-          }
-        }
-      });
-
-      this.actionURLs = localActionURLs
-    },
 
     // A silent refresh leaves the page's loading overlay alone and keeps the rows on
     // screen if it fails.
@@ -425,7 +332,6 @@ export default {
         if (requestId !== this.requestId) return
 
         this.pipelines = data.data || data.reports || [];
-        this.getPipelinesActionsURL()
         this.totalItems = data.total_count || 0;
         this.currentPage = page;
         this.loadError = null;
@@ -484,21 +390,6 @@ export default {
 </script>
 
 <style scoped>
-.action-summary-card {
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  border-radius: 8px;
-}
-
-.action-list-item {
-  transition: background-color 0.2s ease;
-  border-radius: 4px;
-  margin: 2px 8px;
-}
-
-.action-list-item:hover {
-  background-color: rgba(var(--v-theme-on-surface), 0.04);
-}
-
 .report-name {
   display: inline-block;
   min-width: 12rem;

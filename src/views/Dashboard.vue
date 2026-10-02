@@ -24,6 +24,30 @@
         />
       </v-col>
     </v-row>
+    <!-- The pull requests follow the same filter as the repositories below. Filtering on
+         the pipelines without an open action leaves nothing for them to show. -->
+    <v-row v-if="isFilterLoaded && filter.openAction !== false">
+      <v-col
+        cols="12"
+      >
+        <!-- The same container as the repository cards below, so both share one width. -->
+        <v-container class="pa-0">
+          <PullRequestList
+            :filter="filter"
+            paginated
+            :limit="5"
+            count-qualifier="in this period"
+            empty="No pull request matches this filter."
+          />
+        </v-container>
+      </v-col>
+    </v-row>
+    <p
+      v-else-if="isFilterLoaded"
+      class="dashboard-note text-body-small text-medium-emphasis"
+    >
+      Pull requests are hidden while the filter keeps only pipelines without one.
+    </p>
     <v-row>
       <v-col
         cols="12"
@@ -41,6 +65,7 @@
 <script>
 import SCMSDashboard from '../components/scm/_summary.vue';
 import PageTitle from '../components/PageTitle.vue';
+import PullRequestList from '../components/PullRequestList.vue';
 
 import PipelineSCMFilter from '../components/scm/_filter.vue';
 
@@ -49,6 +74,7 @@ export default {
   components: {
     PageTitle,
     PipelineSCMFilter,
+    PullRequestList,
     PipelineSCMSSummary: SCMSDashboard,
   },
 
@@ -85,3 +111,9 @@ export default {
 }
 </script>
 
+
+<style scoped>
+.dashboard-note {
+  margin: 0 0 8px;
+}
+</style>

@@ -4,6 +4,7 @@ import {
   decodeFilterState,
   encodeBase64UrlUtf8,
   encodeFilterState,
+  filterRequestBody,
 } from '@/composables/filter'
 
 describe('base64url', () => {
@@ -47,5 +48,27 @@ describe('filter state', () => {
   it('returns null when the blob decodes to something other than an object', () => {
     expect(decodeFilterState(encodeBase64UrlUtf8('"a string"'))).toBeNull()
     expect(decodeFilterState(encodeBase64UrlUtf8('null'))).toBeNull()
+  })
+})
+
+describe('filterRequestBody', () => {
+  it('reads the date range, the labels and the results', () => {
+    expect(filterRequestBody({
+      startTime: '2026-09-01T00:00:00Z',
+      endTime: '2026-09-02T00:00:00Z',
+      labels: { team: 'infra', tier: 1 },
+      results: ['✗'],
+      openAction: true,
+    })).toEqual({
+      start_time: '2026-09-01T00:00:00Z',
+      end_time: '2026-09-02T00:00:00Z',
+      labels: { team: 'infra', tier: '1' },
+      results: ['✗'],
+    })
+  })
+
+  it('leaves out what is unset', () => {
+    expect(filterRequestBody(null)).toEqual({})
+    expect(filterRequestBody({ startTime: '2026-09-01T00:00:00Z', labels: {}, results: [] })).toEqual({})
   })
 })
