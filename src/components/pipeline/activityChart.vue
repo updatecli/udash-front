@@ -1,18 +1,18 @@
 <template>
-  <!-- While the first request is in flight we only reserve the plot height, so the
-       host does not have to know anything about the loading state. -->
   <div
     v-if="loading && !summary"
     class="d-flex align-center justify-center"
     :style="{ height }"
   >
+    <!-- While the first request is in flight we only reserve the plot height, so the
+         host does not have to know anything about the loading state. -->
     <v-progress-circular indeterminate color="primary" size="32" />
   </div>
-
-  <!-- Nothing is rendered when the request failed or returned no report at all:
-       a host page stays exactly as it would be without this component. -->
   <div v-else-if="hasData" class="activity-chart" :class="{ 'activity-chart--refreshing': loading }">
-    <!-- We show counts instead of a success rate. A change Updatecli applied is neither
+    <!-- Nothing is rendered when the request failed or returned no report at all:
+         a host page stays exactly as it would be without this component.
+
+         We show counts instead of a success rate. A change Updatecli applied is neither
          a success nor a failure, and a percentage would have to count it as one. -->
     <p v-if="showStats" class="activity-stats text-body-medium text-medium-emphasis mb-3">
       <span>
@@ -28,14 +28,12 @@
       <Bar :data="chartData" :options="chartOptions" />
     </div>
   </div>
-
-  <!-- A refused request is reported where the plot would be. Everything else still
-       renders nothing, so a host page stays exactly as it would be without this
-       component. -->
   <p v-else-if="error && compact" class="text-body-small text-medium-emphasis mb-0">
+    <!-- A refused request is reported where the plot would be. Everything else still
+         renders nothing, so a host page stays exactly as it would be without this
+         component. -->
     {{ error }}
   </p>
-
   <LoadError
     v-else-if="error"
     compact
@@ -47,6 +45,10 @@
 </template>
 
 <script>
+// The template keeps no comment before or between its root branches. A dev build keeps
+// template comments, so one there turns the rendered root into a fragment, and the
+// <Transition> of a v-lazy host (the dashboard strips) leaves it stuck at opacity 0.
+// Each branch documents itself from the inside instead.
 import { Bar } from 'vue-chartjs'
 
 import {
