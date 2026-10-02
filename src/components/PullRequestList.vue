@@ -30,7 +30,7 @@
     </p>
 
     <ul v-else class="pull-requests__list" :aria-busy="loading">
-      <li v-for="(row, index) in rows" :key="row.url" class="pull-requests__item">
+      <li v-for="(row, index) in rows" :key="row.key" class="pull-requests__item">
         <v-icon
           :icon="getStatusIcon(row.worst)"
           :color="getStatusColor(row.worst)"
@@ -40,6 +40,7 @@
         ></v-icon>
         <div class="pull-requests__body">
           <a
+            v-if="row.url"
             :href="row.url"
             target="_blank"
             rel="noopener noreferrer"
@@ -49,6 +50,13 @@
             {{ row.title }}<span class="d-sr-only"> (opens the {{ row.noun }} in a new tab)</span>
             <v-icon icon="mdi-open-in-new" size="x-small" class="pull-requests__external" aria-hidden="true"></v-icon>
           </a>
+          <!-- A link which is not http(s) is still a pull request waiting, so it is listed and
+               counted, only not offered as a link. -->
+          <span
+            v-else
+            class="pull-requests__title text-body-medium"
+            :class="{ 'text-mono': !row.hasTitle }"
+          >{{ row.title }}</span>
           <div class="pull-requests__meta text-body-small text-medium-emphasis">
             <span v-if="row.repository" class="text-mono">{{ row.repository }}<template v-if="row.branch"> · {{ row.branch }}</template></span>
             <span class="text-mono" :title="formatAbsoluteDate(row.updatedAt)">{{ toRelativeTime(row.updatedAt, now) }}</span>
@@ -58,10 +66,10 @@
             v-if="row.pipelines.length > 1"
             type="button"
             class="pull-requests__toggle text-body-small"
-            :aria-expanded="String(!!expanded[row.url])"
+            :aria-expanded="String(!!expanded[row.key])"
             :aria-controls="pipelinesId(index)"
             :aria-label="`${row.pipelines.length} pipelines feeding ${row.title}: ${row.tallyText}`"
-            @click="expanded[row.url] = !expanded[row.url]"
+            @click="expanded[row.key] = !expanded[row.key]"
           >
             <span
               v-for="entry in row.tally"
@@ -74,7 +82,7 @@
           </button>
 
           <ul
-            v-show="row.pipelines.length === 1 || expanded[row.url]"
+            v-show="row.pipelines.length === 1 || expanded[row.key]"
             :id="pipelinesId(index)"
             class="pull-requests__pipelines text-body-small"
             :aria-label="`Pipelines feeding ${row.title}`"
@@ -107,6 +115,10 @@
       class="pull-requests__pagination"
       @update:model-value="goTo"
     ></v-pagination>
+
+    <p v-if="pageError" class="pull-requests__page-error text-body-small text-error" role="status">
+      {{ pageError }}
+    </p>
 
     <p class="d-sr-only" aria-live="polite">{{ announcement }}</p>
   </section>
@@ -164,6 +176,7 @@ const error = ref(null)
 const loading = ref(false)
 const page = ref(1)
 const announcement = ref('')
+const pageError = ref('')
 const expanded = reactive({})
 
 const pageCount = computed(() => Math.ceil(total.value / props.limit))
@@ -174,6 +187,9 @@ const countLabel = computed(() => [
 ].filter(Boolean).join(' '))
 
 let generation = 0
+// The page the reader asked for, until its request settled. A refresh meanwhile loads
+// it too, so it does not drop the page the reader is waiting on.
+let requested = null
 
 function severity(result) {
   const rank = SEVERITY.indexOf(result)
@@ -205,9 +221,11 @@ function toRow(action) {
     .map((result) => ({ result, count: counts[result], textClass: TALLY_CLASSES[result] }))
 
   return {
+    key: action.url,
+    // url is empty when the link is not http(s), which the row then shows as plain text.
     url,
     hasTitle: Boolean(action.title),
-    title: action.title || url.replace(/^https?:\/\//, ''),
+    title: action.title || String(action.url || '').replace(/^https?:\/\//i, ''),
     noun: extractGitURLInfo(url)?.provider === 'gitlab' ? 'merge request' : 'pull request',
     repository: shortRepository(action.repository),
     branch: action.branch || '',
@@ -219,10 +237,15 @@ function toRow(action) {
   }
 }
 
-// load fetches the current page. announce says whether to tell screen readers what
-// the page now holds, which only a change asked for by the reader warrants.
-async function load({ announce = false } = {}) {
+// load fetches a page, the one the reader asked for or else the current one. The page
+// only becomes the current one once it arrived, so a page that fails to load leaves the
+// pager on the rows shown. announce says whether the reader asked for that page, which
+// warrants telling screen readers what it holds, or that it could not be loaded.
+async function load({ target = requested ?? page.value, announce = requested !== null } = {}) {
   error.value = null
+  // Only a page the reader asks for replaces the message: a background refresh, even one
+  // that succeeds, still leaves the pager short of the page that could not be loaded.
+  if (announce) pageError.value = ''
   loading.value = true
   // A slow response must not overwrite the one from a later refresh.
   const current = ++generation
@@ -234,21 +257,21 @@ async function load({ announce = false } = {}) {
         ...filterRequestBody(props.filter),
         ...(props.filter?.scmid ? { scmid: props.filter.scmid } : {}),
         limit: props.limit,
-        page: page.value,
+        page: target,
       },
     })
     if (current !== generation) return
 
     total.value = data.total_count || 0
-    // A refresh can leave the current page past the last one, once pull requests got merged.
-    if ((data.data || []).length === 0 && total.value > 0 && page.value > pageCount.value) {
-      page.value = pageCount.value
-      load()
+    // A refresh can leave the page past the last one, once pull requests got merged.
+    if ((data.data || []).length === 0 && total.value > 0 && target > pageCount.value) {
+      load({ target: pageCount.value, announce })
       return
     }
 
-    // A link that is not http(s) is not offered at all.
-    rows.value = (data.data || []).map(toRow).filter((row) => row.url)
+    requested = null
+    page.value = target
+    rows.value = (data.data || []).map(toRow)
     markUpdated()
 
     if (announce) {
@@ -258,9 +281,13 @@ async function load({ announce = false } = {}) {
     }
   } catch (loadError) {
     if (current !== generation) return
-    // A background refresh that fails keeps what is already on screen.
+    requested = null
+    // A background refresh that fails keeps what is already on screen. A page the reader
+    // asked for says it could not be loaded, next to the pager still on the rows shown.
     if (rows.value === null) {
       error.value = describeLoadError(loadError, 'the pull requests')
+    } else if (announce) {
+      pageError.value = `Page ${target} could not be loaded. ${describeLoadError(loadError, 'it')}`
     }
   } finally {
     if (current === generation) loading.value = false
@@ -269,13 +296,16 @@ async function load({ announce = false } = {}) {
 
 // goTo moves to a page the reader asked for, so what it now holds is announced.
 function goTo(nextPage) {
-  page.value = nextPage
-  load({ announce: true })
+  requested = nextPage
+  load()
 }
 
 watch(() => props.filter, () => {
   rows.value = null
+  total.value = 0
   page.value = 1
+  requested = null
+  pageError.value = ''
   load()
 }, { deep: true })
 
@@ -461,6 +491,10 @@ a.pull-requests__count:focus-visible {
 /* Page numbers start under the list rather than floating in the middle of it. */
 .pull-requests__pagination {
   margin-top: 8px;
+}
+
+.pull-requests__page-error {
+  margin: 4px 0 0;
 }
 
 .pull-requests__pagination :deep(.v-pagination__list) {

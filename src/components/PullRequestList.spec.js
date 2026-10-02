@@ -163,12 +163,55 @@ describe('PullRequestList', () => {
     expect(title.text()).toContain('opens the merge request in a new tab')
   })
 
-  it('drops a link that is not http or https', async () => {
-    answer({ data: [action(7, { url: 'javascript:alert(1)' }), action(8)], total_count: 2 })
+  it('lists a pull request whose link is not http or https as plain text', async () => {
+    answer({ data: [action(7, { url: 'javascript:alert(1)', title: 'Unsafe' }), action(8)], total_count: 2 })
     const wrapper = await mountList()
 
+    // Both are counted and listed, only the safe one is a link.
+    expect(wrapper.findAll('.pull-requests__item')).toHaveLength(2)
     const hrefs = wrapper.findAll('a[target="_blank"]').map((link) => link.attributes('href'))
     expect(hrefs).toEqual(['https://github.com/updatecli/udash/pull/8'])
+    const unsafe = wrapper.findAll('.pull-requests__title')[0]
+    expect(unsafe.element.tagName).toBe('SPAN')
+    expect(unsafe.text()).toBe('Unsafe')
+  })
+
+  it('keeps the pager on the rows shown when the page asked for fails to load', async () => {
+    answer({ data: [action(1)], total_count: 30 })
+    const wrapper = await mountList({ paginated: true, limit: 10 })
+
+    api.apiFetch.mockImplementation(async () => { throw Object.assign(new Error('boom'), { status: 503 }) })
+    wrapper.getComponent(VPagination).vm.$emit('update:modelValue', 3)
+    await flushPromises()
+
+    expect(wrapper.getComponent(VPagination).props('modelValue')).toBe(1)
+    expect(wrapper.text()).toContain('Bump dependency 1')
+    expect(wrapper.get('.pull-requests__page-error').text()).toBe('Page 3 could not be loaded. The Udash API is unavailable right now. Try again in a moment.')
+
+    // A later refresh still reads the page on screen, not the one that failed, and keeps
+    // saying the page asked for could not be loaded.
+    answer({ data: [action(1)], total_count: 30 })
+    await vi.advanceTimersByTimeAsync(60 * 1000)
+    await flushPromises()
+    expect(lastBody()).toMatchObject({ page: 1 })
+    expect(wrapper.find('.pull-requests__page-error').exists()).toBe(true)
+
+    // Asking for a page again replaces it.
+    answer({ data: [action(11)], total_count: 30 })
+    wrapper.getComponent(VPagination).vm.$emit('update:modelValue', 2)
+    await flushPromises()
+    expect(wrapper.find('.pull-requests__page-error').exists()).toBe(false)
+  })
+
+  it('drops the count of the previous filter while the new one loads', async () => {
+    answer({ data: [action(1)], total_count: 12 })
+    const wrapper = await mountList({ filter: {}, countQualifier: 'in this period' })
+    expect(wrapper.get('.pull-requests__count').text()).toBe('12 pull requests in this period')
+
+    api.apiFetch.mockImplementation(() => new Promise(() => {}))
+    await wrapper.setProps({ filter: { results: ['✗'] } })
+
+    expect(wrapper.find('.pull-requests__count').exists()).toBe(false)
   })
 
   it('pages through every pull request', async () => {
@@ -230,6 +273,41 @@ describe('PullRequestList', () => {
 
     expect(lastBody()).toMatchObject({ page: 2 })
     expect(wrapper.text()).toContain('Bump dependency 12')
+  })
+
+  it('keeps the page asked for when a refresh comes before it arrived', async () => {
+    answer({ data: [action(1)], total_count: 30 })
+    const wrapper = await mountList({ paginated: true, limit: 10 })
+
+    api.apiFetch.mockImplementation(() => new Promise(() => {}))
+    wrapper.getComponent(VPagination).vm.$emit('update:modelValue', 3)
+    await flushPromises()
+
+    answer({ data: [action(21)], total_count: 30 })
+    await vi.advanceTimersByTimeAsync(60 * 1000)
+    await flushPromises()
+
+    expect(lastBody()).toMatchObject({ page: 3 })
+    expect(wrapper.getComponent(VPagination).props('modelValue')).toBe(3)
+    expect(wrapper.text()).toContain('Bump dependency 21')
+    expect(wrapper.get('[aria-live="polite"]').text()).toBe('Page 3 of 3, pull requests 21 to 21 of 30')
+  })
+
+  it('says nothing when a refresh fails to move back to the last page', async () => {
+    answer({ data: [action(1)], total_count: 30 })
+    const wrapper = await mountList({ paginated: true, limit: 10 })
+    wrapper.getComponent(VPagination).vm.$emit('update:modelValue', 3)
+    await flushPromises()
+
+    api.apiFetch.mockImplementation(async (path, { body }) => {
+      if (body.page === 3) return { data: [], total_count: 12 }
+      throw Object.assign(new Error('boom'), { status: 503 })
+    })
+    await vi.advanceTimersByTimeAsync(60 * 1000)
+    await flushPromises()
+
+    expect(lastBody()).toMatchObject({ page: 2 })
+    expect(wrapper.find('.pull-requests__page-error').exists()).toBe(false)
   })
 
   it('qualifies the count when a filter narrows it', async () => {
