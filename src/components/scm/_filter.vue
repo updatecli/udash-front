@@ -227,6 +227,7 @@ import { apiFetch, describeLoadError } from '@/composables/api';
 import LoadError from '../LoadError.vue';
 import { getMaxHistoryDays } from '@/composables/runtime';
 import { FILTER_STORAGE_KEY, stepToISO } from '@/composables/date';
+import { subscribeRefresh } from '@/composables/live';
 import { PIPELINE_RESULTS, PIPELINE_RESULT_VALUES, OPEN_ACTION_OPTIONS, OPEN_ACTION_VALUES, openActionToQuery } from '@/composables/status';
 import { encodeFilterState, decodeFilterState } from '@/composables/filter';
 
@@ -264,6 +265,8 @@ export default {
     dateRange: [...DEFAULT_DATE_RANGE],  // [start step, end step] by default
     labelKeys: [],
     labelValuesByKey: {},  // Map to store label values for each key
+    labelsRequest: 0,  // Bumped by every label refresh, so older responses can be dropped
+    labelsSteps: null,  // The dateRange the label lists were loaded for, as "newest,oldest"
     selectedLabels: [{ key: null, value: null }],  // Array of label selections
     selectedResults: [],  // Pipeline results to keep, empty meaning all of them
     pipelineResults: PIPELINE_RESULTS,
@@ -276,7 +279,14 @@ export default {
     scmLoadError: null,
   }),
 
+  // The label lists follow the live refresh like the reports and charts they filter.
+  // Without it a page left open never offered a label first reported after it loaded.
+  mounted() {
+    this.stopRefresh = subscribeRefresh(() => this.refreshLabels())
+  },
+
   beforeUnmount() {
+    this.stopRefresh?.();
     this.cancelAutoUpdate();
     clearTimeout(this.debounceTimer);
   },
@@ -388,17 +398,6 @@ export default {
       },
     },
 
-    // dateRange[0] is the step closest to now and dateRange[1] the furthest back, so
-    // the range starts at the second entry. The API also accepts the two in the wrong
-    // order, which is why this code read them backwards for a long time without
-    // breaking anything.
-    formattedStartTime() {
-      return stepToISO(this.dateRange[1])
-    },
-
-    formattedEndTime() {
-      return stepToISO(this.dateRange[0])
-    },
 
     // maxDateStep is how far the slider reaches. It comes from the instance's
     // configured history window.
@@ -539,41 +538,98 @@ export default {
       return this.restrictedSCM != ""
     },
 
-    async getLabelKeys() {
-      try {
-        const query = `/pipeline/labels?keyonly=true&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
-
-        const data = await apiFetch(query);
-        this.labelKeys = data.labels || [];
-      } catch (error) {
-        console.error('Error fetching label keys:', error);
-        this.labelKeys = [];
+    // timeWindow turns dateRange into API timestamps. It reads the clock on every call:
+    // a computed would cache "now" until the range changed, so a page left open kept
+    // asking for the window it was loaded with.
+    //
+    // dateRange[0] is the step closest to now and dateRange[1] the furthest back, so
+    // the range starts at the second entry. The API also accepts the two in the wrong
+    // order, which is why this code read them backwards for a long time without
+    // breaking anything.
+    timeWindow() {
+      return {
+        start: stepToISO(this.dateRange[1]),
+        end: stepToISO(this.dateRange[0]),
       }
     },
 
-    async getLabelValues(labelKey) {
+    selectedLabelKeys() {
+      return [...new Set(this.selectedLabels.map((label) => label.key).filter(Boolean))]
+    },
+
+    // fetchLabelKeys and fetchLabelValues return null when the request fails, so a
+    // failed background refresh keeps the lists it already had.
+    async fetchLabelKeys(range) {
       try {
-        if (!labelKey) {
-          return [];
-        }
+        const data = await apiFetch(`/pipeline/labels?keyonly=true&start_time=${encodeURIComponent(range.start)}&end_time=${encodeURIComponent(range.end)}`);
+        return data.labels || [];
+      } catch (error) {
+        console.error('Error fetching label keys:', error);
+        return null;
+      }
+    },
 
-        // Return cached values if available
-        if (this.labelValuesByKey[labelKey]) {
-          return this.labelValuesByKey[labelKey];
-        }
-
-        const query = `/pipeline/labels?key=${encodeURIComponent(labelKey)}&start_time=${encodeURIComponent(this.formattedStartTime)}&end_time=${encodeURIComponent(this.formattedEndTime)}`;
-
-        const data = await apiFetch(query);
-
-        // Extract unique values from the labels array
-        const uniqueValues = [...new Set((data.labels || []).map(label => label.value))];
-        this.labelValuesByKey[labelKey] = uniqueValues;
-        return this.labelValuesByKey[labelKey];
+    async fetchLabelValues(labelKey, range) {
+      try {
+        const data = await apiFetch(`/pipeline/labels?key=${encodeURIComponent(labelKey)}&start_time=${encodeURIComponent(range.start)}&end_time=${encodeURIComponent(range.end)}`);
+        return [...new Set((data.labels || []).map(label => label.value))];
       } catch (error) {
         console.error('Error fetching label values:', error);
-        return [];
+        return null;
       }
+    },
+
+    // refreshLabels reloads the keys, and the values of every selected key, for the
+    // current window. Each call supersedes the previous one: a slow response for an
+    // older window is dropped instead of overwriting a newer list.
+    async refreshLabels() {
+      const request = ++this.labelsRequest
+      const steps = this.dateRange.join()
+      const range = this.timeWindow()
+      const keys = this.selectedLabelKeys()
+
+      const [labelKeys, ...values] = await Promise.all([
+        this.fetchLabelKeys(range),
+        ...keys.map((key) => this.fetchLabelValues(key, range)),
+      ])
+      if (request !== this.labelsRequest) {
+        return
+      }
+
+      // A failed request keeps the previous list only while the range is the one it was
+      // loaded for. After a range change it would offer labels the new range may not have.
+      const sameRange = steps === this.labelsSteps
+      this.labelsSteps = steps
+
+      this.labelKeys = labelKeys ?? (sameRange ? this.labelKeys : [])
+
+      const valuesByKey = {}
+      keys.forEach((key, index) => {
+        const keyValues = values[index] ?? (sameRange ? this.labelValuesByKey[key] : null)
+        if (keyValues) {
+          valuesByKey[key] = keyValues
+        }
+      })
+      this.labelValuesByKey = valuesByKey
+
+      // A key picked while this refresh was in flight is not in it.
+      this.selectedLabelKeys().forEach((key) => this.loadLabelValues(key))
+    },
+
+    // loadLabelValues fetches the values of one key unless the current window already
+    // has them.
+    async loadLabelValues(labelKey) {
+      if (!labelKey || this.labelValuesByKey[labelKey]) {
+        return
+      }
+
+      const request = this.labelsRequest
+      const values = await this.fetchLabelValues(labelKey, this.timeWindow())
+      if (request !== this.labelsRequest || values === null) {
+        return
+      }
+
+      this.labelValuesByKey[labelKey] = values
     },
 
     resetRestrictedSCM() {
@@ -592,9 +648,8 @@ export default {
       this.selectedLabels = [{ key: null, value: null }]
       this.selectedResults = []
       this.selectedOpenAction = null
-      this.labelValuesByKey = {}
       this.getSCMSData()
-      this.getLabelKeys()
+      this.refreshLabels()
     },
 
     prettifyURL: function(url) {
@@ -749,9 +804,10 @@ export default {
 
     applyFilter() {
 
+      const range = this.timeWindow()
       var newFilter = {
-        startTime: this.formattedStartTime,
-        endTime: this.formattedEndTime,
+        startTime: range.start,
+        endTime: range.end,
       }
 
       if (this.showRepositoryBranch) {
@@ -910,11 +966,12 @@ export default {
         return;
       }
 
-      if (labelKey) {
-        await this.getLabelValues(labelKey);
-      }
-      // Clear value when key changes
+      // Clear value when key changes. It has to happen before the values load: a live
+      // refresh can fill them in first, and a value picked from those would be lost.
       this.selectedLabels[index].value = null;
+      if (labelKey) {
+        await this.loadLabelValues(labelKey);
+      }
     },
 
     onLabelValueChange(index) {
@@ -978,8 +1035,7 @@ export default {
         // Debounce label refresh to avoid an API call on every slider tick
         clearTimeout(this.debounceTimer)
         this.debounceTimer = setTimeout(() => {
-          this.labelValuesByKey = {}
-          this.getLabelKeys()
+          this.refreshLabels()
         }, 500)
       },
       repository (val) {
@@ -1025,12 +1081,12 @@ export default {
           } else {
             this.getSCMSData()
           }
-          await this.getLabelKeys()
+          await this.refreshLabels()
         } else {
           // When not showing repository/branch selectors, emit the initial
           // time-range filter directly so child components get the correct filter.
           this.$emit('loaded', false)
-          await this.getLabelKeys()
+          await this.refreshLabels()
           this.applyFilter()
           this.$emit('loaded', true)
         }
