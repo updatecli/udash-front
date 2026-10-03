@@ -144,4 +144,20 @@ describe('PipelineSCMS label lists', () => {
 
     expect(wrapper.vm.labelKeys).toEqual(['squad'])
   })
+
+  it('does not offer a key already used by another row', async () => {
+    api.apiFetch.mockImplementation(labels(['env', 'team'], { env: ['prod'] }))
+    const { wrapper } = await mountFilter()
+    wrapper.vm.expandedPanels = [0]
+    await flushPromises()
+
+    const keySelects = () => wrapper.findAllComponents({ name: 'VSelect' }).filter((select) => select.props('label') === 'Label')
+    keySelects()[0].vm.$emit('update:modelValue', 'env')
+    await flushPromises()
+    wrapper.vm.addLabelRow()
+    await flushPromises()
+
+    expect(keySelects()[0].props('items')).toEqual(['env', 'team'])
+    expect(keySelects()[1].props('items')).toEqual(['team'])
+  })
 })

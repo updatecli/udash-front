@@ -73,7 +73,7 @@
                     <v-select
                       variant="outlined"
                       label="Label"
-                      :items="labelKeys"
+                      :items="getLabelKeysForIndex(index)"
                       prepend-inner-icon="mdi-label"
                       v-model="label.key"
                       clearable
@@ -934,6 +934,14 @@ export default {
     stepToHumanDate(step) {
       const date = this.stepToDate(step)
       return this.formatHumanDate(date)
+    },
+
+    // A key can only be used once, since the API takes labels as a map. Offering the keys
+    // of the other rows would only let the select clear itself.
+    getLabelKeysForIndex(index) {
+      return this.labelKeys.filter((key) => {
+        return !this.selectedLabels.some((label, i) => i !== index && label.key === key);
+      });
     },
 
     getLabelValuesForIndex(index) {
