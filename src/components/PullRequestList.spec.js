@@ -9,6 +9,13 @@ vi.mock('@/composables/api', async (importOriginal) => ({
   apiFetch: api.apiFetch,
 }))
 
+const auth = vi.hoisted(() => ({ login: vi.fn(async () => {}) }))
+
+vi.mock('@/composables/auth', async (importOriginal) => ({
+  ...(await importOriginal()),
+  login: auth.login,
+}))
+
 function action(n, overrides = {}) {
   return {
     url: `https://github.com/updatecli/udash/pull/${n}`,
@@ -28,10 +35,16 @@ function answer(response) {
   })
 }
 
+// jsdom has no visualViewport, which VMenu needs to position itself. The stub renders
+// the menu items inline, next to their activator.
+const MenuStub = {
+  template: '<div><slot name="activator" :props="{}" /><slot /></div>',
+}
+
 async function mountList(props = {}) {
   vi.resetModules()
   const { default: PullRequestList } = await import('@/components/PullRequestList.vue')
-  const wrapper = mount(PullRequestList, { props, global: { stubs: { RouterLink: RouterLinkStub } } })
+  const wrapper = mount(PullRequestList, { props, global: { stubs: { RouterLink: RouterLinkStub, VMenu: MenuStub } } })
   await flushPromises()
   return wrapper
 }
@@ -48,7 +61,32 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   api.apiFetch.mockReset()
+  auth.login.mockClear()
+  delete window.config
 })
+
+// answerAcknowledging answers searches with search (a value, or a function of the request
+// body) and acknowledgement requests with change (null, as for a 204, by default).
+function answerAcknowledging(search, change = null) {
+  api.apiFetch.mockImplementation(async (path, { body } = {}) => {
+    if (path.startsWith('/pipeline/actions/ack')) {
+      if (change instanceof Error) throw change
+      return change
+    }
+    return typeof search === 'function' ? search(body) : search
+  })
+}
+
+function ackCalls() {
+  return api.apiFetch.mock.calls.filter(([path]) => path.startsWith('/pipeline/actions/ack'))
+}
+
+// pickDays picks a duration from the acknowledge menu of the first row.
+async function pickDays(wrapper, label) {
+  const item = wrapper.findAll('.pull-requests__item .v-list-item').find((element) => element.text().includes(label))
+  await item.trigger('click')
+  await flushPromises()
+}
 
 describe('PullRequestList', () => {
   it('asks for the open pull requests matching the filter', async () => {
@@ -96,7 +134,7 @@ describe('PullRequestList', () => {
     expect(item.text()).toContain('updatecli/udash · main')
     expect(item.text()).toContain('3 minutes ago')
     expect(item.findComponent(RouterLinkStub).props('to')).toBe('/pipeline/reports/p7')
-    expect(item.find('button').exists()).toBe(false)
+    expect(item.find('.pull-requests__toggle').exists()).toBe(false)
     expect(wrapper.text()).toContain('1 pull request')
   })
 
@@ -330,6 +368,205 @@ describe('PullRequestList', () => {
     const wrapper = await mountList()
 
     expect(wrapper.text()).toContain('No pull request is waiting.')
+  })
+
+  it('acknowledges a pull request for the days picked, then reloads without it', async () => {
+    let acknowledged = false
+    answerAcknowledging(() => (acknowledged
+      ? { data: [], total_count: 0, acknowledged_count: 1 }
+      : { data: [action(7)], total_count: 1, acknowledged_count: 0 }))
+    const wrapper = await mountList()
+    expect(wrapper.find('.pull-requests__acknowledged').exists()).toBe(false)
+
+    api.apiFetch.mockImplementationOnce(async () => {
+      acknowledged = true
+      return null
+    })
+    await pickDays(wrapper, '7 days')
+
+    expect(ackCalls()).toEqual([['/pipeline/actions/ack', {
+      method: 'PUT',
+      body: { url: 'https://github.com/updatecli/udash/pull/7', days: 7, result: '✔' },
+      signInOnUnauthorized: false,
+    }]])
+    expect(lastBody()).toEqual({ limit: 5, page: 1 })
+    expect(wrapper.text()).toContain('No pull request is waiting.')
+    expect(wrapper.get('.pull-requests__notice').text()).toBe('Acknowledged Bump dependency 7 for 7 days. Undo')
+    expect(wrapper.get('.pull-requests__acknowledged').text()).toBe('Show 1 acknowledged')
+  })
+
+  it('acknowledges a pull request whose result it does not know as unknown', async () => {
+    answerAcknowledging({
+      data: [action(7, { pipelines: [{ id: 'a', name: 'Odd', result: 'weird' }] })],
+      total_count: 1,
+    })
+    const wrapper = await mountList()
+
+    await pickDays(wrapper, '1 day')
+
+    expect(ackCalls()[0][1].body).toMatchObject({ days: 1, result: '?' })
+  })
+
+  it('undoes the acknowledgement just made', async () => {
+    answerAcknowledging({ data: [action(7)], total_count: 1 })
+    const wrapper = await mountList()
+    await pickDays(wrapper, '30 days')
+
+    await wrapper.get('.pull-requests__notice button').trigger('click')
+    await flushPromises()
+
+    expect(ackCalls().at(-1)).toEqual([
+      '/pipeline/actions/ack?url=https%3A%2F%2Fgithub.com%2Fupdatecli%2Fudash%2Fpull%2F7',
+      { method: 'DELETE', signInOnUnauthorized: false },
+    ])
+    expect(wrapper.find('.pull-requests__notice').exists()).toBe(false)
+  })
+
+  it('lists the acknowledged pull requests on demand, and brings one back', async () => {
+    answerAcknowledging((body) => (body.acknowledged
+      ? {
+        data: [action(3, { acknowledgement: { until: '2026-09-29T12:00:00Z', by: 'Pat' } })],
+        total_count: 1,
+        acknowledged_count: 1,
+      }
+      : { data: [action(1)], total_count: 1, acknowledged_count: 1 }))
+    const wrapper = await mountList()
+
+    await wrapper.get('.pull-requests__acknowledged').trigger('click')
+    await flushPromises()
+
+    expect(lastBody()).toEqual({ acknowledged: true, limit: 5, page: 1 })
+    expect(wrapper.get('.pull-requests__count').text()).toBe('1 acknowledged pull request')
+    expect(wrapper.get('.pull-requests__meta').text()).toContain('Acknowledged by Pat, back in 7 days')
+    expect(wrapper.get('.pull-requests__acknowledged').text()).toBe('Hide acknowledged')
+
+    const unacknowledge = wrapper.get('.pull-requests__ack')
+    expect(unacknowledge.attributes('aria-label')).toBe('Unacknowledge Bump dependency 3')
+    await unacknowledge.trigger('click')
+    await flushPromises()
+
+    expect(ackCalls()).toEqual([[
+      '/pipeline/actions/ack?url=https%3A%2F%2Fgithub.com%2Fupdatecli%2Fudash%2Fpull%2F3',
+      { method: 'DELETE', signInOnUnauthorized: false },
+    ]])
+
+    await wrapper.get('.pull-requests__acknowledged').trigger('click')
+    await flushPromises()
+    expect(lastBody()).toEqual({ limit: 5, page: 1 })
+  })
+
+  it('keeps the pull request and says why when it cannot be acknowledged', async () => {
+    answerAcknowledging({ data: [action(7)], total_count: 1 }, Object.assign(new Error('forbidden'), { status: 403 }))
+    const wrapper = await mountList()
+
+    await pickDays(wrapper, '7 days')
+
+    expect(wrapper.get('.pull-requests__change-error').text())
+      .toBe('Your account is not allowed to acknowledge Bump dependency 7.')
+    expect(wrapper.text()).toContain('Bump dependency 7')
+    expect(wrapper.find('.pull-requests__notice').exists()).toBe(false)
+  })
+
+  it('offers to acknowledge even signed out, since only the API knows whether that needs a session', async () => {
+    window.config = { AUTH_ENABLED: 'true', AUTH_VISIBILITY: 'public' }
+    answerAcknowledging({ data: [action(7)], total_count: 1, acknowledged_count: 2 })
+    const wrapper = await mountList()
+
+    expect(wrapper.get('.pull-requests__ack').attributes('aria-label')).toBe('Acknowledge Bump dependency 7')
+    expect(wrapper.get('.pull-requests__acknowledged').text()).toBe('Show 2 acknowledged')
+  })
+
+  it('offers to sign in, rather than leaving the page, when the API wants a session to acknowledge', async () => {
+    window.config = { AUTH_ENABLED: 'true', AUTH_VISIBILITY: 'public' }
+    answerAcknowledging({ data: [action(7)], total_count: 1 }, Object.assign(new Error('unauthorized'), { status: 401 }))
+    const wrapper = await mountList()
+
+    await pickDays(wrapper, '1 day')
+
+    expect(ackCalls()[0][1]).toMatchObject({ signInOnUnauthorized: false })
+    expect(auth.login).not.toHaveBeenCalled()
+    expect(wrapper.get('.pull-requests__change-error').text()).toBe('Sign in to acknowledge Bump dependency 7. Sign in')
+    expect(wrapper.text()).toContain('Bump dependency 7')
+
+    await wrapper.get('.pull-requests__change-error button').trigger('click')
+    expect(auth.login).toHaveBeenCalledWith('/')
+  })
+
+  it('does not offer to sign in again when the API refused the session already open', async () => {
+    window.config = { AUTH_ENABLED: 'true', AUTH_VISIBILITY: 'public' }
+    answerAcknowledging({ data: [action(7)], total_count: 1 }, Object.assign(new Error('unauthorized'), { status: 401 }))
+    const wrapper = await mountList()
+    const { useAuth } = await import('@/composables/auth')
+    useAuth().isAuthenticated.value = true
+
+    await pickDays(wrapper, '1 day')
+
+    expect(wrapper.get('.pull-requests__change-error').text()).toBe(
+      'Could not acknowledge Bump dependency 7: the Udash API did not accept your session. Sign out, then sign in again.',
+    )
+    expect(wrapper.find('.pull-requests__change-error button').exists()).toBe(false)
+  })
+
+  it('sends a single request however many times Undo is pressed', async () => {
+    answerAcknowledging({ data: [action(7)], total_count: 1 })
+    const wrapper = await mountList()
+    await pickDays(wrapper, '7 days')
+
+    let settle
+    api.apiFetch.mockImplementationOnce(() => new Promise((resolve) => { settle = resolve }))
+    const undo = wrapper.get('.pull-requests__notice button')
+    await undo.trigger('click')
+    await undo.trigger('click')
+    settle(null)
+    await flushPromises()
+
+    expect(ackCalls().filter(([, options]) => options.method === 'DELETE')).toHaveLength(1)
+  })
+
+  it('says sign-in is off rather than offering it, when this frontend has none', async () => {
+    answerAcknowledging({ data: [action(7)], total_count: 1 }, Object.assign(new Error('unauthorized'), { status: 401 }))
+    const wrapper = await mountList()
+
+    await pickDays(wrapper, '1 day')
+
+    expect(wrapper.get('.pull-requests__change-error').text()).toBe(
+      'Could not acknowledge Bump dependency 7: the Udash API wants somebody signed in, and sign-in is turned off in this frontend (AUTH_ENABLED).',
+    )
+    expect(wrapper.find('.pull-requests__change-error button').exists()).toBe(false)
+  })
+
+  it('still leads back to the waiting pull requests when the acknowledged ones fail to load', async () => {
+    answerAcknowledging((body) => {
+      if (body.acknowledged) throw Object.assign(new Error('boom'), { status: 503 })
+      return { data: [action(1)], total_count: 1, acknowledged_count: 2 }
+    })
+    const wrapper = await mountList()
+
+    await wrapper.get('.pull-requests__acknowledged').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[role="alert"]').exists()).toBe(true)
+
+    await wrapper.get('.pull-requests__acknowledged').trigger('click')
+    await flushPromises()
+
+    expect(lastBody()).toEqual({ limit: 5, page: 1 })
+    expect(wrapper.text()).toContain('Bump dependency 1')
+  })
+
+  it('does not report an acknowledgement on a list the reader left meanwhile', async () => {
+    answerAcknowledging({ data: [action(7)], total_count: 1, acknowledged_count: 1 })
+    const wrapper = await mountList()
+
+    let settle
+    api.apiFetch.mockImplementationOnce(() => new Promise((resolve) => { settle = resolve }))
+    await pickDays(wrapper, '7 days')
+
+    await wrapper.get('.pull-requests__acknowledged').trigger('click')
+    settle(null)
+    await flushPromises()
+
+    expect(lastBody()).toMatchObject({ acknowledged: true })
+    expect(wrapper.find('.pull-requests__notice').exists()).toBe(false)
   })
 
   it('shows the error and retries', async () => {
