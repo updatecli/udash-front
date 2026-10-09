@@ -27,9 +27,9 @@ export function getApiBaseUrl() {
 // so callers don't need to know whether this instance runs with authentication, or
 // whether its API serves this request anonymously.
 //
-// It throws on anything but a 2xx. The error uses the message the API puts in the body
-// when there is one, because that message is usually the only explanation of why a view
-// came back empty.
+// It throws on anything but a 2xx, and returns null for a 204. The error uses the message
+// the API puts in the body when there is one, because that message is usually the only
+// explanation of why a view came back empty.
 export async function apiFetch(path, { method = 'GET', body, signal } = {}) {
   const headers = {}
 
@@ -68,6 +68,11 @@ export async function apiFetch(path, { method = 'GET', body, signal } = {}) {
     }
 
     throw error
+  }
+
+  // A 204 has no body to decode.
+  if (response.status === 204) {
+    return null
   }
 
   return response.json()

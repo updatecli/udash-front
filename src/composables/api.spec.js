@@ -72,6 +72,13 @@ describe('apiFetch', () => {
     })
   })
 
+  it('returns null for a change answered without a body', async () => {
+    const api = await loadApi()
+    fetch.mockResolvedValue(jsonResponse(204))
+
+    await expect(api.apiFetch('/pipeline/actions/ack', { method: 'PUT', body: {} })).resolves.toBeNull()
+  })
+
   it('sends no Authorization header without a session', async () => {
     const api = await loadApi({ AUTH_ENABLED: 'true' })
     auth.getAccessToken.mockResolvedValue(null)
