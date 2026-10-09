@@ -115,6 +115,14 @@ describe('apiFetch', () => {
     await expect(api.apiFetch('/x')).rejects.toMatchObject({ status: 401 })
     expect(auth.handleUnauthorized).toHaveBeenCalledOnce()
   })
+
+  it('leaves a 401 to the caller when it explains the refusal itself', async () => {
+    const api = await loadApi()
+    fetch.mockResolvedValue(jsonResponse(401, { message: 'unauthorized' }))
+
+    await expect(api.apiFetch('/x', { method: 'PUT', signInOnUnauthorized: false })).rejects.toMatchObject({ status: 401 })
+    expect(auth.handleUnauthorized).not.toHaveBeenCalled()
+  })
 })
 
 describe('describeLoadError', () => {

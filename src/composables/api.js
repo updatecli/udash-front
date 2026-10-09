@@ -30,7 +30,10 @@ export function getApiBaseUrl() {
 // It throws on anything but a 2xx, and returns null for a 204. The error uses the message
 // the API puts in the body when there is one, because that message is usually the only
 // explanation of why a view came back empty.
-export async function apiFetch(path, { method = 'GET', body, signal } = {}) {
+//
+// A 401 redirects to the login page unless signInOnUnauthorized is false. A caller
+// handling a click passes false to explain the refusal inline instead of leaving the page.
+export async function apiFetch(path, { method = 'GET', body, signal, signInOnUnauthorized = true } = {}) {
   const headers = {}
 
   if (isAuthEnabled) {
@@ -63,7 +66,7 @@ export async function apiFetch(path, { method = 'GET', body, signal } = {}) {
 
     // A 401 with no session means the API is stricter than this frontend's config says.
     // Only a login can unblock the page.
-    if (response.status === 401) {
+    if (response.status === 401 && signInOnUnauthorized) {
       handleUnauthorized()
     }
 
