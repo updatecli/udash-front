@@ -1,10 +1,14 @@
 <template>
   <!-- The actions left open by the latest report of every pipeline, one row per pull
        request however many pipelines feed it. Each row leads with the worst result among
-       those pipelines, so a pull request fed by a failing pipeline stands out unopened. -->
+       those pipelines, so a pull request fed by a failing pipeline stands out unopened.
+
+       A pull request somebody acknowledged leaves the list for every viewer, until the
+       acknowledgement expires or its worst result changes. The list says how many it
+       leaves out, and lists them on demand. -->
   <section class="pull-requests" :aria-labelledby="headingId">
     <header class="pull-requests__header">
-      <component :is="headingTag" :id="headingId" :class="headingClass">
+      <component :is="headingTag" :id="headingId" ref="heading" :class="headingClass" tabindex="-1">
         <v-icon :icon="openActionIcon" color="result-waiting" size="small" aria-hidden="true"></v-icon>
         {{ title }}
       </component>
@@ -26,7 +30,7 @@
     </div>
 
     <p v-else-if="rows.length === 0" class="pull-requests__empty text-body-medium text-medium-emphasis">
-      {{ empty }}
+      {{ showAcknowledged ? 'No pull request is acknowledged.' : empty }}
     </p>
 
     <ul v-else class="pull-requests__list" :aria-busy="loading">
@@ -60,6 +64,10 @@
           <div class="pull-requests__meta text-body-small text-medium-emphasis">
             <span v-if="row.repository" class="text-mono">{{ row.repository }}<template v-if="row.branch"> · {{ row.branch }}</template></span>
             <span class="text-mono" :title="formatAbsoluteDate(row.updatedAt)">{{ toRelativeTime(row.updatedAt, now) }}</span>
+            <span v-if="row.acknowledgement">
+              Acknowledged<template v-if="row.acknowledgement.by"> by {{ row.acknowledgement.by }}</template>,
+              back <span :title="formatAbsoluteDate(row.acknowledgement.until)">{{ toRelativeTime(row.acknowledgement.until, now) }}</span>
+            </span>
           </div>
 
           <button
@@ -103,6 +111,43 @@
             </li>
           </ul>
         </div>
+
+        <!-- Shown to every viewer. Only the API knows whether acknowledging needs a sign-in,
+             and describeChangeError explains a refusal. -->
+        <v-btn
+          v-if="showAcknowledged"
+          icon="mdi-undo-variant"
+          variant="text"
+          size="small"
+          class="pull-requests__ack"
+          :aria-label="`Unacknowledge ${row.title}`"
+          title="Unacknowledge"
+          :loading="!!busy[row.key]"
+          @click="unacknowledge(row)"
+        ></v-btn>
+        <v-menu v-else location="bottom end">
+          <template #activator="{ props: menu }">
+            <v-btn
+              v-bind="menu"
+              icon="mdi-eye-check-outline"
+              variant="text"
+              size="small"
+              class="pull-requests__ack"
+              :aria-label="`Acknowledge ${row.title}`"
+              title="Acknowledge"
+              :loading="!!busy[row.key]"
+            ></v-btn>
+          </template>
+          <v-list density="compact">
+            <v-list-subheader>Acknowledge for</v-list-subheader>
+            <v-list-item
+              v-for="days in ACKNOWLEDGE_DAYS"
+              :key="days"
+              :title="daysLabel(days)"
+              @click="acknowledge(row, days)"
+            ></v-list-item>
+          </v-list>
+        </v-menu>
       </li>
     </ul>
 
@@ -120,20 +165,48 @@
       {{ pageError }}
     </p>
 
+    <p v-if="changeError" class="pull-requests__page-error pull-requests__change-error text-body-small text-error" role="status">
+      {{ changeError.text }}
+      <button v-if="changeError.signIn" type="button" class="pull-requests__link" @click="signIn">Sign in</button>
+    </p>
+
+    <p v-if="lastAcknowledged" class="pull-requests__notice text-body-small">
+      Acknowledged {{ lastAcknowledged.title }} for {{ daysLabel(lastAcknowledged.days) }}.
+      <button
+        ref="undoButton"
+        type="button"
+        class="pull-requests__link"
+        :disabled="!!busy[lastAcknowledged.key]"
+        @click="undo"
+      >Undo</button>
+    </p>
+
+    <button
+      v-if="showAcknowledged || (!error && acknowledgedCount > 0)"
+      ref="toggleButton"
+      type="button"
+      class="pull-requests__link pull-requests__acknowledged text-body-small"
+      @click="toggleAcknowledged"
+    >
+      {{ showAcknowledged ? 'Hide acknowledged' : `Show ${acknowledgedCount.toLocaleString()} acknowledged` }}
+    </button>
+
     <p class="d-sr-only" aria-live="polite">{{ announcement }}</p>
   </section>
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useDisplay } from 'vuetify'
 import LoadError from '@/components/LoadError.vue'
 import { apiFetch, describeLoadError } from '@/composables/api'
+import { currentReturnTo, login, useAuth } from '@/composables/auth'
 import { filterRequestBody } from '@/composables/filter'
 import { formatAbsoluteDate, toRelativeTime } from '@/composables/date'
 import { extractGitURLInfo } from '@/composables/git'
 import { getPipelineResultText, getStatusColor, getStatusIcon, OPEN_ACTION_ICON } from '@/composables/status'
 import { markUpdated, useLiveRefresh, useNow } from '@/composables/live'
+import { isAuthEnabled } from '@/composables/runtime'
 import { safeHttpUrl, shortRepository } from '@/composables/url'
 
 const props = defineProps({
@@ -166,9 +239,13 @@ const TALLY_CLASSES = {
   '✔': 'text-medium-emphasis',
 }
 
+// The durations the API accepts, in days.
+const ACKNOWLEDGE_DAYS = [1, 7, 30]
+
 const openActionIcon = OPEN_ACTION_ICON
 const now = useNow()
 const { xs } = useDisplay()
+const { isAuthenticated } = useAuth()
 
 const rows = ref(null)
 const total = ref(0)
@@ -178,15 +255,31 @@ const page = ref(1)
 const announcement = ref('')
 const pageError = ref('')
 const expanded = reactive({})
+const acknowledgedCount = ref(0)
+// When true, the list shows the acknowledged pull requests instead of the waiting ones.
+const showAcknowledged = ref(false)
+// Pull request urls with an acknowledgement request in flight.
+const busy = reactive({})
+// The pull request the Undo notice refers to.
+const lastAcknowledged = ref(null)
+// { text, signIn } for the last acknowledgement request that failed.
+const changeError = ref(null)
+const heading = ref(null)
+const undoButton = ref(null)
+const toggleButton = ref(null)
 
 const pageCount = computed(() => Math.ceil(total.value / props.limit))
 const countLabel = computed(() => [
+  showAcknowledged.value ? 'acknowledged' : '',
   total.value === 1 ? 'pull request' : 'pull requests',
   props.countQualifier,
   props.seeAllLink ? '· see all' : '',
 ].filter(Boolean).join(' '))
 
 let generation = 0
+// view is bumped each time the list starts over, so an acknowledgement request that
+// settles later does not post its notice on a list the reader already left.
+let view = 0
 // The page the reader asked for, until its request settled. A refresh meanwhile loads
 // it too, so it does not drop the page the reader is waiting on.
 let requested = null
@@ -220,6 +313,8 @@ function toRow(action) {
     .filter((result) => counts[result])
     .map((result) => ({ result, count: counts[result], textClass: TALLY_CLASSES[result] }))
 
+  const worst = pipelines[0]?.result
+
   return {
     key: action.url,
     // url is empty when the link is not http(s), which the row then shows as plain text.
@@ -231,7 +326,11 @@ function toRow(action) {
     branch: action.branch || '',
     updatedAt: action.updated_at,
     pipelines,
-    worst: pipelines[0]?.result,
+    worst,
+    // The API stores the worst result with the acknowledgement and only accepts known
+    // results, so an unknown one is sent as '?'.
+    acknowledgeResult: SEVERITY.includes(worst) ? worst : '?',
+    acknowledgement: action.acknowledgement || null,
     tally,
     tallyText: tally.map((entry) => `${entry.count} ${getPipelineResultText(entry.result).toLowerCase()}`).join(', '),
   }
@@ -256,6 +355,7 @@ async function load({ target = requested ?? page.value, announce = requested !==
       body: {
         ...filterRequestBody(props.filter),
         ...(props.filter?.scmid ? { scmid: props.filter.scmid } : {}),
+        ...(showAcknowledged.value ? { acknowledged: true } : {}),
         limit: props.limit,
         page: target,
       },
@@ -263,6 +363,7 @@ async function load({ target = requested ?? page.value, announce = requested !==
     if (current !== generation) return
 
     total.value = data.total_count || 0
+    acknowledgedCount.value = data.acknowledged_count || 0
     // A refresh can leave the page past the last one, once pull requests got merged.
     if ((data.data || []).length === 0 && total.value > 0 && target > pageCount.value) {
       load({ target: pageCount.value, announce })
@@ -300,14 +401,131 @@ function goTo(nextPage) {
   load()
 }
 
-watch(() => props.filter, () => {
+// reload starts the list over from its first page, for example after a filter change.
+function reload() {
   rows.value = null
   total.value = 0
   page.value = 1
   requested = null
   pageError.value = ''
+  changeError.value = null
+  lastAcknowledged.value = null
+  view++
   load()
-}, { deep: true })
+}
+
+function daysLabel(days) {
+  return days === 1 ? '1 day' : `${days} days`
+}
+
+// describeChangeError explains why an acknowledgement request failed. what names the
+// change, such as "acknowledge Bump dependency". A 401 offers to sign in only when this
+// frontend has sign-in enabled and the reader is signed out; signing in again would only
+// return the session the API just refused.
+function describeChangeError(failure, what) {
+  const status = failure?.status
+
+  if (!status) {
+    return { text: `Could not ${what}: the Udash API could not be reached. Check your connection, then try again.` }
+  }
+
+  if (status === 401) {
+    if (!isAuthEnabled) {
+      return { text: `Could not ${what}: the Udash API wants somebody signed in, and sign-in is turned off in this frontend (AUTH_ENABLED).` }
+    }
+    if (isAuthenticated.value) {
+      return { text: `Could not ${what}: the Udash API did not accept your session. Sign out, then sign in again.` }
+    }
+    return { text: `Sign in to ${what}.`, signIn: true }
+  }
+
+  if (status === 403) {
+    return { text: `Your account is not allowed to ${what}.` }
+  }
+
+  const detail = failure.message && !failure.message.startsWith('HTTP error!') ? ` ${failure.message}` : ''
+  return { text: `Could not ${what} (HTTP ${status}).${detail}` }
+}
+
+// signIn returns to this page after login so the reader can try again.
+function signIn() {
+  login(currentReturnTo()).catch(() => {
+    changeError.value = { text: 'Could not reach the sign-in page. Try again in a moment.' }
+  })
+}
+
+// focusAfterChange moves the focus off a row that just left the list, so it does not
+// fall back to the top of the page.
+async function focusAfterChange(target) {
+  await nextTick()
+  const element = target?.value?.$el || target?.value || toggleButton.value || heading.value?.$el || heading.value
+  element?.focus?.()
+}
+
+// changeAcknowledgement sends an acknowledgement request, then reloads the list. It
+// returns true only if the request succeeded and the reader is still on the same list,
+// so the caller can post its notice and move the focus.
+async function changeAcknowledgement(row, what, request) {
+  const started = view
+  busy[row.key] = true
+  changeError.value = null
+
+  try {
+    await request()
+  } catch (failure) {
+    // A failure is reported even if the reader moved to another list.
+    changeError.value = describeChangeError(failure, `${what} ${row.title}`)
+    return false
+  } finally {
+    delete busy[row.key]
+  }
+
+  await load()
+  return started === view
+}
+
+async function acknowledge(row, days) {
+  const done = await changeAcknowledgement(row, 'acknowledge', () => apiFetch('/pipeline/actions/ack', {
+    method: 'PUT',
+    body: { url: row.key, days, result: row.acknowledgeResult },
+    signInOnUnauthorized: false,
+  }))
+  if (!done) return
+
+  lastAcknowledged.value = { key: row.key, title: row.title, days }
+  announcement.value = `Acknowledged ${row.title} for ${daysLabel(days)}.`
+  focusAfterChange(undoButton)
+}
+
+function unacknowledgeRequest(key) {
+  return apiFetch(`/pipeline/actions/ack?url=${encodeURIComponent(key)}`, { method: 'DELETE', signInOnUnauthorized: false })
+}
+
+async function unacknowledge(row) {
+  if (!await changeAcknowledgement(row, 'unacknowledge', () => unacknowledgeRequest(row.key))) return
+
+  announcement.value = `${row.title} is waiting again.`
+  focusAfterChange()
+}
+
+async function undo() {
+  const row = lastAcknowledged.value
+  // Ignore a second click while the first request is still running.
+  if (busy[row.key]) return
+  if (!await changeAcknowledgement(row, 'unacknowledge', () => unacknowledgeRequest(row.key))) return
+
+  lastAcknowledged.value = null
+  announcement.value = `${row.title} is waiting again.`
+  focusAfterChange()
+}
+
+function toggleAcknowledged() {
+  showAcknowledged.value = !showAcknowledged.value
+  reload()
+  focusAfterChange(toggleButton)
+}
+
+watch(() => props.filter, reload, { deep: true })
 
 load()
 useLiveRefresh(() => load())
@@ -329,6 +547,11 @@ useLiveRefresh(() => load())
   align-items: center;
   gap: 8px;
   margin: 0;
+}
+
+/* The heading receives the focus when the focused row leaves the list. */
+.pull-requests__header [tabindex="-1"]:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .pull-requests__count {
@@ -376,6 +599,18 @@ a.pull-requests__count:focus-visible {
 .pull-requests__body {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* Muted until hovered: rows are read far more often than acknowledged. */
+.pull-requests__ack {
+  flex-shrink: 0;
+  margin: -6px 0;
+  opacity: var(--v-medium-emphasis-opacity);
+}
+
+.pull-requests__ack:hover,
+.pull-requests__ack:focus-visible {
+  opacity: 1;
 }
 
 .pull-requests__title {
@@ -449,8 +684,14 @@ a.pull-requests__count:focus-visible {
 }
 
 @media (pointer: coarse) {
-  .pull-requests__toggle {
+  .pull-requests__toggle,
+  .pull-requests__link {
     min-height: 44px;
+  }
+
+  .pull-requests__ack {
+    width: 44px;
+    height: 44px;
   }
 }
 
@@ -493,8 +734,37 @@ a.pull-requests__count:focus-visible {
   margin-top: 8px;
 }
 
-.pull-requests__page-error {
+.pull-requests__page-error,
+.pull-requests__notice {
   margin: 4px 0 0;
+}
+
+.pull-requests__link {
+  min-height: 24px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: rgb(var(--v-theme-on-surface));
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(var(--v-theme-on-surface), 0.4);
+}
+
+.pull-requests__link:hover,
+.pull-requests__link:focus-visible {
+  text-decoration-color: currentColor;
+}
+
+.pull-requests__acknowledged {
+  display: block;
+  margin-top: 4px;
+  opacity: var(--v-medium-emphasis-opacity);
+}
+
+.pull-requests__acknowledged:hover,
+.pull-requests__acknowledged:focus-visible {
+  opacity: 1;
 }
 
 .pull-requests__pagination :deep(.v-pagination__list) {

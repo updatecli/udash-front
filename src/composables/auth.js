@@ -219,7 +219,7 @@ export async function authGuard(to) {
 
 // currentReturnTo rebuilds the router path from the address bar. The stashed value is
 // replayed through router.replace(), so the APP_BASE_PATH prefix has to come off.
-function currentReturnTo() {
+export function currentReturnTo() {
   const base = getAppBasePath()
   const path = window.location.pathname
 
