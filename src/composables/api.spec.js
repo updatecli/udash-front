@@ -72,6 +72,13 @@ describe('apiFetch', () => {
     })
   })
 
+  it('returns null for a change answered without a body', async () => {
+    const api = await loadApi()
+    fetch.mockResolvedValue(jsonResponse(204))
+
+    await expect(api.apiFetch('/pipeline/actions/ack', { method: 'PUT', body: {} })).resolves.toBeNull()
+  })
+
   it('sends no Authorization header without a session', async () => {
     const api = await loadApi({ AUTH_ENABLED: 'true' })
     auth.getAccessToken.mockResolvedValue(null)
@@ -107,6 +114,14 @@ describe('apiFetch', () => {
 
     await expect(api.apiFetch('/x')).rejects.toMatchObject({ status: 401 })
     expect(auth.handleUnauthorized).toHaveBeenCalledOnce()
+  })
+
+  it('leaves a 401 to the caller when it explains the refusal itself', async () => {
+    const api = await loadApi()
+    fetch.mockResolvedValue(jsonResponse(401, { message: 'unauthorized' }))
+
+    await expect(api.apiFetch('/x', { method: 'PUT', signInOnUnauthorized: false })).rejects.toMatchObject({ status: 401 })
+    expect(auth.handleUnauthorized).not.toHaveBeenCalled()
   })
 })
 
