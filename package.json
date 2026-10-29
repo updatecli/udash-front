@@ -17,7 +17,7 @@
     "@fontsource/orbitron": "^5.3.0",
     "@fontsource/space-grotesk": "^5.3.0",
     "@mdi/js": "^7.4.47",
-    "chart.js": "^4.5.1",
+    "chart.js": "^4.6.1",
     "highlight.js": "^11.12.0",
     "js-yaml": "^5.4.3",
     "oidc-client-ts": "^3.5.0",
