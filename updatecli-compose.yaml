@@ -35,6 +35,23 @@ policies:
       spec:
         ignoreversionconstraints: true
 
+  - name: NPM vulnerability
+    id: npm_vulnerability
+    policy: ghcr.io/updatecli/policies/npm/autodiscovery:0.13.0@sha256:a6ae41383d6e0ebd8a139b44f441134b9a6e881aa30393e1298529d73df27d83
+    valuesinline:
+      pipelineid: "npm/vulnerability"
+      groupby: individual
+      spec:
+        vulnerability:
+          minseverity: "high"
+      pipeline:
+        labels:
+          ecosystem: npm
+          policy: autodiscovery
+          vulnerability: minhigh
+          monitor: active
+
+
   - name: Handle GitHub action version update
     policy: ghcr.io/updatecli/policies/autodiscovery/githubaction:0.5.0@sha256:7dd97c132950994dc3fb89e0bc77037358e9168d8e6980705b2a06e444270626
 
@@ -46,7 +63,7 @@ policies:
 
   - name: Configure Updatecli workflows
     id: updatecli
-    policy: ghcr.io/updatecli/policies/updatecli/githubaction/scaffold:0.2.0@sha256:abfecc050f1598f0ee835d673ddc06c89f71319c64672486e608d6f47f0d8987
+    policy: ghcr.io/updatecli/policies/updatecli/githubaction/scaffold:0.3.0
     valuesinline:
       gha:
         npm:
