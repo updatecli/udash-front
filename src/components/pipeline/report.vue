@@ -100,6 +100,12 @@
                   <dd class="text-mono" :title="formatAbsoluteDate(pipeline.Updated_at)">{{
                     toRelativeTime(pipeline.Updated_at, now) }}</dd>
                 </div>
+                <!-- Reports from Updatecli before the field existed carry no version. -->
+                <div>
+                  <dt>Updatecli</dt>
+                  <dd v-if="updatecliVersion" class="text-mono">{{ updatecliVersion }}</dd>
+                  <dd v-else class="text-medium-emphasis">Not recorded</dd>
+                </div>
                 <div v-if="hasMultiplePipelineURLs">
                   <dt>CI</dt>
                   <dd class="text-body-small">
@@ -209,6 +215,14 @@
           </v-card>
         </v-col>
       </v-row>
+
+      <!-- The whole run, including what was logged outside any resource. Last, because it
+           is the rawest view of the report. -->
+      <v-row v-if="pipeline.Pipeline.ConsoleOutput">
+        <v-col cols="12">
+          <ConsoleOutputComponent id="console-output" :data="pipeline.Pipeline.ConsoleOutput" />
+        </v-col>
+      </v-row>
     </v-container>
   </template>
 </template>
@@ -218,6 +232,7 @@ import ActionComponent from './_action.vue';
 import SourceComponent from './_source.vue';
 import ConditionComponent from './_condition.vue';
 import TargetComponent from './_target.vue';
+import ConsoleOutputComponent from './_consoleOutput.vue';
 
 import LinkedReports from './configs/_linkedReports.vue';
 import PageTitle from '@/components/PageTitle.vue';
@@ -262,6 +277,7 @@ export default {
     SourceComponent,
     ConditionComponent,
     TargetComponent,
+    ConsoleOutputComponent,
     PipelineGraphComponent,
     LinkedReports,
   },
@@ -332,6 +348,11 @@ export default {
 
     resultMeaning() {
       return PIPELINE_RESULTS.find((entry) => entry.value === this.pipeline?.Pipeline?.Result)?.subtitle || ''
+    },
+
+    updatecliVersion() {
+      const version = this.pipeline?.Pipeline?.UpdatecliVersion
+      return typeof version === 'string' ? version.trim() : ''
     },
 
     sortedLabels() {
