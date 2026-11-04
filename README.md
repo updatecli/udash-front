@@ -47,6 +47,11 @@ public/config.json
 
 The app loads `config.json` before the Vue bundle, then exposes the same values on `window.config`.
 
+`API_BASE_URL` points at the root of the Udash API (`/api` by default), not at a versioned path.
+The frontend adds the API version it speaks (currently `v1beta1`) itself, so requests go to
+`<API_BASE_URL>/v1beta1/...`. The Getting Started page shows the full versioned URL, which is
+the one to give to `updatecli udash login --api-url` or `UPDATECLI_UDASH_API_URL`.
+
 `MAX_HISTORY_DAYS` caps how far back the interface looks. It sets how far the dashboard
 date filter reaches, and the window of the activity chart on the home page. It defaults to
 `30` when unset and is capped at the API's own maximum of `366`.

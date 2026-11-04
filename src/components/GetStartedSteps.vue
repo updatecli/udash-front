@@ -68,7 +68,7 @@
 
 <script>
 import { getDashboardUrl, isAuthEnabled } from '@/composables/runtime';
-import { getApiBaseUrl } from '@/composables/api';
+import { getVersionedApiUrl } from '@/composables/api';
 import { copyText } from '@/composables/clipboard';
 
 export default {
@@ -110,7 +110,7 @@ export default {
   }),
   computed: {
     apiBaseUrl() {
-      return getApiBaseUrl()
+      return getVersionedApiUrl()
     },
     dashboardUrl() {
       return getDashboardUrl()
