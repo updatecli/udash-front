@@ -45,6 +45,11 @@ describe('API base URL', () => {
     expect(api.getApiBaseURL()).toBe('https://api.uda.sh/updatecli')
     expect(api.getApiBaseUrl()).toBe('https://api.uda.sh/updatecli')
   })
+
+  it('adds the API version to the URL shown for Updatecli', async () => {
+    const api = await loadApi({ API_BASE_URL: 'https://api.uda.sh/updatecli/' })
+    expect(api.getVersionedApiUrl()).toBe(`https://api.uda.sh/updatecli/${api.API_VERSION}`)
+  })
 })
 
 describe('apiFetch', () => {
@@ -53,7 +58,7 @@ describe('apiFetch', () => {
     fetch.mockResolvedValue(jsonResponse(200, { data: [1] }))
 
     await expect(api.apiFetch('/pipeline/reports')).resolves.toEqual({ data: [1] })
-    expect(fetch).toHaveBeenCalledWith('/api/pipeline/reports', { method: 'GET', headers: {}, signal: undefined })
+    expect(fetch).toHaveBeenCalledWith('/api/v1beta1/pipeline/reports', { method: 'GET', headers: {}, signal: undefined })
     expect(auth.getAccessToken).not.toHaveBeenCalled()
   })
 
@@ -64,7 +69,7 @@ describe('apiFetch', () => {
 
     await api.apiFetch('/tokens', { method: 'POST', body: { name: 'ci' } })
 
-    expect(fetch).toHaveBeenCalledWith('/api/tokens', {
+    expect(fetch).toHaveBeenCalledWith('/api/v1beta1/tokens', {
       method: 'POST',
       headers: { Authorization: 'Bearer secret', 'Content-Type': 'application/json' },
       body: '{"name":"ci"}',

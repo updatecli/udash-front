@@ -2,6 +2,9 @@
 import { getAccessToken, handleUnauthorized } from '@/composables/auth'
 import { getRuntimeConfig, isAuthEnabled } from '@/composables/runtime'
 
+// API_VERSION is appended to API_BASE_URL on every request.
+export const API_VERSION = 'v1beta1'
+
 // getApiBaseURL returns the base URL for API requests with no trailing slash.
 export function getApiBaseURL() {
   const raw = getRuntimeConfig().API_BASE_URL || '/api'
@@ -20,6 +23,11 @@ export function getApiBaseUrl() {
   }
 
   return window.location.origin + raw
+}
+
+// getVersionedApiUrl returns the fully-qualified URL of the versioned API.
+export function getVersionedApiUrl() {
+  return `${getApiBaseUrl()}/${API_VERSION}`
 }
 
 // apiFetch calls the udash API at `path`, which is relative to the API base URL, and
@@ -50,7 +58,7 @@ export async function apiFetch(path, { method = 'GET', body, signal, signInOnUna
     init.body = JSON.stringify(body)
   }
 
-  const response = await fetch(`${getApiBaseURL()}${path}`, init)
+  const response = await fetch(`${getApiBaseURL()}/${API_VERSION}${path}`, init)
 
   if (!response.ok) {
     let detail = ''
